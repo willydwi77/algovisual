@@ -1042,6 +1042,15 @@ const BacktrackingAlgorithm = () => {
     setCurrentStep(0);
     setElapsedTime(0);
   };
+
+  const handleAlgorithmChange = (e) => {
+    const newAlgo = e.target.value;
+    setAlgorithm(newAlgo);
+    // Clearing steps immediately to prevent render crash during transition
+    setSteps([]);
+    setCurrentStep(0);
+  };
+
   const handleBegin = () => {
     setIsPlaying(false);
     setCurrentStep(0);
@@ -1326,6 +1335,10 @@ const BacktrackingAlgorithm = () => {
   const renderMaze = () => {
     const grid = currentVisual.board;
     if (!grid) return null;
+    // Defensive check: ensure grid is valid for maze (has objects with walls)
+    if (!grid[0] || !grid[0][0] || typeof grid[0][0].walls === "undefined") {
+      return null;
+    }
 
     const cellSize = 16;
     const rows = grid.length;
@@ -1600,7 +1613,7 @@ const BacktrackingAlgorithm = () => {
             <div className="flex flex-wrap gap-3 items-center bg-slate-800 p-2 rounded-xl border border-slate-700 justify-center">
               <select
                 value={algorithm}
-                onChange={(e) => setAlgorithm(e.target.value)}
+                onChange={handleAlgorithmChange}
                 className="bg-slate-900 border border-slate-600 text-sm rounded-lg p-2 focus:ring-orange-500 outline-none"
               >
                 <option value="nqueens">N-Queens</option>

@@ -685,6 +685,9 @@ function direction(p1, p2, p3) {
         }
       }
 
+      // Fix: Define 'inside' variable based on odd count
+      const inside = count % 2 !== 0;
+
       stepsArr.push(
         snapshot(
           [],
@@ -743,6 +746,12 @@ function direction(p1, p2, p3) {
     setElapsedTime(0);
     const generatedSteps = generateSteps(algorithm);
     setSteps(generatedSteps);
+  };
+
+  const handleAlgorithmChange = (e) => {
+    setAlgorithm(e.target.value);
+    setSteps([]); // Clear steps to prevent race condition
+    setCurrentStep(0);
   };
 
   const handleStop = () => {
@@ -1178,7 +1187,7 @@ function direction(p1, p2, p3) {
             <div className="flex flex-wrap gap-3 items-center bg-slate-800 p-2 rounded-xl border border-slate-700 justify-center">
               <select
                 value={algorithm}
-                onChange={(e) => setAlgorithm(e.target.value)}
+                onChange={handleAlgorithmChange}
                 className="bg-slate-900 border border-slate-600 text-sm rounded-lg p-2 focus:ring-violet-500 outline-none"
               >
                 <option value="convexhull">Convex Hull</option>

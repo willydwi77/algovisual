@@ -9,1526 +9,1086 @@ import {
   Variable,
   Layers,
   MessageSquare,
-  SkipBack,
   SkipForward,
   StepBack,
   StepForward,
-  Square,
-  Search,
-  Clock,
+  Activity,
 } from "lucide-react";
 
-/**
- * SortAlgorithm Component
- * Visualizes Sorting Algorithms: Bubble, Selection, Insertion, Quick, Merge, Heap.
- * Uses a symmetrical layout, execution log, and step-by-step visualization.
- */
-const SortAlgorithm = () => {
-  // ==========================================
-  // 1. CONSTANTS & DEFINITIONS
-  // ==========================================
+// ==========================================
+// 1. CONSTANTS: PSEUDOCODE TEXTS (INDONESIAN)
+// ==========================================
 
-  const STEP_DELAY = 300; // ms per step
+const PSEUDOCODE = {
+  bubble: `PROCEDURE BubbleSort(arr: List of Integer, n: Integer)
+  DECLARE i, j, temp: Integer
+  DECLARE swapped: Boolean
 
-  const variableDefinitions = {
-    common: { n: "Total Data" },
-    bubble: {
-      i: "Loop Luar (Pass)",
-      j: "Posisi Sekarang",
-      temp: "Simpan Sementara",
-    },
-    selection: {
-      i: "Posisi Target",
-      j: "Pencari Minimum",
-      minIdx: "Indeks Terkecil",
-      temp: "Simpan Sementara",
-    },
-    insertion: {
-      i: "Batas Terurut",
-      j: "Pencari Posisi",
-      key: "Nilai Disisipkan",
-    },
-    quick: {
-      low: "Batas Kiri",
-      high: "Batas Kanan",
-      pivot: "Nilai Patokan",
-      i: "Batas Partisi",
-      j: "Scanner",
-      temp: "Simpan Sementara",
-    },
-    merge: {
-      left: "Indeks Kiri",
-      right: "Indeks Kanan",
-      mid: "Titik Tengah",
-      i: "Pointer Kiri",
-      j: "Pointer Kanan",
-      k: "Pointer Merge",
-    },
-    heap: {
-      n: "Ukuran Heap",
-      i: "Indeks Sekarang",
-      largest: "Indeks Terbesar",
-      left: "Child Kiri",
-      right: "Child Kanan",
-      temp: "Simpan Sementara",
-    },
-  };
+  FOR i FROM 0 TO n-2 DO
+    swapped <- FALSE
+    FOR j FROM 0 TO n-i-2 DO
+      IF arr[j] > arr[j+1] THEN
+        temp <- arr[j]
+        arr[j] <- arr[j+1]
+        arr[j+1] <- temp
+        swapped <- TRUE
+      END IF
+    END FOR
+    IF NOT swapped THEN BREAK END IF
+  END FOR
+END PROCEDURE`,
 
-  const algorithmDescriptions = {
-    bubble: {
-      title: "Bubble Sort (Pengurutan Gelembung)",
-      description:
-        "Membandingkan pasangan elemen adjacent (bersebelahan) dan menukarnya jika tidak berurutan. Elemen terbesar akan 'menggelembung' ke akhir array pada setiap pass. Simpel namun tidak efisien untuk dataset besar.",
-      complexity: "Time: O(n²), Space: O(1)",
-      useCase:
-        "Pembelajaran algoritma, dataset sangat kecil, data hampir terurut",
-      pseudocode: `For i from 0 to n-1:
-  For j from 0 to n-i-1:
-    If arr[j] > arr[j+1]:
-      Swap(arr[j], arr[j+1])`,
-    },
-    selection: {
-      title: "Selection Sort (Pengurutan Seleksi)",
-      description:
-        "Pada setiap iterasi, mencari elemen terkecil dari bagian yang belum terurut dan menukarnya dengan elemen pertama dari bagian tersebut. Membangun array terurut dari kiri ke kanan.",
-      complexity: "Time: O(n²), Space: O(1)",
-      useCase: "Dataset kecil, minimalisir jumlah swap, memory terbatas",
-      pseudocode: `For i from 0 to n-1:
-  minIdx = i
-  For j from i+1 to n:
-    If arr[j] < arr[minIdx]: minIdx = j
-  If minIdx != i:
-    Swap(arr[i], arr[minIdx])`,
-    },
-    insertion: {
-      title: "Insertion Sort (Pengurutan Penyisipan)",
-      description:
-        "Membangun array terurut satu elemen pada satu waktu dengan mengambil elemen dan menyisipkannya ke posisi yang tepat di bagian array yang sudah terurut. Seperti mengurutkan kartu di tangan.",
-      complexity: "Time: O(n²), Space: O(1)",
-      useCase:
-        "Data hampir terurut, online sorting (data datang bertahap), dataset kecil",
-      pseudocode: `For i from 1 to n:
-  key = arr[i]
-  j = i - 1
-  While j >= 0 and arr[j] > key:
-    arr[j+1] = arr[j]
-    j = j - 1
-  arr[j+1] = key`,
-    },
-    quick: {
-      title: "Quick Sort (Pengurutan Cepat)",
-      description:
-        "Algoritma divide-and-conquer yang memilih pivot dan mempartisi array sehingga elemen kecil di kiri pivot dan besar di kanan. Rekursif mengurutkan sub-array. Sangat efisien untuk dataset besar.",
-      complexity: "Time: O(n log n), Space: O(log n)",
-      useCase: "General purpose sorting, dataset besar, performa tinggi",
-      pseudocode: `QuickSort(arr, low, high):
-  If low < high:
-    pi = Partition(arr, low, high)
-    QuickSort(arr, low, pi-1)
-    QuickSort(arr, pi+1, high)
+  selection: `PROCEDURE SelectionSort(arr: List of Integer, n: Integer)
+  DECLARE i, j, minIdx, temp: Integer
 
-Partition(arr, low, high):
-  pivot = arr[high]
-  i = low - 1
-  For j from low to high-1:
-    If arr[j] < pivot:
-      i++, Swap(arr[i], arr[j])
-  Swap(arr[i+1], arr[high])
-  Return i+1`,
-    },
-    merge: {
-      title: "Merge Sort (Pengurutan Gabung)",
-      description:
-        "Algoritma divide-and-conquer yang membagi array menjadi dua bagian hingga tersisa satu elemen, lalu menggabungkan (merge) bagian-bagian tersebut secara terurut. Stabil dan konsisten.",
-      complexity: "Time: O(n log n), Space: O(n)",
-      useCase:
-        "Stable sort diperlukan, linked lists, external sorting, data besar",
-      pseudocode: `MergeSort(arr, left, right):
-  If left < right:
-    mid = (left + right) / 2
+  FOR i FROM 0 TO n-2 DO
+    minIdx <- i
+    FOR j FROM i+1 TO n-1 DO
+      IF arr[j] < arr[minIdx] THEN
+        minIdx <- j
+      END IF
+    END FOR
+    
+    IF minIdx != i THEN
+      temp <- arr[i]
+      arr[i] <- arr[minIdx]
+      arr[minIdx] <- temp
+    END IF
+  END FOR
+END PROCEDURE`,
+
+  insertion: `PROCEDURE InsertionSort(arr: List of Integer, n: Integer)
+  DECLARE i, j, key: Integer
+
+  FOR i FROM 1 TO n-1 DO
+    key <- arr[i]
+    j <- i - 1
+    
+    WHILE j >= 0 AND arr[j] > key DO
+      arr[j+1] <- arr[j]
+      j <- j - 1
+    END WHILE
+    
+    arr[j+1] <- key
+  END FOR
+END PROCEDURE`,
+
+  quick: `PROCEDURE QuickSort(arr, low, high)
+  IF low < high THEN
+    pi <- Partition(arr, low, high)
+    QuickSort(arr, low, pi - 1)
+    QuickSort(arr, pi + 1, high)
+  END IF
+END PROCEDURE
+
+FUNCTION Partition(arr, low, high)
+  pivot <- arr[high]
+  i <- low - 1
+  FOR j FROM low TO high - 1 DO
+    IF arr[j] < pivot THEN
+      i <- i + 1
+      Swap(arr[i], arr[j])
+    END IF
+  END FOR
+  Swap(arr[i + 1], arr[high])
+  RETURN i + 1
+END FUNCTION`,
+
+  merge: `PROCEDURE MergeSort(arr, left, right)
+  IF left < right THEN
+    mid <- (left + right) / 2
     MergeSort(arr, left, mid)
-    MergeSort(arr, mid+1, right)
+    MergeSort(arr, mid + 1, right)
     Merge(arr, left, mid, right)
+  END IF
+END PROCEDURE
 
-Merge(arr, left, mid, right):
-  L = arr[left..mid], R = arr[mid+1..right]
-  i = 0, j = 0, k = left
-  While i < |L| and j < |R|:
-    If L[i] <= R[j]: arr[k] = L[i], i++
-    Else: arr[k] = R[j], j++
+PROCEDURE Merge(arr, left, mid, right)
+  Copy data to temp L[], R[]
+  i <- 0, j <- 0, k <- left
+  WHILE i < n1 AND j < n2 DO
+    IF L[i] <= R[j] THEN arr[k] <- L[i]
+    ELSE arr[k] <- R[j]
     k++
-  Copy remaining L and R to arr`,
-    },
-    heap: {
-      title: "Heap Sort (Pengurutan Heap)",
-      description:
-        "Membangun max heap dari array, kemudian berulang kali mengekstrak elemen terbesar (root) dan meletakkannya di akhir array. Menggunakan struktur data binary heap. In-place sorting.",
-      complexity: "Time: O(n log n), Space: O(1)",
-      useCase: "Guaranteed O(n log n), priority queue, space constraint",
-      pseudocode: `HeapSort(arr):
-  BuildMaxHeap(arr)
-  For i from n-1 to 1:
+  END WHILE
+  Copy remaining elements
+END PROCEDURE`,
+
+  heap: `PROCEDURE HeapSort(arr, n)
+  BuildMaxHeap(arr, n)
+  FOR i FROM n-1 DOWNTO 1 DO
     Swap(arr[0], arr[i])
     Heapify(arr, i, 0)
+  END FOR
+END PROCEDURE
 
-Heapify(arr, n, i):
-  largest = i, l = 2*i+1, r = 2*i+2
-  If l < n and arr[l] > arr[largest]: largest = l
-  If r < n and arr[r] > arr[largest]: largest = r
-  If largest != i:
+PROCEDURE Heapify(arr, n, i)
+  largest <- i
+  l <- 2*i + 1, r <- 2*i + 2
+  IF l < n AND arr[l] > arr[largest] THEN largest <- l
+  IF r < n AND arr[r] > arr[largest] THEN largest <- r
+  IF largest != i THEN
     Swap(arr[i], arr[largest])
-    Heapify(arr, n, largest)`,
-    },
-  };
+    Heapify(arr, n, largest)
+  END IF
+END PROCEDURE`,
+};
 
-  const algoCode = {
-    bubble: `function bubbleSort(arr) {
-  let n = arr.length;
-  for (let i = 0; i < n; i++) {
-    for (let j = 0; j < n - i - 1; j++) {
-      if (arr[j] > arr[j + 1]) {
-        let temp = arr[j];
-        arr[j] = arr[j + 1];
-        arr[j + 1] = temp;
+const ALGO_INFO = {
+  bubble: {
+    title: "BUBBLE SORT",
+    description:
+      "Algoritma pengurutan sederhana yang berulang kali melangkah melalui daftar, membandingkan elemen yang berdekatan dan menukarnya jika urutannya salah.",
+    complexity: "O(n²)",
+  },
+  selection: {
+    title: "SELECTION SORT",
+    description:
+      "Algoritma pengurutan perbandingan in-place. Ini membagi daftar input menjadi dua bagian: sublist item yang sudah diurutkan dan sublist item yang belum diurutkan.",
+    complexity: "O(n²)",
+  },
+  insertion: {
+    title: "INSERTION SORT",
+    description:
+      "Algoritma pengurutan sederhana yang membangun array yang diurutkan akhir satu item pada satu waktu. Ini jauh kurang efisien pada daftar besar daripada algoritma yang lebih canggih.",
+    complexity: "O(n²)",
+  },
+  quick: {
+    title: "QUICK SORT",
+    description:
+      "Algoritma Divide and Conquer. Ini memilih elemen sebagai pivot dan mempartisi array yang diberikan di sekitar pivot yang dipilih.",
+    complexity: "O(n log n)",
+  },
+  merge: {
+    title: "MERGE SORT",
+    description:
+      "Algoritma Divide and Conquer yang efisien, berbasis perbandingan. Sebagian besar implementasi menghasilkan pengurutan yang stabil.",
+    complexity: "O(n log n)",
+  },
+  heap: {
+    title: "HEAP SORT",
+    description:
+      "Teknik pengurutan berbasis perbandingan berdasarkan struktur data Binary Heap. Mirip dengan selection sort di mana kita pertama-tama menemukan elemen maksimum.",
+    complexity: "O(n log n)",
+  },
+};
+
+// ==========================================
+// 2. SUB-COMPONENTS
+// ==========================================
+
+const BigOGraph = ({ algorithm, progress }) => {
+  const type = ["bubble", "selection", "insertion"].includes(algorithm)
+    ? "quadratic"
+    : "log-linear";
+  const label = ALGO_INFO[algorithm].complexity;
+
+  const width = 280;
+  const height = 120;
+  const padding = 15;
+
+  const points = [];
+  const steps = 40;
+
+  for (let i = 0; i <= steps; i++) {
+    const x = i / steps;
+    let y =
+      type === "quadratic"
+        ? x * x
+        : x === 0
+        ? 0
+        : (x * Math.log2(x * 10 + 1)) / 3.5;
+    if (y > 1) y = 1;
+
+    const px = padding + x * (width - 2 * padding);
+    const py = height - padding - y * (height - 2 * padding);
+    points.push(`${px},${py}`);
+  }
+
+  // Current Dot
+  const cx = progress; // 0..1
+  let cy =
+    type === "quadratic"
+      ? cx * cx
+      : cx === 0
+      ? 0
+      : (cx * Math.log2(cx * 10 + 1)) / 3.5;
+  if (cy > 1) cy = 1;
+  const dotX = padding + cx * (width - 2 * padding);
+  const dotY = height - padding - cy * (height - 2 * padding);
+
+  return (
+    <div className="bg-slate-900 border border-slate-700 rounded-xl p-4 shadow-xl">
+      <div className="flex justify-between items-center mb-2">
+        <div className="flex items-center gap-2 text-orange-400 font-bold text-xs uppercase">
+          <Activity size={14} /> Kompleksitas Waktu
+        </div>
+        <div className="px-2 py-0.5 bg-emerald-900/30 border border-emerald-500/30 text-emerald-400 text-xs font-mono rounded">
+          {label}
+        </div>
+      </div>
+      <div className="relative h-[120px] w-full border-l border-b border-slate-600">
+        <svg width="100%" height="100%" viewBox={`0 0 ${width} ${height}`}>
+          <polyline
+            points={points.join(" ")}
+            fill="none"
+            stroke="#f97316"
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+          <circle
+            cx={dotX}
+            cy={dotY}
+            r="4"
+            fill="white"
+            stroke="#f97316"
+            strokeWidth="2"
+          />
+          <circle
+            cx={dotX}
+            cy={dotY}
+            r="8"
+            fill="#f97316"
+            opacity="0.3"
+            className="animate-pulse"
+          />
+        </svg>
+      </div>
+      <div className="flex justify-between text-[10px] text-slate-500 mt-1 font-mono">
+        <span>Start</span>
+        <span>Operations vs N</span>
+        <span>End</span>
+      </div>
+    </div>
+  );
+};
+
+const CodeViewer = ({ code, activeLine }) => {
+  const lines = code.split("\n");
+  const scrollRef = useRef(null);
+
+  useEffect(() => {
+    if (scrollRef.current && activeLine > 0) {
+      // Simple scroll into view logic
+      const el = scrollRef.current.children[activeLine - 1];
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
       }
     }
-  }
-}`,
-    selection: `function selectionSort(arr) {
-  let n = arr.length;
-  for (let i = 0; i < n; i++) {
-    let minIdx = i;
-    for (let j = i + 1; j < n; j++) {
-      if (arr[j] < arr[minIdx]) {
-        minIdx = j;
-      }
-    }
-    if (minIdx !== i) {
-      let temp = arr[i];
-      arr[i] = arr[minIdx];
-      arr[minIdx] = temp;
-    }
-  }
-}`,
-    insertion: `function insertionSort(arr) {
-  let n = arr.length;
-  for (let i = 1; i < n; i++) {
-    let key = arr[i];
-    let j = i - 1;
-    while (j >= 0 && arr[j] > key) {
-      arr[j + 1] = arr[j];
-      j = j - 1;
-    }
-    arr[j + 1] = key;
-  }
-}`,
-    quick: `function quickSort(arr, low, high) {
-  if (low < high) {
-    let pi = partition(arr, low, high);
-    quickSort(arr, low, pi - 1);
-    quickSort(arr, pi + 1, high);
-  }
-}
+  }, [activeLine]);
 
-function partition(arr, low, high) {
-  let pivot = arr[high];
-  let i = (low - 1);
-  for (let j = low; j < high; j++) {
-    if (arr[j] < pivot) {
-      i++;
-      swap(arr, i, j);
-    }
-  }
-  swap(arr, i + 1, high);
-  return i + 1;
-}`,
-    merge: `function mergeSort(arr, left, right) {
-  if (left < right) {
-    let mid = Math.floor((left + right) / 2);
-    mergeSort(arr, left, mid);
-    mergeSort(arr, mid + 1, right);
-    merge(arr, left, mid, right);
-  }
-}
+  return (
+    <div className="bg-[#1e1e1e] rounded-lg border border-slate-700 overflow-hidden flex flex-col h-full shadow-inner">
+      <div className="flex items-center justify-between px-4 py-2 bg-[#2d2d2d] border-b border-slate-700">
+        <span className="text-xs text-slate-400 font-bold flex items-center gap-2">
+          <Code size={14} /> PSEUDOCODE
+        </span>
+        <span className="text-[10px] text-slate-500 uppercase tracking-widest">
+          IDN
+        </span>
+      </div>
+      {/* Removed overflow-auto to allow container to stretch */}
+      <div className="flex-1 p-4 font-mono text-sm leading-6" ref={scrollRef}>
+        {lines.map((line, idx) => {
+          const lineNum = idx + 1;
+          const isActive = activeLine === lineNum;
 
-function merge(arr, left, mid, right) {
-  let L = arr.slice(left, mid + 1);
-  let R = arr.slice(mid + 1, right + 1);
-  let i = 0, j = 0, k = left;
-  while (i < L.length && j < R.length) {
-    if (L[i] <= R[j]) {
-      arr[k] = L[i]; i++;
-    } else {
-      arr[k] = R[j]; j++;
-    }
-    k++;
-  }
-  while (i < L.length) { 
-    arr[k] = L[i]; i++; k++; 
-  }
-  while (j < R.length) { 
-    arr[k] = R[j]; j++; k++; 
-  }
-}`,
-    heap: `function heapSort(arr) {
-  let n = arr.length;
-  for (let i = Math.floor(n / 2) - 1; i >= 0; i--) {
-    heapify(arr, n, i);
-  }
-  for (let i = n - 1; i > 0; i--) {
-    swap(arr, 0, i);
-    heapify(arr, i, 0);
-  }
-}
+          // Basic Syntax Highlighting Logic
+          const formattedLine = line
+            .replace(
+              /(PROCEDURE|FUNCTION|DECLARE|FOR|WHILE|IF|THEN|ELSE|END|RETURN|not|AND|OR|TO|DOWNTO|do|break)/gi,
+              '<span class="text-purple-400 font-bold">$1</span>'
+            )
+            .replace(
+              /(List of Integer|Integer|Boolean)/g,
+              '<span class="text-yellow-300">$1</span>'
+            )
+            .replace(
+              /(\/\/.*)/g,
+              '<span class="text-slate-500 italic">$1</span>'
+            )
+            .replace(
+              /(true|false)/gi,
+              '<span class="text-red-400 font-bold">$1</span>'
+            );
 
-function heapify(arr, n, i) {
-  let largest = i;
-  let left = 2 * i + 1;
-  let right = 2 * i + 2;
-  if (left < n && arr[left] > arr[largest])
-    largest = left;
-  if (right < n && arr[right] > arr[largest])
-    largest = right;
-  if (largest !== i) {
-    swap(arr, i, largest);
-    heapify(arr, n, largest);
-  }
-}`,
-  };
+          return (
+            <div
+              key={idx}
+              className={`flex ${
+                isActive
+                  ? "bg-slate-700/50 -mx-4 px-4 border-l-2 border-orange-500"
+                  : ""
+              }`}
+            >
+              <span className="w-8 text-slate-600 text-right mr-4 select-none shrink-0">
+                {lineNum}
+              </span>
+              <span
+                className={`whitespace-pre ${
+                  isActive ? "text-orange-100" : "text-slate-300"
+                }`}
+                dangerouslySetInnerHTML={{ __html: formattedLine }}
+              />
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
 
-  // ==========================================
-  // 2. STATE MANAGEMENT
-  // ==========================================
-  const [arraySize, setArraySize] = useState(15);
+// ==========================================
+// 3. MAIN LOGIC
+// ==========================================
+
+const SortAlgorithm = () => {
+  const [arraySize, setArraySize] = useState(10); // Standard slider size
   const [algorithm, setAlgorithm] = useState("bubble");
 
-  // Timeline Engine
   const [steps, setSteps] = useState([]);
   const [currentStep, setCurrentStep] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const intervalRef = useRef(null);
 
-  // Time tracking
-  const [elapsedTime, setElapsedTime] = useState(0);
+  // --- ALGORITHM GENERATORS (With Line Numbers) ---
 
-  // ==========================================
-  // 3. LOGIC & HELPERS
-  // ==========================================
+  const snapshot = (arr, active, swap, sorted, line, desc) => ({
+    array: [...arr],
+    activeIndices: [...active],
+    swapIndices: [...swap],
+    sortedIndices: [...sorted],
+    activeLine: line,
+    description: desc,
+  });
 
-  const getVarDesc = (name) => {
-    if (
-      variableDefinitions[algorithm] &&
-      variableDefinitions[algorithm][name]
-    ) {
-      return variableDefinitions[algorithm][name];
-    }
-    return variableDefinitions.common[name] || "";
-  };
-
-  const snapshot = (arr, active, swap, sorted, line, desc, vars) => {
-    return {
-      array: [...arr],
-      activeIndices: [...active],
-      swapIndices: [...swap],
-      sortedIndices: [...sorted],
-      activeCodeLine: line,
-      stepDescription: desc,
-      variables: { ...vars },
-    };
-  };
-
-  const generateSteps = (initialArray, algoType) => {
-    const stepsArr = [];
+  const generateSteps = (initialArray, algo) => {
     let arr = [...initialArray];
-    let n = arr.length;
-    let vars = { n };
+    const n = arr.length;
+    let s = [];
 
-    stepsArr.push(
-      snapshot(
-        arr,
-        [],
-        [],
-        [],
-        -1,
-        "Mulai Algoritma Sorting - Inisialisasi variabel dan struktur data",
-        vars
-      )
-    );
+    // Initial State
+    s.push(snapshot(arr, [], [], [], 1, "Mulai Algoritma"));
 
-    if (algoType === "bubble") {
-      for (let i = 0; i < n; i++) {
-        vars = { ...vars, i };
+    if (algo === "bubble") {
+      for (let i = 0; i < n - 1; i++) {
+        s.push(snapshot(arr, [], [], [], 5, `Loop Luar i=${i}`));
+        let swapped = false;
+        s.push(snapshot(arr, [], [], [], 6, `swapped = FALSE`));
+
         for (let j = 0; j < n - i - 1; j++) {
-          vars = { ...vars, j };
-          stepsArr.push(
+          s.push(
             snapshot(
               arr,
               [j, j + 1],
               [],
               [],
-              5,
-              `Pass ${i + 1}, Posisi ${j}: Bandingkan ${arr[j]} dan ${
-                arr[j + 1]
-              }. Apakah perlu ditukar?`,
-              vars
+              8,
+              `Bandingkan arr[${j}] (${arr[j]}) > arr[${j + 1}] (${arr[j + 1]})`
             )
           );
-
           if (arr[j] > arr[j + 1]) {
             let temp = arr[j];
-            vars = { ...vars, temp };
             arr[j] = arr[j + 1];
             arr[j + 1] = temp;
-            stepsArr.push(
+            swapped = true;
+            s.push(
               snapshot(
                 arr,
                 [],
                 [j, j + 1],
                 [],
-                7,
-                `${arr[j + 1]} > ${arr[j]}: SWAP! Elemen ${arr[j + 1]} dan ${
-                  arr[j]
-                } bertukar posisi ke array[${j}] dan array[${j + 1}].`,
-                vars
+                10,
+                `Tukar posisi ${j} dan ${j + 1}`
               )
             );
-          } else {
-            stepsArr.push(
-              snapshot(
-                arr,
-                [],
-                [],
-                [],
-                5,
-                `${arr[j]} ≤ ${
-                  arr[j + 1]
-                }: Sudah urut, tidak perlu swap. Lanjut ke perbandingan berikutnya.`,
-                vars
-              )
-            );
+            s.push(snapshot(arr, [], [], [], 12, `Set swapped = TRUE`));
           }
         }
-        let currentSorted = [];
-        for (let k = 0; k <= i; k++) currentSorted.push(n - 1 - k);
-        stepsArr.push(
-          snapshot(
-            arr,
-            [],
-            [],
-            currentSorted,
-            3,
-            `Pass ${i + 1} selesai! Elemen terbesar ${
-              arr[n - 1 - i]
-            } sudah 'menggelembung' ke posisi ${n - 1 - i}.`,
-            vars
-          )
-        );
+
+        // Mark sorted at end of pass
+        let sorted = [];
+        for (let k = 0; k <= i; k++) sorted.push(n - 1 - k);
+
+        s.push(snapshot(arr, [], [], sorted, 15, `Cek Swapped?`));
+        if (!swapped) {
+          s.push(snapshot(arr, [], [], sorted, 15, `Tidak ada swap, BREAK`));
+          break;
+        }
       }
-    } else if (algoType === "selection") {
-      for (let i = 0; i < n; i++) {
+    } else if (algo === "selection") {
+      for (let i = 0; i < n - 1; i++) {
+        s.push(snapshot(arr, [], [], [], 4, `Loop i=${i}`));
         let minIdx = i;
-        vars = { ...vars, i, minIdx };
-        stepsArr.push(
-          snapshot(
-            arr,
-            [i],
-            [],
-            [],
-            3,
-            `Iterasi ${i + 1}: Cari elemen terkecil dari indeks ${i} hingga ${
-              n - 1
-            }.`,
-            vars
-          )
-        );
+        s.push(snapshot(arr, [i], [], [], 5, `Set minIdx = ${i}`));
 
         for (let j = i + 1; j < n; j++) {
-          vars = { ...vars, j };
-          stepsArr.push(
+          s.push(
             snapshot(
               arr,
               [minIdx, j],
               [],
               [],
-              6,
-              `Bandingkan arr[${j}] = ${arr[j]} dengan minimum saat ini arr[${minIdx}] = ${arr[minIdx]}.`,
-              vars
+              7,
+              `Cek arr[${j}] < arr[${minIdx}]?`
             )
           );
           if (arr[j] < arr[minIdx]) {
             minIdx = j;
-            vars = { ...vars, minIdx };
-            stepsArr.push(
+            s.push(
               snapshot(
                 arr,
                 [minIdx],
                 [],
                 [],
-                7,
-                `Update! ${arr[j]} lebih kecil. Minimum baru di indeks ${j} dengan nilai ${arr[j]}.`,
-                vars
+                8,
+                `Update minIdx = ${j} (${arr[j]})`
               )
             );
           }
         }
+
         if (minIdx !== i) {
+          s.push(snapshot(arr, [], [], [], 12, `Tukar elemen`));
           let temp = arr[i];
-          vars = { ...vars, temp };
           arr[i] = arr[minIdx];
           arr[minIdx] = temp;
-          stepsArr.push(
+          s.push(
             snapshot(
               arr,
               [],
               [i, minIdx],
               [],
-              12,
-              `Swap! Tukar nilai minimum ${arr[i]} (dari indeks ${minIdx}) dengan arr[${i}] = ${arr[minIdx]}.`,
-              vars
-            )
-          );
-        } else {
-          stepsArr.push(
-            snapshot(
-              arr,
-              [],
-              [],
-              [],
-              10,
-              `Tidak perlu swap. Elemen di indeks ${i} sudah merupakan minimum (${arr[i]}).`,
-              vars
+              13,
+              `Swap arr[${i}] dan arr[${minIdx}]`
             )
           );
         }
 
-        let currentSorted = [];
-        for (let k = 0; k <= i; k++) currentSorted.push(k);
-        stepsArr.push(
-          snapshot(
-            arr,
-            [],
-            [],
-            currentSorted,
-            3,
-            `Iterasi ${i + 1} selesai. Indeks 0-${i} sudah terurut.`,
-            vars
-          )
-        );
+        let sorted = Array.from({ length: i + 1 }, (_, k) => k);
+        s.push(snapshot(arr, [], [], sorted, 16, `Iterasi selesai`));
       }
-    } else if (algoType === "insertion") {
-      let currentSorted = [0];
-      stepsArr.push(
-        snapshot(
-          arr,
-          [0],
-          [],
-          currentSorted,
-          3,
-          `Elemen pertama arr[0] = ${arr[0]} sudah terurut secara trivial.`,
-          vars
-        )
-      );
-
+    } else if (algo === "insertion") {
       for (let i = 1; i < n; i++) {
+        s.push(snapshot(arr, [], [], [], 4, `Loop i=${i}`));
         let key = arr[i];
         let j = i - 1;
-        vars = { ...vars, i, key, j };
-        stepsArr.push(
-          snapshot(
-            arr,
-            [i],
-            [],
-            currentSorted,
-            4,
-            `Iterasi ${i}: Ambil key = ${key} dari indeks ${i}. Cari posisi yang tepat untuk disisipkan.`,
-            vars
-          )
-        );
+        s.push(snapshot(arr, [i], [], [], 5, `Ambil Key = ${key}`));
+
+        // Visualization hack: show comparison before shift
+        if (j >= 0)
+          s.push(snapshot(arr, [j, i], [], [], 8, `Cek arr[${j}] > key?`));
 
         while (j >= 0 && arr[j] > key) {
-          vars = { ...vars, j };
-          stepsArr.push(
-            snapshot(
-              arr,
-              [j, j + 1],
-              [],
-              currentSorted,
-              6,
-              `arr[${j}] = ${arr[j]} > key (${key}). Geser ${
-                arr[j]
-              } ke kanan menjadi arr[${j + 1}].`,
-              vars
-            )
-          );
           arr[j + 1] = arr[j];
-          stepsArr.push(
-            snapshot(
-              arr,
-              [],
-              [j, j + 1],
-              currentSorted,
-              7,
-              `Menggeser elemen ${arr[j + 1]} satu posisi ke kanan...`,
-              vars
-            )
+          s.push(
+            snapshot(arr, [], [j, j + 1], [], 9, `Geser ${arr[j]} ke kanan`)
           );
           j = j - 1;
+          if (j >= 0)
+            s.push(snapshot(arr, [j], [], [], 8, `Cek arr[${j}] > key?`));
         }
         arr[j + 1] = key;
-        currentSorted = [];
-        for (let k = 0; k <= i; k++) currentSorted.push(k);
-        stepsArr.push(
-          snapshot(
-            arr,
-            [j + 1],
-            [],
-            currentSorted,
-            10,
-            `Sisipkan key = ${key} di posisi yang  tepat: indeks ${
-              j + 1
-            }. Bagian 0-${i} sekarang terurut.`,
-            vars
-          )
+        s.push(
+          snapshot(arr, [j + 1], [], [], 13, `Sisipkan key di indeks ${j + 1}`)
         );
       }
-    } else if (algoType === "quick") {
-      const partition = (arr, low, high) => {
-        let pivot = arr[high];
-        let i = low - 1;
-        vars = { ...vars, pivot, low, high, i };
-        stepsArr.push(
+    } else if (algo === "quick") {
+      // Quick Sort Implementation
+      const partition = (low, high) => {
+        const pivot = arr[high];
+        s.push(
           snapshot(
             arr,
             [high],
             [],
             [],
-            14,
-            `Partisi range [${low}..${high}]: Pilih pivot = arr[${high}] = ${pivot}. Elemen akan diatur: < pivot di kiri, > pivot di kanan.`,
-            vars
+            8,
+            `Pilih pivot = arr[${high}] = ${pivot}`
           )
         );
 
+        let i = low - 1;
+        s.push(snapshot(arr, [], [], [], 9, `Set i = ${low - 1}`));
+
         for (let j = low; j < high; j++) {
-          vars = { ...vars, j };
-          stepsArr.push(
+          s.push(
             snapshot(
               arr,
               [j, high],
               [],
               [],
-              16,
-              `Bandingkan arr[${j}] = ${arr[j]} dengan pivot (${pivot}).`,
-              vars
+              11,
+              `Bandingkan arr[${j}] (${arr[j]}) < pivot (${pivot})?`
             )
           );
+
           if (arr[j] < pivot) {
             i++;
-            vars = { ...vars, i };
-            let temp = arr[i];
-            arr[i] = arr[j];
-            arr[j] = temp;
-            vars = { ...vars, temp };
-            stepsArr.push(
-              snapshot(
-                arr,
-                [],
-                [i, j],
-                [],
-                19,
-                `${arr[i]} < ${pivot}: Swap arr[${i}] dan arr[${j}]. Pindahkan elemen kecil ke partisi kiri.`,
-                vars
-              )
-            );
-          } else {
-            stepsArr.push(
-              snapshot(
-                arr,
-                [j],
-                [],
-                [],
-                16,
-                `${arr[j]} ≥ ${pivot}: Tidak swap. Biarkan di partisi kanan.`,
-                vars
-              )
-            );
+            s.push(snapshot(arr, [i, j], [], [], 12, `i++, sekarang i = ${i}`));
+
+            if (i !== j) {
+              [arr[i], arr[j]] = [arr[j], arr[i]];
+              s.push(
+                snapshot(
+                  arr,
+                  [],
+                  [i, j],
+                  [],
+                  13,
+                  `Tukar arr[${i}] dengan arr[${j}]`
+                )
+              );
+            }
           }
         }
-        let temp = arr[i + 1];
-        arr[i + 1] = arr[high];
-        arr[high] = temp;
-        stepsArr.push(
+
+        // Place pivot in correct position
+        [arr[i + 1], arr[high]] = [arr[high], arr[i + 1]];
+        s.push(
           snapshot(
             arr,
             [],
             [i + 1, high],
             [],
-            21,
-            `Partisi selesai! Tempatkan pivot ${
-              arr[i + 1]
-            } di posisi finalnya (indeks ${
-              i + 1
-            }). Pivot sekarang di tempat yang benar.`,
-            vars
+            16,
+            `Tempatkan pivot di posisi ${i + 1}`
           )
         );
+
         return i + 1;
       };
 
-      const quickSortRec = (arr, low, high) => {
+      const quickSortHelper = (low, high) => {
         if (low < high) {
-          stepsArr.push(
+          s.push(snapshot(arr, [], [], [], 2, `QuickSort(${low}, ${high})`));
+
+          const pi = partition(low, high);
+          s.push(
             snapshot(
               arr,
+              [pi],
               [],
-              [],
-              [],
-              2,
-              `QuickSort range [${low}..${high}] dengan ${
-                high - low + 1
-              } elemen.`,
-              { ...vars, low, high }
+              [pi],
+              3,
+              `Partition selesai, pivot di ${pi}`
             )
           );
-          let pi = partition(arr, low, high);
-          quickSortRec(arr, low, pi - 1);
-          quickSortRec(arr, pi + 1, high);
+
+          quickSortHelper(low, pi - 1);
+          quickSortHelper(pi + 1, high);
         }
       };
-      quickSortRec(arr, 0, n - 1);
-    } else if (algoType === "merge") {
-      const merge = (arr, left, mid, right) => {
-        let L = arr.slice(left, mid + 1);
-        let R = arr.slice(mid + 1, right + 1);
+
+      quickSortHelper(0, n - 1);
+    } else if (algo === "merge") {
+      // Merge Sort Implementation
+      const merge = (left, mid, right) => {
+        const n1 = mid - left + 1;
+        const n2 = right - mid;
+
+        const L = arr.slice(left, mid + 1);
+        const R = arr.slice(mid + 1, right + 1);
+
+        s.push(snapshot(arr, [], [], [], 10, `Bagi array: L[${n1}], R[${n2}]`));
+
         let i = 0,
           j = 0,
           k = left;
-
-        vars = { ...vars, left, mid, right, i, j, k };
-        stepsArr.push(
-          snapshot(
-            arr,
-            Array.from({ length: right - left + 1 }, (_, idx) => left + idx),
-            [],
-            [],
-            13,
-            `Merge dua subarray terurut: [${left}..${mid}] (${L.join(
-              ","
-            )}) dan [${mid + 1}..${right}] (${R.join(
-              ","
-            )}) menjadi satu array terurut.`,
-            vars
-          )
+        s.push(
+          snapshot(arr, [], [], [], 12, `Mulai merge dari indeks ${left}`)
         );
 
-        while (i < L.length && j < R.length) {
-          vars = { ...vars, i, j, k };
-          stepsArr.push(
+        while (i < n1 && j < n2) {
+          const leftIdx = left + i;
+          const rightIdx = mid + 1 + j;
+
+          s.push(
             snapshot(
               arr,
-              [k],
+              [leftIdx, rightIdx],
               [],
               [],
-              15,
-              `Bandingkan L[${i}] = ${L[i]} dengan R[${j}] = ${R[j]}. Ambil yang lebih kecil untuk arr[${k}].`,
-              vars
+              13,
+              `Bandingkan L[${i}]=${L[i]} dengan R[${j}]=${R[j]}`
             )
           );
 
           if (L[i] <= R[j]) {
             arr[k] = L[i];
-            stepsArr.push(
-              snapshot(
-                arr,
-                [],
-                [k],
-                [],
-                17,
-                `${L[i]} ≤ ${R[j]}: Ambil ${L[i]} dari subarray kiri, simpan di arr[${k}].`,
-                vars
-              )
+            s.push(
+              snapshot(arr, [k], [], [], 14, `arr[${k}] = L[${i}] = ${L[i]}`)
             );
             i++;
           } else {
             arr[k] = R[j];
-            stepsArr.push(
-              snapshot(
-                arr,
-                [],
-                [k],
-                [],
-                20,
-                `${R[j]} < ${L[i]}: Ambil ${R[j]} dari subarray kanan, simpan di arr[${k}].`,
-                vars
-              )
+            s.push(
+              snapshot(arr, [k], [], [], 15, `arr[${k}] = R[${j}] = ${R[j]}`)
             );
             j++;
           }
           k++;
-          vars = { ...vars, i, j, k };
         }
 
-        while (i < L.length) {
+        while (i < n1) {
           arr[k] = L[i];
-          stepsArr.push(
-            snapshot(
-              arr,
-              [],
-              [k],
-              [],
-              24,
-              `Salin sisa elemen dari subarray kiri: ${L[i]} → arr[${k}].`,
-              { ...vars, i, k }
-            )
+          s.push(
+            snapshot(arr, [k], [], [], 18, `Salin sisa L[${i}] = ${L[i]}`)
           );
           i++;
           k++;
         }
-        while (j < R.length) {
+
+        while (j < n2) {
           arr[k] = R[j];
-          stepsArr.push(
-            snapshot(
-              arr,
-              [],
-              [k],
-              [],
-              27,
-              `Salin sisa elemen dari subarray kanan: ${R[j]} → arr[${k}].`,
-              { ...vars, j, k }
-            )
+          s.push(
+            snapshot(arr, [k], [], [], 18, `Salin sisa R[${j}] = ${R[j]}`)
           );
           j++;
           k++;
         }
-        stepsArr.push(
+
+        // Mark merged section as sorted
+        const sorted = [];
+        for (let idx = left; idx <= right; idx++) sorted.push(idx);
+        s.push(
           snapshot(
             arr,
             [],
             [],
-            [],
-            4,
-            `Merge selesai untuk range [${left}..${right}]. Subarray ini sekarang terurut.`,
-            vars
+            sorted,
+            18,
+            `Merge selesai untuk rentang [${left}..${right}]`
           )
         );
       };
 
-      const mergeSortRec = (arr, left, right) => {
+      const mergeSortHelper = (left, right) => {
         if (left < right) {
-          let mid = Math.floor((left + right) / 2);
-          vars = { ...vars, left, mid, right };
-          stepsArr.push(
-            snapshot(
-              arr,
-              Array.from({ length: right - left + 1 }, (_, idx) => left + idx),
-              [],
-              [],
-              2,
-              `Divide: Bagi array [${left}..${right}] menjadi dua: [${left}..${mid}] dan [${
-                mid + 1
-              }..${right}]. Rekursi untuk masing-masing.`,
-              vars
-            )
-          );
+          const mid = Math.floor((left + right) / 2);
+          s.push(snapshot(arr, [], [], [], 3, `Bagi array: mid = ${mid}`));
 
-          mergeSortRec(arr, left, mid);
-          mergeSortRec(arr, mid + 1, right);
-          merge(arr, left, mid, right);
+          mergeSortHelper(left, mid);
+          mergeSortHelper(mid + 1, right);
+          merge(left, mid, right);
         }
       };
-      mergeSortRec(arr, 0, n - 1);
-    } else if (algoType === "heap") {
-      const heapify = (arr, n, i) => {
-        let largest = i;
-        let left = 2 * i + 1;
-        let right = 2 * i + 2;
 
-        vars = { ...vars, n, i, largest, left, right };
-        stepsArr.push(
+      mergeSortHelper(0, n - 1);
+    } else if (algo === "heap") {
+      // Heap Sort Implementation
+      const heapify = (size, i) => {
+        let largest = i;
+        const l = 2 * i + 1;
+        const r = 2 * i + 2;
+
+        s.push(
           snapshot(
             arr,
             [i],
             [],
             [],
-            13,
-            `Heapify node ${i} (nilai: ${arr[i]}). Cek apakah max heap property terpenuhi: parent ≥ children.`,
-            vars
+            9,
+            `Heapify node ${i}, left=${l}, right=${r}`
           )
         );
 
-        if (left < n && arr[left] > arr[largest]) {
-          largest = left;
-          vars = { ...vars, largest };
-          stepsArr.push(
+        if (l < size && arr[l] > arr[largest]) {
+          largest = l;
+          s.push(
             snapshot(
               arr,
-              [i, left],
+              [l, largest],
               [],
               [],
-              17,
-              `Child kiri arr[${left}] = ${arr[left]} > parent arr[${i}] = ${arr[i]}. Update largest = ${left}.`,
-              vars
+              12,
+              `arr[${l}] > arr[${i}], largest = ${l}`
             )
           );
         }
-        if (right < n && arr[right] > arr[largest]) {
-          largest = right;
-          vars = { ...vars, largest };
-          stepsArr.push(
+
+        if (r < size && arr[r] > arr[largest]) {
+          largest = r;
+          s.push(
             snapshot(
               arr,
-              [i, right],
+              [r, largest],
               [],
               [],
-              19,
-              `Child kanan arr[${right}] = ${arr[right]} > current largest arr[${largest}]. Update largest = ${right}.`,
-              vars
+              13,
+              `arr[${r}] > arr[${largest}], largest = ${r}`
             )
           );
         }
 
         if (largest !== i) {
-          let temp = arr[i];
-          arr[i] = arr[largest];
-          arr[largest] = temp;
-          vars = { ...vars, temp };
-          stepsArr.push(
+          [arr[i], arr[largest]] = [arr[largest], arr[i]];
+          s.push(
             snapshot(
               arr,
               [],
               [i, largest],
               [],
-              22,
-              `Heap property dilanggar! Swap arr[${i}] = ${arr[largest]} dengan arr[${largest}] = ${arr[i]} untuk restore max heap.`,
-              vars
+              15,
+              `Tukar arr[${i}] dengan arr[${largest}]`
             )
           );
-          heapify(arr, n, largest);
+          heapify(size, largest);
         }
       };
 
-      // Build heap
-      stepsArr.push(
-        snapshot(
-          arr,
-          [],
-          [],
-          [],
-          -1,
-          `Fase 1 (Build Heap): Bangun max heap dari array. Mulai dari node tidak-daun terakhir ke root.`,
-          vars
-        )
-      );
+      // Build max heap
+      s.push(snapshot(arr, [], [], [], 2, "Membangun Max Heap"));
       for (let i = Math.floor(n / 2) - 1; i >= 0; i--) {
-        vars = { ...vars, i };
-        stepsArr.push(
-          snapshot(
-            arr,
-            [i],
-            [],
-            [],
-            4,
-            `Build heap: Heapify subtree dengan root di index ${i}.`,
-            vars
-          )
-        );
-        heapify(arr, n, i);
+        heapify(n, i);
       }
+      s.push(snapshot(arr, [], [], [], 2, "Max Heap selesai dibangun"));
 
-      stepsArr.push(
-        snapshot(
-          arr,
-          [],
-          [],
-          [],
-          -1,
-          `Max heap terbentuk! Elemen terbesar ${arr[0]} berada di root (indeks 0).`,
-          vars
-        )
-      );
-
-      // Extract elements
-      stepsArr.push(
-        snapshot(
-          arr,
-          [],
-          [],
-          [],
-          -1,
-          `Fase 2 (Sorting): Ekstrak elemen terbesar dari heap satu per satu dan rebuild heap.`,
-          vars
-        )
-      );
+      // Extract elements from heap
       for (let i = n - 1; i > 0; i--) {
-        vars = { ...vars, i };
-        let temp = arr[0];
-        arr[0] = arr[i];
-        arr[i] = temp;
-        vars = { ...vars, temp };
-        stepsArr.push(
+        s.push(
+          snapshot(arr, [0, i], [], [], 4, `Tukar root arr[0] dengan arr[${i}]`)
+        );
+        [arr[0], arr[i]] = [arr[i], arr[0]];
+        s.push(
           snapshot(
             arr,
             [],
             [0, i],
             [i],
-            7,
-            `Ekstrak max (root) ${arr[i]}: Swap arr[0] dengan arr[${i}], lalu mark arr[${i}] sebagai terurut. Sisa heap: ${i} elemen.`,
-            vars
+            4,
+            `arr[${i}] = ${arr[i]} sudah di posisi akhir`
           )
         );
-        heapify(arr, i, 0);
+
+        heapify(i, 0);
       }
+    } else {
+      // Generic fallback
+      arr.sort((a, b) => a - b);
+      s.push(
+        snapshot(
+          arr,
+          [],
+          [],
+          Array.from({ length: n }, (_, k) => k),
+          1,
+          "Algoritma belum diimplementasikan"
+        )
+      );
     }
 
-    let allIndices = [];
-    for (let i = 0; i < n; i++) allIndices.push(i);
-    stepsArr.push(
+    // Final
+    s.push(
       snapshot(
         arr,
         [],
         [],
-        allIndices,
+        Array.from({ length: n }, (_, k) => k),
         -1,
-        `Sorting selesai! Array sekarang terurut secara ascending: ${arr.join(
-          ", "
-        )}`,
-        vars
+        "Pengurutan Selesai"
       )
     );
-    return stepsArr;
+    return s;
   };
 
-  // ==========================================
-  // 4. EFFECTS & HANDLERS
-  // ==========================================
-
-  useEffect(() => {
-    resetAndGenerate();
-  }, [arraySize, algorithm]);
-
-  const resetAndGenerate = () => {
+  // --- HELPERS ---
+  const reset = () => {
     setIsPlaying(false);
     setCurrentStep(0);
-    setElapsedTime(0);
-    const newArray = [];
-    for (let i = 0; i < arraySize; i++) {
-      newArray.push(Math.floor(Math.random() * 100) + 5);
-    }
-    const generatedSteps = generateSteps(newArray, algorithm);
-    setSteps(generatedSteps);
+    const newArr = Array.from(
+      { length: arraySize },
+      () => Math.floor(Math.random() * 90) + 10
+    );
+    const generated = generateSteps(newArr, algorithm);
+    setSteps(generated);
   };
+
+  useEffect(() => {
+    reset();
+  }, [arraySize, algorithm]);
 
   useEffect(() => {
     if (isPlaying) {
-      const baseTime = Date.now() - elapsedTime;
       intervalRef.current = setInterval(() => {
-        const now = Date.now();
-        const newElapsed = now - baseTime;
-        setElapsedTime(newElapsed);
-
-        const targetStep = Math.floor(newElapsed / STEP_DELAY);
-        if (targetStep >= steps.length - 1) {
-          setCurrentStep(steps.length - 1);
+        setCurrentStep((prev) => {
+          if (prev < steps.length - 1) return prev + 1;
           setIsPlaying(false);
-        } else {
-          setCurrentStep(targetStep);
-        }
-      }, 30);
-    } else {
-      clearInterval(intervalRef.current);
-    }
+          return prev;
+        });
+      }, 100);
+    } else clearInterval(intervalRef.current);
     return () => clearInterval(intervalRef.current);
-  }, [isPlaying, steps.length]);
-
-  const handleStop = () => {
-    setIsPlaying(false);
-    setCurrentStep(0);
-    setElapsedTime(0);
-  };
-  const handlePrev = () => {
-    setIsPlaying(false);
-    if (currentStep > 0) {
-      const prev = currentStep - 1;
-      setCurrentStep(prev);
-      setElapsedTime(prev * STEP_DELAY);
-    }
-  };
-  const handleNext = () => {
-    setIsPlaying(false);
-    if (currentStep < steps.length - 1) {
-      const next = currentStep + 1;
-      setCurrentStep(next);
-      setElapsedTime(next * STEP_DELAY);
-    }
-  };
-  const handleEnd = () => {
-    setIsPlaying(false);
-    const last = steps.length - 1;
-    setCurrentStep(last);
-    setElapsedTime(last * STEP_DELAY);
-  };
-  const handleBegin = () => {
-    setIsPlaying(false);
-    setCurrentStep(0);
-    setElapsedTime(0);
-  };
-
-  // ==========================================
-  // 5. RENDER HELPER COMPONENTS
-  // ==========================================
+  }, [isPlaying, steps]);
 
   const currentVisual = steps[currentStep] || {
     array: [],
     activeIndices: [],
     swapIndices: [],
     sortedIndices: [],
-    activeCodeLine: -1,
-    stepDescription: "Loading...",
-    variables: {},
+    activeLine: 0,
+    description: "Loading...",
   };
-
-  const getStatusColor = () => {
-    if (currentVisual.swapIndices.length > 0) return "text-red-400";
-    if (currentVisual.activeIndices.length > 0) return "text-yellow-400";
-    if (currentVisual.sortedIndices.length === currentVisual.array.length)
-      return "text-emerald-400";
-    return "text-slate-400";
-  };
-
-  const getStatusText = () => {
-    if (currentVisual.swapIndices.length > 0) return "SWAP";
-    if (currentVisual.activeIndices.length > 0) return "COMPARING";
-    if (currentVisual.sortedIndices.length === currentVisual.array.length)
-      return "SORTED";
-    return "PROCESSING";
-  };
-
-  const VarBadge = ({ name, value }) => (
-    <div className="flex flex-col bg-slate-700/50 rounded p-1.5 items-center border border-slate-600">
-      <span className="text-[10px] text-orange-300 font-mono font-bold uppercase">
-        {name}
-      </span>
-      <span className="text-sm text-white font-bold">{value}</span>
-      <span className="text-[8px] text-slate-400 text-center">
-        {getVarDesc(name)}
-      </span>
-    </div>
-  );
-
-  const CodeBlock = ({ code }) => {
-    const lines = code.trim().split("\n");
-    return (
-      <div className="font-mono text-xs overflow-auto">
-        {lines.map((line, index) => {
-          const isActive = currentVisual.activeCodeLine === index + 1;
-          return (
-            <div
-              key={index}
-              className={`flex px-2 py-0.5 ${
-                isActive
-                  ? "bg-orange-900/60 border-l-4 border-orange-400"
-                  : "border-l-4 border-transparent"
-              }`}
-            >
-              <span className="w-8 text-slate-600 text-right mr-3 leading-5 select-none">
-                {index + 1}
-              </span>
-              <span
-                className={`whitespace-pre ${
-                  isActive ? "text-orange-200 font-bold" : "text-slate-300"
-                }`}
-              >
-                {line}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
-
-  const ExecutionLog = () => {
-    const logRef = useRef(null);
-    const logs = steps.slice(0, currentStep + 1);
-
-    useEffect(() => {
-      if (logRef.current) {
-        logRef.current.scrollTop = logRef.current.scrollHeight;
-      }
-    }, [logs.length]);
-
-    return (
-      <div className="flex flex-col h-full bg-slate-900 overflow-hidden">
-        <div className="bg-slate-800/80 p-3 border-b border-slate-700 flex items-center gap-2 text-orange-100 text-sm font-semibold">
-          <MessageSquare size={16} className="text-orange-400" />
-          Log Eksekusi
-        </div>
-        <div
-          ref={logRef}
-          className="flex-1 overflow-auto p-4 space-y-2 scrollbar-thin scrollbar-thumb-slate-700"
-        >
-          {logs.map((step, idx) => (
-            <div
-              key={idx}
-              className={`text-xs p-2 rounded border-l-2 ${
-                idx === logs.length - 1
-                  ? "bg-orange-900/30 border-orange-500 ring-1 ring-orange-500/20"
-                  : "bg-slate-800/50 border-slate-600"
-              }`}
-            >
-              <div className="flex gap-2 items-start">
-                <span className="font-mono text-slate-500 font-bold min-w-[24px] text-right border-r border-slate-700 pr-2 mr-1">
-                  {idx + 1}
-                </span>
-                <span
-                  className={
-                    idx === logs.length - 1
-                      ? "text-orange-200"
-                      : "text-slate-400"
-                  }
-                >
-                  {step.stepDescription}
-                </span>
-              </div>
-            </div>
-          ))}
-          {logs.length === 0 && (
-            <div className="text-slate-500 text-center italic mt-10">
-              Menunggu eksekusi...
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  };
+  const percentage = Math.floor((currentStep / (steps.length - 1 || 1)) * 100);
 
   // ==========================================
-  // 6. MAIN COMPONENT RENDER
+  // 4. RENDER
   // ==========================================
-
   return (
-    <div className="h-full overflow-auto bg-slate-900">
-      <div className="min-h-full text-white font-sans p-4 flex flex-col items-center">
-        {/* HEADER */}
-        <header className="w-full max-w-7xl mb-6 flex flex-col gap-4 border-b border-slate-700 pb-4">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-orange-600 rounded-lg shadow-lg shadow-orange-500/20">
-                <BarChart3 size={24} className="text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-orange-400 to-amber-300 pb-2 mb-1">
-                  Algo Sort
-                </h1>
-                <p className="text-xs text-slate-400">
-                  Metode dalam mengurutkan data
-                </p>
+    <div className="min-h-screen flex flex-col bg-slate-900 text-slate-100 font-sans selection:bg-orange-500/30">
+      {/* HEADER */}
+      <header className="px-6 py-4 bg-slate-950 border-b border-slate-800 flex flex-wrap gap-4 items-center justify-between shrink-0 sticky top-0 z-50 shadow-lg">
+        <div className="flex items-center gap-3">
+          <div className="bg-gradient-to-br from-orange-500 to-red-600 p-2.5 rounded-lg shadow-lg shadow-orange-500/20">
+            <BarChart3 size={20} className="text-white" />
+          </div>
+          <div>
+            <h1 className="text-xl font-black text-white tracking-tight">
+              ALGOSORT<span className="text-orange-500">.ID</span>
+            </h1>
+            <p className="text-xs text-slate-400 font-medium">
+              Visualisasi Algoritma Sorting
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4 bg-slate-900/50 p-1.5 pr-4 rounded-xl border border-slate-800">
+          <div className="relative">
+            <select
+              value={algorithm}
+              onChange={(e) => setAlgorithm(e.target.value)}
+              className="appearance-none bg-slate-800 text-sm font-bold text-slate-200 py-2 pl-4 pr-10 rounded-lg cursor-pointer hover:bg-slate-700 outline-none focus:ring-2 focus:ring-orange-500/50 border border-slate-700 transition-all"
+            >
+              <option value="bubble">Bubble Sort</option>
+              <option value="selection">Selection Sort</option>
+              <option value="insertion">Insertion Sort</option>
+              {/* Keep UI functional for others even if basic logic */}
+              <option value="quick">Quick Sort</option>
+              <option value="merge">Merge Sort</option>
+              <option value="heap">Heap Sort</option>
+            </select>
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+              <SkipForward size={14} className="rotate-90" />
+            </div>
+          </div>
+
+          <div className="h-8 w-px bg-slate-700"></div>
+
+          <div className="flex flex-col gap-1 w-32">
+            <div className="flex justify-between text-[10px] uppercase font-bold text-slate-500">
+              <span>Data Size</span>
+              <span className="text-orange-400">{arraySize}</span>
+            </div>
+            <input
+              type="range"
+              min="5"
+              max="50"
+              value={arraySize}
+              onChange={(e) => setArraySize(Number(e.target.value))}
+              className="h-1.5 w-full bg-slate-700 rounded-lg appearance-none cursor-pointer accent-orange-500"
+            />
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={reset}
+            className="p-2.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors"
+            title="Reset"
+          >
+            <RotateCcw size={18} />
+          </button>
+        </div>
+      </header>
+
+      {/* TOP INFO CARD */}
+      <div className="p-6 border-b border-slate-700 bg-[#151925]">
+        <h2 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-amber-200 mb-2">
+          {ALGO_INFO[algorithm].title}
+        </h2>
+        <p className="text-sm text-slate-400 leading-relaxed max-w-2xl">
+          {ALGO_INFO[algorithm].description}
+        </p>
+
+        <div className="flex gap-4 mt-4">
+          <div className="flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">
+            <Activity size={12} className="text-orange-400" />
+            Time:{" "}
+            <span className="text-slate-200">
+              {ALGO_INFO[algorithm].complexity}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">
+            <Variable size={12} className="text-blue-400" />
+            Space: <span className="text-slate-200">O(1)</span>
+          </div>
+        </div>
+      </div>
+
+      {/* MAIN BODY */}
+      <main className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-0">
+        {/* LEFT COLUMN: VISUALS (5/12) */}
+        <div className="lg:col-span-5 bg-[#0f172a] border-r border-slate-800 flex flex-col p-4 gap-4">
+          {/* 1. VISUAL BAR CHART (HERO) */}
+          <div className="bg-slate-900 border border-slate-700 rounded-xl p-4 shadow-2xl min-h-[220px] flex flex-col relative shrink-0">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xs font-bold text-slate-400 uppercase flex items-center gap-2">
+                <Layers size={14} /> Visualisasi Grafik
+              </h3>
+              <div className="flex gap-2">
+                {["SORTED", "SWAP", "COMPARE"].map((label, idx) => (
+                  <span
+                    key={idx}
+                    className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${
+                      label === "SORTED"
+                        ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                        : label === "SWAP"
+                        ? "bg-red-500/10 text-red-500 border-red-500/20"
+                        : "bg-yellow-500/10 text-yellow-400 border-yellow-500/20"
+                    }`}
+                  >
+                    {label}
+                  </span>
+                ))}
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-3 items-center bg-slate-800 p-2 rounded-xl border border-slate-700 justify-center">
-              <select
-                value={algorithm}
-                onChange={(e) => setAlgorithm(e.target.value)}
-                className="bg-slate-900 border border-slate-600 text-sm rounded-lg p-2 focus:ring-orange-500 outline-none"
-              >
-                <optgroup label="Simple Sorts">
-                  <option value="bubble">Bubble Sort</option>
-                  <option value="selection">Selection Sort</option>
-                  <option value="insertion">Insertion Sort</option>
-                </optgroup>
-                <optgroup label="Efficient Sorts">
-                  <option value="quick">Quick Sort</option>
-                  <option value="merge">Merge Sort</option>
-                  <option value="heap">Heap Sort</option>
-                </optgroup>
-              </select>
+            <div className="flex-1 flex items-end justify-center gap-[2px] pb-2">
+              {currentVisual.array.map((val, idx) => {
+                let color = "bg-slate-600";
+                if (currentVisual.sortedIndices.includes(idx))
+                  color =
+                    "bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.4)]";
+                else if (currentVisual.swapIndices.includes(idx))
+                  color = "bg-red-500";
+                else if (currentVisual.activeIndices.includes(idx))
+                  color = "bg-yellow-400";
 
-              <div className="flex flex-col gap-1 min-w-[100px]">
-                <div className="flex justify-between text-[10px] text-slate-400 font-bold uppercase">
-                  <span>Data</span>
-                  <span className="text-orange-400 font-mono">{arraySize}</span>
+                return (
+                  <div
+                    key={idx}
+                    className={`rounded-t transition-all duration-100 ${color}`}
+                    style={{
+                      height: `${(val / 100) * 100}%`,
+                      width: `${100 / arraySize}%`,
+                    }}
+                  />
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 2. ARRAY STRUCTURE (BOXES) - RESTORED */}
+          <div className="bg-slate-900 border border-slate-700 rounded-xl p-3 shrink-0">
+            <h3 className="text-xs font-bold text-slate-400 uppercase mb-3 flex items-center gap-2">
+              <Hash size={14} /> Struktur Data Array
+            </h3>
+            <div className="flex justify-center flex-wrap gap-1">
+              {currentVisual.array.map((val, idx) => (
+                <div
+                  key={idx}
+                  className={`
+                                w-8 h-8 flex items-center justify-center rounded text-xs font-mono font-bold border-2 transition-colors duration-150
+                                ${
+                                  currentVisual.sortedIndices.includes(idx)
+                                    ? "border-emerald-500 bg-emerald-900/20 text-emerald-400"
+                                    : currentVisual.swapIndices.includes(idx)
+                                    ? "border-red-500 bg-red-900/20 text-red-400"
+                                    : currentVisual.activeIndices.includes(idx)
+                                    ? "border-yellow-400 bg-yellow-900/20 text-yellow-400"
+                                    : "border-slate-700 bg-slate-800 text-slate-300"
+                                }
+                            `}
+                >
+                  {val}
                 </div>
-                <input
-                  type="range"
-                  min="5"
-                  max="50"
-                  step="1"
-                  value={arraySize}
-                  onChange={(e) => setArraySize(Number(e.target.value))}
-                  className="w-24 h-2 bg-slate-700 rounded-lg accent-orange-500 cursor-pointer"
-                />
-              </div>
+              ))}
+            </div>
+          </div>
 
-              {/* Time Display */}
-              <div className="px-3 py-1 bg-slate-900 rounded border border-slate-600 flex flex-col items-center min-w-[80px]">
-                <span className="text-[10px] text-slate-500 uppercase font-bold flex items-center gap-1">
-                  <Clock size={10} /> Waktu
-                </span>
-                <span className="text-sm font-mono text-amber-400">
-                  {(elapsedTime / 1000).toFixed(1)}s
-                </span>
-              </div>
+          {/* 3. BIG O GRAPH */}
+          <div className="shrink-0">
+            <BigOGraph
+              algorithm={algorithm}
+              progress={currentStep / (steps.length || 1)}
+            />
+          </div>
 
+          {/* 4. PLAYBACK CONTROLS */}
+          <div className="mt-auto bg-slate-800/50 border border-slate-700/50 rounded-xl p-3">
+            <div className="flex items-center justify-between gap-4 mb-2">
               <button
-                onClick={resetAndGenerate}
-                className="p-2 hover:bg-slate-700 rounded-lg text-slate-300 hover:text-white"
-                title="Reset"
+                onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}
+                className="p-2 bg-slate-700 hover:bg-slate-600 rounded-full text-white transition-all"
               >
-                <RotateCcw size={18} />
+                <StepBack size={16} />
+              </button>
+              <button
+                onClick={() => setIsPlaying(!isPlaying)}
+                className="flex-1 py-2 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-400 hover:to-red-400 text-white font-bold rounded-lg shadow-lg shadow-orange-500/25 flex items-center justify-center gap-2 transition-all active:scale-95"
+              >
+                {isPlaying ? (
+                  <>
+                    <Pause size={18} /> PAUSE
+                  </>
+                ) : (
+                  <>
+                    <Play size={18} /> MULAI ANIMASI
+                  </>
+                )}
+              </button>
+              <button
+                onClick={() =>
+                  setCurrentStep(Math.min(steps.length - 1, currentStep + 1))
+                }
+                className="p-2 bg-slate-700 hover:bg-slate-600 rounded-full text-white transition-all"
+              >
+                <StepForward size={16} />
               </button>
             </div>
-          </div>
-        </header>
 
-        {/* ALGORITHM DESCRIPTION */}
-        <section className="w-full max-w-7xl mb-4">
-          <div className="bg-gradient-to-r from-orange-900/30 to-amber-900/30 border border-orange-700/50 rounded-xl p-4 shadow-lg">
-            <div className="flex items-start gap-3">
-              <div className="p-2 bg-orange-600 rounded-lg shadow-lg shadow-orange-500/20 mt-1">
-                <Search size={20} className="text-white" />
+            {/* Progress Bar */}
+            <div className="w-full h-1.5 bg-slate-700 rounded-full overflow-hidden mt-2">
+              <div
+                className="h-full bg-orange-500 transition-all duration-300"
+                style={{ width: `${percentage}%` }}
+              />
+            </div>
+            <div className="flex justify-between mt-1 text-[10px] text-slate-400">
+              <span>Langkah {currentStep}</span>
+              <span>{percentage}% Selesai</span>
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT COLUMN: INFO & PSEUDOCODE (7/12) */}
+        <div className="lg:col-span-7 bg-[#1e1e1e] flex flex-col border-l border-slate-800">
+          {/* PSEUDOCODE PANEL */}
+          <div className="p-4 bg-[#252526]">
+            <CodeViewer
+              code={PSEUDOCODE[algorithm]}
+              activeLine={currentVisual.activeLine}
+            />
+          </div>
+
+          {/* CURRENT ACTION INDICATOR */}
+          <div className="p-6 border-b border-slate-800 bg-slate-900/50">
+            <div className="bg-slate-900 border border-orange-500/50 p-4 rounded-xl shadow-lg border-l-4 border-l-orange-500 flex items-start gap-4">
+              <div className="p-2 bg-orange-900/30 rounded-lg shrink-0">
+                <MessageSquare size={16} className="text-orange-400" />
               </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-bold text-orange-200 mb-2">
-                  {algorithmDescriptions[algorithm].title}
-                </h3>
-                <p className="text-sm text-slate-300 mb-2 leading-relaxed">
-                  {algorithmDescriptions[algorithm].description}
+              <div>
+                <h4 className="text-[10px] font-bold text-orange-400 uppercase mb-1">
+                  Status Eksekusi
+                </h4>
+                <p className="text-sm font-medium text-white leading-tight">
+                  {currentVisual.description}
                 </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
-                  <div className="bg-slate-800/60 rounded-lg p-2 border border-slate-700">
-                    <span className="text-slate-400 font-semibold">
-                      Kompleksitas:
-                    </span>
-                    <span className="text-orange-300 ml-2 font-mono">
-                      {algorithmDescriptions[algorithm].complexity}
-                    </span>
-                  </div>
-                  <div className="bg-slate-800/60 rounded-lg p-2 border border-slate-700">
-                    <span className="text-slate-400 font-semibold">
-                      Use Case:
-                    </span>
-                    <span className="text-slate-300 ml-2">
-                      {algorithmDescriptions[algorithm].useCase}
-                    </span>
-                  </div>
-                </div>
-                {algorithmDescriptions[algorithm].pseudocode && (
-                  <div className="mt-3 bg-slate-950/50 rounded-lg p-3 border border-slate-700/50 font-mono text-xs text-slate-400 whitespace-pre overflow-x-auto">
-                    <div className="text-orange-400 font-bold mb-1">
-                      Pseudocode:
-                    </div>
-                    {algorithmDescriptions[algorithm].pseudocode}
-                  </div>
-                )}
               </div>
             </div>
           </div>
-        </section>
-
-        {/* MAIN GRID - SYMMETRICAL 2 COLUMNS */}
-        <main className="w-full max-w-7xl flex-1 grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* LEFT COLUMN: VISUALIZATION & CONTROLS */}
-          <section className="flex flex-col gap-4">
-            {/* 1. Visualization (Bar Chart) */}
-            <div className="bg-slate-900 border border-slate-700 rounded-xl overflow-hidden shadow-xl min-h-[350px] flex flex-col">
-              <div className="bg-slate-800/80 p-3 border-b border-slate-700 flex justify-between items-center text-orange-100 text-sm font-semibold">
-                <div className="flex items-center gap-2">
-                  <Hash size={16} className="text-orange-400" />
-                  Visualisasi Grafik
-                </div>
-                <div className={`text-xs font-bold ${getStatusColor()}`}>
-                  {getStatusText()}
-                </div>
-              </div>
-
-              <div className="relative flex-1 flex items-end justify-center gap-[2px] p-4 bg-slate-900/50">
-                {currentVisual.array.map((value, idx) => {
-                  let colorClass = "bg-slate-500";
-                  if (currentVisual.sortedIndices.includes(idx))
-                    colorClass = "bg-emerald-500";
-                  else if (currentVisual.swapIndices.includes(idx))
-                    colorClass = "bg-red-500";
-                  else if (currentVisual.activeIndices.includes(idx))
-                    colorClass = "bg-yellow-400";
-
-                  return (
-                    <div
-                      key={idx}
-                      style={{
-                        height: `${(value / 105) * 100}%`,
-                        width: `${100 / arraySize}%`,
-                      }}
-                      className={`rounded-t ${colorClass} transition-colors duration-75`}
-                    ></div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* 2. Visual Array Numbers */}
-            <div className="bg-slate-900 border border-slate-700 rounded-xl overflow-hidden shadow-xl">
-              <div className="bg-slate-800/80 p-3 border-b border-slate-700 flex items-center gap-2 text-orange-100 text-sm font-semibold">
-                <Layers size={16} className="text-orange-400" />
-                Array Data
-              </div>
-              <div className="p-4 overflow-x-auto flex justify-center bg-[#151925]">
-                <div className="flex gap-1">
-                  {currentVisual.array.map((value, idx) => {
-                    let borderColor = "border-slate-600",
-                      bgColor = "bg-slate-800",
-                      textColor = "text-slate-300";
-                    if (currentVisual.sortedIndices.includes(idx)) {
-                      borderColor = "border-emerald-500";
-                      bgColor = "bg-emerald-900/30";
-                      textColor = "text-emerald-400";
-                    } else if (currentVisual.swapIndices.includes(idx)) {
-                      borderColor = "border-red-500";
-                      bgColor = "bg-red-900/30";
-                      textColor = "text-red-400";
-                    } else if (currentVisual.activeIndices.includes(idx)) {
-                      borderColor = "border-yellow-400";
-                      bgColor = "bg-yellow-900/30";
-                      textColor = "text-yellow-400";
-                    }
-
-                    return (
-                      <div
-                        key={idx}
-                        className="flex flex-col items-center gap-1 group"
-                      >
-                        <div
-                          className={`w-8 h-8 flex items-center justify-center border-2 rounded font-mono font-bold text-xs transition-all duration-75 ${borderColor} ${bgColor} ${textColor}`}
-                        >
-                          {value}
-                        </div>
-                        <span className="text-[8px] text-slate-500 font-mono">
-                          {idx}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-
-            {/* 3. Controls */}
-            <div className="bg-slate-900 border border-slate-700 rounded-xl overflow-hidden shadow-xl p-4 flex flex-col gap-4">
-              <div className="bg-slate-800/80 p-2 rounded-xl border border-slate-600 flex justify-center items-center gap-4 shadow-lg">
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={handleStop}
-                    className="p-2 hover:bg-red-500/20 text-slate-300 hover:text-red-400 rounded-lg"
-                    title="Stop"
-                  >
-                    <Square size={20} fill="currentColor" />
-                  </button>
-                  <div className="w-px h-6 bg-slate-600 mx-2"></div>
-                  <button
-                    onClick={handleBegin}
-                    className="p-2 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg"
-                    title="Start"
-                  >
-                    <SkipBack size={20} />
-                  </button>
-                  <button
-                    onClick={handlePrev}
-                    disabled={currentStep === 0}
-                    className="p-2 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg disabled:opacity-30"
-                    title="Prev"
-                  >
-                    <StepBack size={20} />
-                  </button>
-                  <button
-                    onClick={() => setIsPlaying(!isPlaying)}
-                    className={`p-3 rounded-full shadow-lg ${
-                      isPlaying ? "bg-amber-500" : "bg-orange-600"
-                    } text-white`}
-                  >
-                    {isPlaying ? (
-                      <Pause size={24} fill="currentColor" />
-                    ) : (
-                      <Play size={24} fill="currentColor" className="ml-1" />
-                    )}
-                  </button>
-                  <button
-                    onClick={handleNext}
-                    disabled={currentStep === steps.length - 1}
-                    className="p-2 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg disabled:opacity-30"
-                    title="Next"
-                  >
-                    <StepForward size={20} />
-                  </button>
-                  <button
-                    onClick={handleEnd}
-                    className="p-2 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg"
-                    title="End"
-                  >
-                    <SkipForward size={20} />
-                  </button>
-                </div>
-                <div className="hidden md:flex flex-col flex-1 max-w-xs ml-4">
-                  <div className="flex justify-between text-[10px] text-slate-400 mb-1">
-                    <span>Progress</span>
-                    <span>
-                      {currentStep} / {steps.length - 1}
-                    </span>
-                  </div>
-                  <div className="w-full bg-slate-700 h-1.5 rounded-full overflow-hidden">
-                    <div
-                      className="bg-orange-500 h-full transition-all duration-100"
-                      style={{
-                        width: `${
-                          (currentStep / (steps.length - 1 || 1)) * 100
-                        }%`,
-                      }}
-                    ></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* 4. Variables */}
-            {Object.keys(currentVisual.variables).length > 0 && (
-              <div className="bg-slate-900 border border-slate-700 rounded-xl overflow-hidden shadow-xl">
-                <div className="bg-slate-800/80 p-3 border-b border-slate-700 flex items-center gap-2 text-orange-100 text-sm font-semibold">
-                  <Variable size={16} className="text-orange-400" />
-                  Variabel
-                </div>
-                <div className="p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 bg-[#151925]">
-                  {Object.entries(currentVisual.variables).map(([key, val]) => (
-                    <VarBadge
-                      key={key}
-                      name={key}
-                      value={
-                        typeof val === "object" ? JSON.stringify(val) : val
-                      }
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-          </section>
-
-          {/* RIGHT COLUMN: CODE & LOG */}
-          <section className="flex flex-col gap-4 h-[calc(100vh-200px)] min-h-[600px]">
-            {/* 1. Code View */}
-            <div className="flex flex-col flex-1 bg-[#1e1e1e] border border-slate-700 rounded-xl overflow-hidden shadow-xl min-h-[300px]">
-              <div className="bg-slate-800 p-3 border-b border-slate-700 flex items-center gap-2 text-slate-200 text-sm font-semibold">
-                <Code size={16} className="text-orange-400" />
-                Implementasi Algoritma
-              </div>
-              <div className="flex-1 overflow-auto py-2 scrollbar-thin scrollbar-thumb-slate-700">
-                <CodeBlock code={algoCode[algorithm]} />
-              </div>
-            </div>
-
-            {/* 2. Execution Log (Stack) */}
-            <div className="flex-1 bg-slate-900 border border-slate-700 rounded-xl overflow-hidden shadow-xl min-h-[250px]">
-              <ExecutionLog />
-            </div>
-          </section>
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
   );
 };

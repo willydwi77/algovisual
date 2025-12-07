@@ -14,8 +14,7 @@ import {
   Square,
   Hash,
   Clock,
-  Info,
-  Percent,
+  Search,
 } from "lucide-react";
 
 /**
@@ -907,7 +906,7 @@ function extGCD(a, b) {
               key={index}
               className={`flex px-2 py-0.5 ${
                 isActive
-                  ? "bg-indigo-900/60 border-l-4 border-indigo-400"
+                  ? "bg-orange-900/60 border-l-4 border-orange-400"
                   : "border-l-4 border-transparent"
               }`}
             >
@@ -916,7 +915,7 @@ function extGCD(a, b) {
               </span>
               <span
                 className={`whitespace-pre ${
-                  isActive ? "text-indigo-200 font-bold" : "text-slate-300"
+                  isActive ? "text-orange-200 font-bold" : "text-slate-300"
                 }`}
               >
                 {line}
@@ -1292,7 +1291,7 @@ function extGCD(a, b) {
           <div className="bg-gradient-to-r from-orange-900/30 to-amber-900/30 border border-orange-700/50 rounded-xl p-4 shadow-lg">
             <div className="flex items-start gap-3">
               <div className="p-2 bg-orange-600 rounded-lg shadow-lg shadow-orange-500/20 mt-1">
-                <Info size={20} className="text-white" />
+                <Search size={20} className="text-white" />
               </div>
               <div className="flex-1">
                 <h3 className="text-lg font-bold text-orange-200 mb-2">

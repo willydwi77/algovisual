@@ -12,10 +12,9 @@ import {
   StepBack,
   StepForward,
   Square,
-  Triangle,
-  Circle,
+  Hash,
   Clock,
-  Info,
+  Search,
 } from "lucide-react";
 
 /**
@@ -811,7 +810,7 @@ function direction(p1, p2, p3) {
       status === "intersect" ||
       status.includes("in")
     )
-      return "text-emerald-400";
+      return "text-amber-400";
     if (status === "pivot" || status === "new_min") return "text-yellow-400";
     if (status === "left_turn" || status === "added") return "text-cyan-400";
     if (status === "right_turn") return "text-red-400";
@@ -830,7 +829,7 @@ function direction(p1, p2, p3) {
    */
   const VarBadge = ({ name, value }) => (
     <div className="flex flex-col bg-slate-700/50 rounded p-1.5 items-center border border-slate-600">
-      <span className="text-[10px] text-violet-300 font-mono font-bold uppercase">
+      <span className="text-[10px] text-orange-300 font-mono font-bold uppercase">
         {name}
       </span>
       <span className="text-sm text-white font-bold">{value}</span>
@@ -854,7 +853,7 @@ function direction(p1, p2, p3) {
               key={index}
               className={`flex px-2 py-0.5 ${
                 isActive
-                  ? "bg-indigo-900/60 border-l-4 border-indigo-400"
+                  ? "bg-orange-900/60 border-l-4 border-orange-400"
                   : "border-l-4 border-transparent"
               }`}
             >
@@ -863,7 +862,7 @@ function direction(p1, p2, p3) {
               </span>
               <span
                 className={`whitespace-pre ${
-                  isActive ? "text-indigo-200 font-bold" : "text-slate-300"
+                  isActive ? "text-orange-200 font-bold" : "text-slate-300"
                 }`}
               >
                 {line}
@@ -1093,7 +1092,7 @@ function direction(p1, p2, p3) {
       <svg
         width={width}
         height={height}
-        className="border-2 border-violet-700 bg-slate-950"
+        className="border-2 border-orange-700 bg-slate-950"
       >
         {content}
       </svg>
@@ -1118,8 +1117,8 @@ function direction(p1, p2, p3) {
 
     return (
       <div className="flex flex-col h-full bg-slate-900 overflow-hidden">
-        <div className="bg-slate-800/80 p-3 border-b border-slate-700 flex items-center gap-2 text-violet-100 text-sm font-semibold">
-          <MessageSquare size={16} className="text-violet-400" />
+        <div className="bg-slate-800/80 p-3 border-b border-slate-700 flex items-center gap-2 text-orange-100 text-sm font-semibold">
+          <MessageSquare size={16} className="text-orange-400" />
           Log Eksekusi
         </div>
         <div
@@ -1131,7 +1130,7 @@ function direction(p1, p2, p3) {
               key={idx}
               className={`text-xs p-2 rounded border-l-2 ${
                 idx === logs.length - 1
-                  ? "bg-indigo-900/30 border-indigo-500 ring-1 ring-indigo-500/20"
+                  ? "bg-orange-900/30 border-orange-500 ring-1 ring-orange-500/20"
                   : "bg-slate-800/50 border-slate-600"
               }`}
             >
@@ -1142,7 +1141,7 @@ function direction(p1, p2, p3) {
                 <span
                   className={
                     idx === logs.length - 1
-                      ? "text-indigo-200"
+                      ? "text-orange-200"
                       : "text-slate-400"
                   }
                 >
@@ -1172,11 +1171,11 @@ function direction(p1, p2, p3) {
         <header className="w-full max-w-7xl mb-6 flex flex-col gap-4 border-b border-slate-700 pb-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-violet-600 rounded-lg shadow-lg shadow-violet-500/20">
+              <div className="p-2 bg-orange-600 rounded-lg shadow-lg shadow-orange-500/20">
                 <Compass size={24} className="text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-violet-400 to-purple-300 pb-2 mb-1">
+                <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-orange-400 to-amber-300 pb-2 mb-1">
                   Algo Geometri
                 </h1>
                 <p className="text-xs text-slate-400">
@@ -1188,7 +1187,7 @@ function direction(p1, p2, p3) {
               <select
                 value={algorithm}
                 onChange={handleAlgorithmChange}
-                className="bg-slate-900 border border-slate-600 text-sm rounded-lg p-2 focus:ring-violet-500 outline-none"
+                className="bg-slate-900 border border-slate-600 text-sm rounded-lg p-2 focus:ring-orange-500 outline-none"
               >
                 <option value="convexhull">Convex Hull</option>
                 <option value="intersection">Interseksi Garis</option>
@@ -1200,7 +1199,7 @@ function direction(p1, p2, p3) {
                 <span className="text-[10px] text-slate-500 uppercase font-bold flex items-center gap-1">
                   <Clock size={10} /> Waktu
                 </span>
-                <span className="text-sm font-mono text-violet-400">
+                <span className="text-sm font-mono text-orange-400">
                   {(elapsedTime / 1000).toFixed(1)}s
                 </span>
               </div>
@@ -1218,13 +1217,13 @@ function direction(p1, p2, p3) {
 
         {/* ALGORITHM DESCRIPTION */}
         <section className="w-full max-w-7xl mb-4">
-          <div className="bg-gradient-to-r from-violet-900/30 to-violet-900/30 border border-violet-700/50 rounded-xl p-4 shadow-lg">
+          <div className="bg-gradient-to-r from-orange-900/30 to-orange-900/30 border border-orange-700/50 rounded-xl p-4 shadow-lg">
             <div className="flex items-start gap-3">
-              <div className="p-2 bg-violet-600 rounded-lg shadow-lg shadow-violet-500/20 mt-1">
-                <Info size={20} className="text-white" />
+              <div className="p-2 bg-orange-600 rounded-lg shadow-lg shadow-orange-500/20 mt-1">
+                <Search size={20} className="text-white" />
               </div>
               <div className="flex-1">
-                <h3 className="text-lg font-bold text-violet-200 mb-2">
+                <h3 className="text-lg font-bold text-orange-200 mb-2">
                   {algorithmDescriptions[algorithm].title}
                 </h3>
                 <p className="text-sm text-slate-300 mb-2 leading-relaxed">
@@ -1235,7 +1234,7 @@ function direction(p1, p2, p3) {
                     <span className="text-slate-400 font-semibold">
                       Kompleksitas:
                     </span>
-                    <span className="text-violet-300 ml-2 font-mono">
+                    <span className="text-orange-300 ml-2 font-mono">
                       {algorithmDescriptions[algorithm].complexity}
                     </span>
                   </div>
@@ -1250,7 +1249,7 @@ function direction(p1, p2, p3) {
                 </div>
                 {algorithmDescriptions[algorithm].pseudocode && (
                   <div className="mt-3 bg-slate-950/50 rounded-lg p-3 border border-slate-700/50 font-mono text-xs text-slate-400 whitespace-pre overflow-x-auto">
-                    <div className="text-violet-400 font-bold mb-1">
+                    <div className="text-orange-400 font-bold mb-1">
                       Pseudocode:
                     </div>
                     {algorithmDescriptions[algorithm].pseudocode}
@@ -1267,9 +1266,9 @@ function direction(p1, p2, p3) {
           <section className="flex flex-col gap-4">
             {/* 1. Visualization */}
             <div className="bg-slate-900 border border-slate-700 rounded-xl overflow-hidden shadow-xl min-h-[400px]">
-              <div className="bg-slate-800/80 p-3 border-b border-slate-700 flex justify-between items-center text-violet-100 text-sm font-semibold">
+              <div className="bg-slate-800/80 p-3 border-b border-slate-700 flex justify-between items-center text-orange-100 text-sm font-semibold">
                 <div className="flex items-center gap-2">
-                  <Circle size={16} className="text-violet-400" />
+                  <Hash size={16} className="text-orange-400" />
                   Visualisasi 2D Geometri
                 </div>
                 <div className={`text-xs font-bold ${getStatusColor()}`}>
@@ -1311,7 +1310,7 @@ function direction(p1, p2, p3) {
                   <button
                     onClick={() => setIsPlaying(!isPlaying)}
                     className={`p-3 rounded-full shadow-lg ${
-                      isPlaying ? "bg-violet-500" : "bg-violet-600"
+                      isPlaying ? "bg-orange-500" : "bg-orange-600"
                     } text-white`}
                   >
                     {isPlaying ? (
@@ -1345,7 +1344,7 @@ function direction(p1, p2, p3) {
                   </div>
                   <div className="w-full bg-slate-700 h-1.5 rounded-full overflow-hidden">
                     <div
-                      className="bg-violet-500 h-full transition-all duration-100"
+                      className="bg-orange-500 h-full transition-all duration-100"
                       style={{
                         width: `${
                           (currentStep / (steps.length - 1 || 1)) * 100
@@ -1360,8 +1359,8 @@ function direction(p1, p2, p3) {
             {/* 3. Variables */}
             {Object.keys(currentVisual.variables).length > 0 && (
               <div className="bg-slate-900 border border-slate-700 rounded-xl overflow-hidden shadow-xl">
-                <div className="bg-slate-800/80 p-3 border-b border-slate-700 flex items-center gap-2 text-violet-100 text-sm font-semibold">
-                  <Variable size={16} className="text-violet-400" />
+                <div className="bg-slate-800/80 p-3 border-b border-slate-700 flex items-center gap-2 text-orange-100 text-sm font-semibold">
+                  <Variable size={16} className="text-orange-400" />
                   Variabel
                 </div>
                 <div className="p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 bg-[#151925]">
@@ -1384,7 +1383,7 @@ function direction(p1, p2, p3) {
             {/* 1. Code View */}
             <div className="flex flex-col flex-1 bg-[#1e1e1e] border border-slate-700 rounded-xl overflow-hidden shadow-xl min-h-[300px]">
               <div className="bg-slate-800 p-3 border-b border-slate-700 flex items-center gap-2 text-slate-200 text-sm font-semibold">
-                <Code size={16} className="text-violet-400" />
+                <Code size={16} className="text-orange-400" />
                 Implementasi Algoritma
               </div>
               <div className="flex-1 overflow-auto py-2 scrollbar-thin scrollbar-thumb-slate-700">

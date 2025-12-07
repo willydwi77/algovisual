@@ -32,7 +32,7 @@ function App() {
               onClick={() => setActiveModule("sorting")}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                 activeModule === "sorting"
-                  ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/30"
+                  ? "bg-orange-600 text-white shadow-lg shadow-orange-500/30"
                   : "text-slate-400 hover:text-white hover:bg-slate-800"
               }`}
             >
@@ -43,7 +43,7 @@ function App() {
               onClick={() => setActiveModule("searching")}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                 activeModule === "searching"
-                  ? "bg-purple-600 text-white shadow-lg shadow-purple-500/30"
+                  ? "bg-orange-600 text-white shadow-lg shadow-orange-500/30"
                   : "text-slate-400 hover:text-white hover:bg-slate-800"
               }`}
             >
@@ -54,7 +54,7 @@ function App() {
               onClick={() => setActiveModule("graph")}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                 activeModule === "graph"
-                  ? "bg-emerald-600 text-white shadow-lg shadow-emerald-500/30"
+                  ? "bg-orange-600 text-white shadow-lg shadow-orange-500/30"
                   : "text-slate-400 hover:text-white hover:bg-slate-800"
               }`}
             >
@@ -76,7 +76,7 @@ function App() {
               onClick={() => setActiveModule("backtracking")}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                 activeModule === "backtracking"
-                  ? "bg-pink-600 text-white shadow-lg shadow-pink-500/30"
+                  ? "bg-orange-600 text-white shadow-lg shadow-orange-500/30"
                   : "text-slate-400 hover:text-white hover:bg-slate-800"
               }`}
             >
@@ -87,7 +87,7 @@ function App() {
               onClick={() => setActiveModule("string")}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                 activeModule === "string"
-                  ? "bg-cyan-600 text-white shadow-lg shadow-cyan-500/30"
+                  ? "bg-orange-600 text-white shadow-lg shadow-orange-500/30"
                   : "text-slate-400 hover:text-white hover:bg-slate-800"
               }`}
             >
@@ -98,7 +98,7 @@ function App() {
               onClick={() => setActiveModule("math")}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                 activeModule === "math"
-                  ? "bg-lime-600 text-white shadow-lg shadow-lime-500/30"
+                  ? "bg-orange-600 text-white shadow-lg shadow-orange-500/30"
                   : "text-slate-400 hover:text-white hover:bg-slate-800"
               }`}
             >
@@ -109,7 +109,7 @@ function App() {
               onClick={() => setActiveModule("geometric")}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                 activeModule === "geometric"
-                  ? "bg-violet-600 text-white shadow-lg shadow-violet-500/30"
+                  ? "bg-orange-600 text-white shadow-lg shadow-orange-500/30"
                   : "text-slate-400 hover:text-white hover:bg-slate-800"
               }`}
             >

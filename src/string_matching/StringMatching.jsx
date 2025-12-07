@@ -6,7 +6,6 @@ import {
   Type,
   Code,
   Variable,
-  Layers,
   MessageSquare,
   SkipBack,
   SkipForward,
@@ -16,8 +15,6 @@ import {
   Search,
   Hash,
   Clock,
-  Info,
-  Percent,
 } from "lucide-react";
 
 /**
@@ -1270,7 +1267,7 @@ function computeZ(s) {
               key={index}
               className={`flex px-2 py-0.5 ${
                 isActive
-                  ? "bg-indigo-900/60 border-l-4 border-indigo-400"
+                  ? "bg-orange-900/60 border-l-4 border-orange-400"
                   : "border-l-4 border-transparent"
               }`}
             >
@@ -1279,7 +1276,7 @@ function computeZ(s) {
               </span>
               <span
                 className={`whitespace-pre ${
-                  isActive ? "text-indigo-200 font-bold" : "text-slate-300"
+                  isActive ? "text-orange-200 font-bold" : "text-slate-300"
                 }`}
               >
                 {line}
@@ -1598,7 +1595,7 @@ function computeZ(s) {
           <div className="bg-gradient-to-r from-orange-900/30 to-amber-900/30 border border-orange-700/50 rounded-xl p-4 shadow-lg">
             <div className="flex items-start gap-3">
               <div className="p-2 bg-orange-600 rounded-lg shadow-lg shadow-orange-500/20 mt-1">
-                <Info size={20} className="text-white" />
+                <Search size={20} className="text-white" />
               </div>
               <div className="flex-1">
                 <h3 className="text-lg font-bold text-orange-200 mb-2">
@@ -1646,7 +1643,7 @@ function computeZ(s) {
             <div className="bg-slate-900 border border-slate-700 rounded-xl overflow-hidden shadow-xl min-h-[400px]">
               <div className="bg-slate-800/80 p-3 border-b border-slate-700 flex justify-between items-center text-orange-100 text-sm font-semibold">
                 <div className="flex items-center gap-2">
-                  <Search size={16} className="text-orange-400" />
+                  <Hash size={16} className="text-orange-400" />
                   Visualisasi Pencarian
                 </div>
                 <div className={`text-xs font-bold ${getStatusColor()}`}>

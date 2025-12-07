@@ -751,7 +751,7 @@ Return -1`,
 
   const VarBadge = ({ name, value }) => (
     <div className="flex flex-col bg-slate-700/50 rounded p-1.5 items-center border border-slate-600">
-      <span className="text-[10px] text-purple-300 font-mono font-bold uppercase">
+      <span className="text-[10px] text-orange-300 font-mono font-bold uppercase">
         {name}
       </span>
       <span className="text-sm text-white font-bold">{value}</span>
@@ -772,7 +772,7 @@ Return -1`,
               key={index}
               className={`flex px-2 py-0.5 ${
                 isActive
-                  ? "bg-indigo-900/60 border-l-4 border-indigo-400"
+                  ? "bg-orange-900/60 border-l-4 border-orange-400"
                   : "border-l-4 border-transparent"
               }`}
             >
@@ -781,7 +781,7 @@ Return -1`,
               </span>
               <span
                 className={`whitespace-pre ${
-                  isActive ? "text-indigo-200 font-bold" : "text-slate-300"
+                  isActive ? "text-orange-200 font-bold" : "text-slate-300"
                 }`}
               >
                 {line}
@@ -805,8 +805,8 @@ Return -1`,
 
     return (
       <div className="flex flex-col h-full bg-slate-900 overflow-hidden">
-        <div className="bg-slate-800/80 p-3 border-b border-slate-700 flex items-center gap-2 text-purple-100 text-sm font-semibold">
-          <MessageSquare size={16} className="text-purple-400" />
+        <div className="bg-slate-800/80 p-3 border-b border-slate-700 flex items-center gap-2 text-orange-100 text-sm font-semibold">
+          <MessageSquare size={16} className="text-orange-400" />
           Log Eksekusi
         </div>
         <div
@@ -818,7 +818,7 @@ Return -1`,
               key={idx}
               className={`text-xs p-2 rounded border-l-2 ${
                 idx === logs.length - 1
-                  ? "bg-purple-900/30 border-purple-500 ring-1 ring-purple-500/20"
+                  ? "bg-orange-900/30 border-orange-500 ring-1 ring-orange-500/20"
                   : "bg-slate-800/50 border-slate-600"
               }`}
             >
@@ -829,7 +829,7 @@ Return -1`,
                 <span
                   className={
                     idx === logs.length - 1
-                      ? "text-purple-200"
+                      ? "text-orange-200"
                       : "text-slate-400"
                   }
                 >
@@ -859,11 +859,11 @@ Return -1`,
         <header className="w-full max-w-7xl mb-6 flex flex-col gap-4 border-b border-slate-700 pb-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-600 rounded-lg shadow-lg shadow-purple-500/20">
+              <div className="p-2 bg-orange-600 rounded-lg shadow-lg shadow-orange-500/20">
                 <Search size={24} className="text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-cyan-300 pb-2 mb-1">
+                <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-orange-400 to-amber-300 pb-2 mb-1">
                   Algo Search
                 </h1>
                 <p className="text-xs text-slate-400">
@@ -876,7 +876,7 @@ Return -1`,
               <select
                 value={algorithm}
                 onChange={(e) => setAlgorithm(e.target.value)}
-                className="bg-slate-900 border border-slate-600 text-sm rounded-lg p-2 focus:ring-purple-500 outline-none"
+                className="bg-slate-900 border border-slate-600 text-sm rounded-lg p-2 focus:ring-orange-500 outline-none"
               >
                 <option value="linear">Linear Search</option>
                 <option value="binary">Binary Search</option>
@@ -898,7 +898,7 @@ Return -1`,
               <div className="flex flex-col gap-1 min-w-[100px]">
                 <div className="flex justify-between text-[10px] text-slate-400 font-bold uppercase">
                   <span>Data</span>
-                  <span className="text-purple-300 font-mono">{arraySize}</span>
+                  <span className="text-orange-300 font-mono">{arraySize}</span>
                 </div>
                 <input
                   type="range"
@@ -906,7 +906,7 @@ Return -1`,
                   max="30"
                   value={arraySize}
                   onChange={(e) => setArraySize(Number(e.target.value))}
-                  className="w-24 h-2 bg-slate-700 rounded-lg accent-purple-500 cursor-pointer"
+                  className="w-24 h-2 bg-slate-700 rounded-lg accent-orange-500 cursor-pointer"
                 />
               </div>
 
@@ -915,7 +915,7 @@ Return -1`,
                 <span className="text-[10px] text-slate-500 uppercase font-bold flex items-center gap-1">
                   <Clock size={10} /> Waktu
                 </span>
-                <span className="text-sm font-mono text-cyan-400">
+                <span className="text-sm font-mono text-amber-400">
                   {(elapsedTime / 1000).toFixed(1)}s
                 </span>
               </div>
@@ -933,13 +933,13 @@ Return -1`,
 
         {/* ALGORITHM DESCRIPTION */}
         <section className="w-full max-w-7xl mb-4">
-          <div className="bg-gradient-to-r from-purple-900/30 to-cyan-900/30 border border-purple-700/50 rounded-xl p-4 shadow-lg">
+          <div className="bg-gradient-to-r from-orange-900/30 to-amber-900/30 border border-orange-700/50 rounded-xl p-4 shadow-lg">
             <div className="flex items-start gap-3">
-              <div className="p-2 bg-purple-600 rounded-lg shadow-lg shadow-purple-500/20 mt-1">
+              <div className="p-2 bg-orange-600 rounded-lg shadow-lg shadow-orange-500/20 mt-1">
                 <Search size={20} className="text-white" />
               </div>
               <div className="flex-1">
-                <h3 className="text-lg font-bold text-purple-200 mb-2">
+                <h3 className="text-lg font-bold text-orange-200 mb-2">
                   {algorithmDescriptions[algorithm].title}
                 </h3>
                 <p className="text-sm text-slate-300 mb-2 leading-relaxed">
@@ -950,7 +950,7 @@ Return -1`,
                     <span className="text-slate-400 font-semibold">
                       Kompleksitas:
                     </span>
-                    <span className="text-purple-300 ml-2 font-mono">
+                    <span className="text-orange-300 ml-2 font-mono">
                       {algorithmDescriptions[algorithm].complexity}
                     </span>
                   </div>
@@ -965,7 +965,7 @@ Return -1`,
                 </div>
                 {algorithmDescriptions[algorithm].pseudocode && (
                   <div className="mt-3 bg-slate-950/50 rounded-lg p-3 border border-slate-700/50 font-mono text-xs text-slate-400 whitespace-pre overflow-x-auto">
-                    <div className="text-purple-400 font-bold mb-1">
+                    <div className="text-orange-400 font-bold mb-1">
                       Pseudocode:
                     </div>
                     {algorithmDescriptions[algorithm].pseudocode}
@@ -982,9 +982,9 @@ Return -1`,
           <section className="flex flex-col gap-4">
             {/* 1. Visualization */}
             <div className="bg-slate-900 border border-slate-700 rounded-xl overflow-hidden shadow-xl min-h-[350px] flex flex-col">
-              <div className="bg-slate-800/80 p-3 border-b border-slate-700 flex justify-between items-center text-purple-100 text-sm font-semibold">
+              <div className="bg-slate-800/80 p-3 border-b border-slate-700 flex justify-between items-center text-orange-100 text-sm font-semibold">
                 <div className="flex items-center gap-2">
-                  <Hash size={16} className="text-purple-400" />
+                  <Hash size={16} className="text-orange-400" />
                   {algorithm === "hashing" ? "Hash Table" : "Visualisasi Array"}
                 </div>
                 <div className={`text-xs font-bold ${getStatusColor()}`}>
@@ -1090,7 +1090,7 @@ Return -1`,
                   <button
                     onClick={() => setIsPlaying(!isPlaying)}
                     className={`p-3 rounded-full shadow-lg ${
-                      isPlaying ? "bg-amber-500" : "bg-purple-600"
+                      isPlaying ? "bg-amber-500" : "bg-orange-600"
                     } text-white`}
                   >
                     {isPlaying ? (
@@ -1124,7 +1124,7 @@ Return -1`,
                   </div>
                   <div className="w-full bg-slate-700 h-1.5 rounded-full overflow-hidden">
                     <div
-                      className="bg-purple-500 h-full transition-all duration-100"
+                      className="bg-orange-500 h-full transition-all duration-100"
                       style={{
                         width: `${
                           (currentStep / (steps.length - 1 || 1)) * 100
@@ -1139,8 +1139,8 @@ Return -1`,
             {/* 3. Variables */}
             {Object.keys(currentVisual.variables).length > 0 && (
               <div className="bg-slate-900 border border-slate-700 rounded-xl overflow-hidden shadow-xl">
-                <div className="bg-slate-800/80 p-3 border-b border-slate-700 flex items-center gap-2 text-purple-100 text-sm font-semibold">
-                  <Variable size={16} className="text-purple-400" />
+                <div className="bg-slate-800/80 p-3 border-b border-slate-700 flex items-center gap-2 text-orange-100 text-sm font-semibold">
+                  <Variable size={16} className="text-orange-400" />
                   Variabel
                 </div>
                 <div className="p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 bg-[#151925]">
@@ -1163,7 +1163,7 @@ Return -1`,
             {/* 1. Code View */}
             <div className="flex flex-col flex-1 bg-[#1e1e1e] border border-slate-700 rounded-xl overflow-hidden shadow-xl min-h-[300px]">
               <div className="bg-slate-800 p-3 border-b border-slate-700 flex items-center gap-2 text-slate-200 text-sm font-semibold">
-                <Code size={16} className="text-purple-400" />
+                <Code size={16} className="text-orange-400" />
                 Implementasi Algoritma
               </div>
               <div className="flex-1 overflow-auto py-2 scrollbar-thin scrollbar-thumb-slate-700">

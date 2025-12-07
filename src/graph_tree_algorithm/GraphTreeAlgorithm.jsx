@@ -1094,7 +1094,7 @@ For each edge (u, v, w):
   // ==========================================
 
   const getStatusColor = () => {
-    if (currentStep >= steps.length - 1) return "text-emerald-400";
+    if (currentStep >= steps.length - 1) return "text-orange-400";
     if (isPlaying) return "text-yellow-400";
     return "text-slate-400";
   };
@@ -1128,7 +1128,7 @@ For each edge (u, v, w):
               key={index}
               className={`flex px-2 py-0.5 ${
                 isActive
-                  ? "bg-indigo-900/60 border-l-4 border-indigo-400"
+                  ? "bg-orange-900/60 border-l-4 border-orange-400"
                   : "border-l-4 border-transparent"
               }`}
             >
@@ -1137,7 +1137,7 @@ For each edge (u, v, w):
               </span>
               <span
                 className={`whitespace-pre ${
-                  isActive ? "text-indigo-200 font-bold" : "text-slate-300"
+                  isActive ? "text-orange-200 font-bold" : "text-slate-300"
                 }`}
               >
                 {line}
@@ -1215,11 +1215,11 @@ For each edge (u, v, w):
         <header className="w-full max-w-7xl mb-6 flex flex-col gap-4 border-b border-slate-700 pb-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-emerald-600 rounded-lg shadow-lg shadow-emerald-500/20">
+              <div className="p-2 bg-orange-600 rounded-lg shadow-lg shadow-orange-500/20">
                 <Network size={24} className="text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-300 pb-2 mb-1">
+                <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-orange-400 to-amber-300 pb-2 mb-1">
                   Algo Graph & Tree
                 </h1>
                 <p className="text-xs text-slate-400">
@@ -1232,7 +1232,7 @@ For each edge (u, v, w):
               <select
                 value={algorithm}
                 onChange={(e) => setAlgorithm(e.target.value)}
-                className="bg-slate-900 border border-slate-600 text-sm rounded-lg p-2 focus:ring-emerald-500 outline-none"
+                className="bg-slate-900 border border-slate-600 text-sm rounded-lg p-2 focus:ring-orange-500 outline-none"
               >
                 <optgroup label="Traversal">
                   <option value="bfs">BFS</option>
@@ -1307,9 +1307,9 @@ For each edge (u, v, w):
 
         {/* ALGORITHM DESCRIPTION */}
         <section className="w-full max-w-7xl mb-4">
-          <div className="bg-gradient-to-r from-emerald-900/30 to-cyan-900/30 border border-emerald-700/50 rounded-xl p-4 shadow-lg">
+          <div className="bg-gradient-to-r from-orange-900/30 to-amber-900/30 border border-orange-700/50 rounded-xl p-4 shadow-lg">
             <div className="flex items-start gap-3">
-              <div className="p-2 bg-emerald-600 rounded-lg shadow-lg shadow-emerald-500/20 mt-1">
+              <div className="p-2 bg-orange-600 rounded-lg shadow-lg shadow-orange-500/20 mt-1">
                 {["bfs", "dfs"].includes(algorithm) ? (
                   <Search size={20} className="text-white" />
                 ) : ["dijkstra", "bellman", "astar"].includes(algorithm) ? (
@@ -1319,7 +1319,7 @@ For each edge (u, v, w):
                 )}
               </div>
               <div className="flex-1">
-                <h3 className="text-lg font-bold text-emerald-200 mb-2">
+                <h3 className="text-lg font-bold text-orange-200 mb-2">
                   {algorithmDescriptions[algorithm].title}
                 </h3>
                 <p className="text-sm text-slate-300 mb-2 leading-relaxed">
@@ -1330,7 +1330,7 @@ For each edge (u, v, w):
                     <span className="text-slate-400 font-semibold">
                       Kompleksitas:
                     </span>
-                    <span className="text-emerald-300 ml-2 font-mono">
+                    <span className="text-orange-300 ml-2 font-mono">
                       {algorithmDescriptions[algorithm].complexity}
                     </span>
                   </div>
@@ -1345,7 +1345,7 @@ For each edge (u, v, w):
                 </div>
                 {algorithmDescriptions[algorithm].pseudocode && (
                   <div className="mt-3 bg-slate-950/50 rounded-lg p-3 border border-slate-700/50 font-mono text-xs text-slate-400 whitespace-pre overflow-x-auto">
-                    <div className="text-emerald-400 font-bold mb-1">
+                    <div className="text-orange-400 font-bold mb-1">
                       Pseudocode:
                     </div>
                     {algorithmDescriptions[algorithm].pseudocode}
@@ -1362,9 +1362,9 @@ For each edge (u, v, w):
           <section className="flex flex-col gap-4">
             {/* 1. Visualization */}
             <div className="bg-slate-900 border border-slate-700 rounded-xl overflow-hidden shadow-xl min-h-[400px]">
-              <div className="bg-slate-800/80 p-3 border-b border-slate-700 flex justify-between items-center text-emerald-100 text-sm font-semibold">
+              <div className="bg-slate-800/80 p-3 border-b border-slate-700 flex justify-between items-center text-orange-100 text-sm font-semibold">
                 <div className="flex items-center gap-2">
-                  <Hash size={16} className="text-emerald-400" />
+                  <Hash size={16} className="text-orange-400" />
                   Visualisasi Graf
                 </div>
                 <div className={`text-xs font-bold ${getStatusColor()}`}>
@@ -1398,10 +1398,10 @@ For each edge (u, v, w):
                     let strokeWidth = "2";
 
                     if (isMST) {
-                      strokeColor = "#06b6d4"; // cyan
+                      strokeColor = "#06b6d4"; // amber
                       strokeWidth = "4";
                     } else if (isPath) {
-                      strokeColor = "#10b981"; // emerald
+                      strokeColor = "#10b981"; // orange
                       strokeWidth = "4";
                     }
 
@@ -1477,8 +1477,8 @@ For each edge (u, v, w):
                     borderColor = "border-blue-400";
                     textColor = "text-white";
                   } else if (isVisited) {
-                    bgColor = "bg-emerald-600";
-                    borderColor = "border-emerald-400";
+                    bgColor = "bg-orange-600";
+                    borderColor = "border-orange-400";
                     textColor = "text-white";
                   }
 
@@ -1494,7 +1494,7 @@ For each edge (u, v, w):
                       {currentVisual.distances &&
                         currentVisual.distances[node.id] !== undefined &&
                         currentVisual.distances[node.id] !== Infinity && (
-                          <div className="absolute -bottom-6 bg-slate-900 text-xs px-1.5 py-0.5 rounded border border-slate-700 text-emerald-400 font-mono">
+                          <div className="absolute -bottom-6 bg-slate-900 text-xs px-1.5 py-0.5 rounded border border-slate-700 text-orange-400 font-mono">
                             {typeof currentVisual.distances[node.id] ===
                             "number"
                               ? currentVisual.distances[node.id].toFixed(0)

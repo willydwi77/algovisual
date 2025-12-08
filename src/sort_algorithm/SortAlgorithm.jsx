@@ -134,6 +134,151 @@ PROCEDURE Heapify(arr, n, i)
 END PROCEDURE`,
 };
 
+// ==========================================
+// C++ IMPLEMENTATIONS
+// ==========================================
+
+const ALGO_CPLUSPLUS = {
+  bubble: `void bubbleSort(vector<int>& arr) {
+  int n = arr.size();
+  
+  for (int i = 0; i < n - 1; i++) {
+    bool swapped = false;
+    
+    for (int j = 0; j < n - i - 1; j++) {
+      if (arr[j] > arr[j + 1]) {
+        swap(arr[j], arr[j + 1]);
+        swapped = true;
+      }
+    }
+    
+    if (!swapped) break;
+  }
+}`,
+
+  selection: `void selectionSort(vector<int>& arr) {
+  int n = arr.size();
+  
+  for (int i = 0; i < n - 1; i++) {
+    int minIdx = i;
+    
+    for (int j = i + 1; j < n; j++) {
+      if (arr[j] < arr[minIdx]) {
+        minIdx = j;
+      }
+    }
+    
+    if (minIdx != i) {
+      swap(arr[i], arr[minIdx]);
+    }
+  }
+}`,
+
+  insertion: `void insertionSort(vector<int>& arr) {
+  int n = arr.size();
+  
+  for (int i = 1; i < n; i++) {
+    int key = arr[i];
+    int j = i - 1;
+    
+    while (j >= 0 && arr[j] > key) {
+      arr[j + 1] = arr[j];
+      j--;
+    }
+    
+    arr[j + 1] = key;
+  }
+}`,
+
+  quick: `int partition(vector<int>& arr, int low, int high) {
+  int pivot = arr[high];
+  int i = low - 1;
+  
+  for (int j = low; j < high; j++) {
+    if (arr[j] < pivot) {
+      i++;
+      swap(arr[i], arr[j]);
+    }
+  }
+  
+  swap(arr[i + 1], arr[high]);
+  return i + 1;
+}
+
+void quickSort(vector<int>& arr, int low, int high) {
+  if (low < high) {
+    int pi = partition(arr, low, high);
+    quickSort(arr, low, pi - 1);
+    quickSort(arr, pi + 1, high);
+  }
+}`,
+
+  merge: `void merge(vector<int>& arr, int left, int mid, int right) {
+  int n1 = mid - left + 1;
+  int n2 = right - mid;
+  
+  vector<int> L(n1), R(n2);
+  
+  for (int i = 0; i < n1; i++)
+    L[i] = arr[left + i];
+  for (int j = 0; j < n2; j++)
+    R[j] = arr[mid + 1 + j];
+  
+  int i = 0, j = 0, k = left;
+  
+  while (i < n1 && j < n2) {
+    if (L[i] <= R[j]) {
+      arr[k++] = L[i++];
+    } else {
+      arr[k++] = R[j++];
+    }
+  }
+  
+  while (i < n1) arr[k++] = L[i++];
+  while (j < n2) arr[k++] = R[j++];
+}
+
+void mergeSort(vector<int>& arr, int left, int right) {
+  if (left < right) {
+    int mid = left + (right - left) / 2;
+    mergeSort(arr, left, mid);
+    mergeSort(arr, mid + 1, right);
+    merge(arr, left, mid, right);
+  }
+}`,
+
+  heap: `void heapify(vector<int>& arr, int n, int i) {
+  int largest = i;
+  int left = 2 * i + 1;
+  int right = 2 * i + 2;
+  
+  if (left < n && arr[left] > arr[largest])
+    largest = left;
+  
+  if (right < n && arr[right] > arr[largest])
+    largest = right;
+  
+  if (largest != i) {
+    swap(arr[i], arr[largest]);
+    heapify(arr, n, largest);
+  }
+}
+
+void heapSort(vector<int>& arr) {
+  int n = arr.size();
+  
+  // Build max heap
+  for (int i = n / 2 - 1; i >= 0; i--)
+    heapify(arr, n, i);
+  
+  // Extract elements from heap
+  for (int i = n - 1; i > 0; i--) {
+    swap(arr[0], arr[i]);
+    heapify(arr, i, 0);
+  }
+}`,
+};
+
 const ALGO_INFO = {
   bubble: {
     title: "BUBBLE SORT",
@@ -177,18 +322,20 @@ const ALGO_INFO = {
 // 2. SUB-COMPONENTS
 // ==========================================
 
-const BigOGraph = ({ algorithm, progress }) => {
+const BigOGraph = ({ algorithm, progress, arraySize }) => {
   const type = ["bubble", "selection", "insertion"].includes(algorithm)
     ? "quadratic"
     : "log-linear";
   const label = ALGO_INFO[algorithm].complexity;
+  const data = arraySize;
 
   const width = 280;
   const height = 120;
   const padding = 15;
 
   const points = [];
-  const steps = 40;
+  // Resolution of the graph matches the array size
+  const steps = data || 10;
 
   for (let i = 0; i <= steps; i++) {
     const x = i / steps;
@@ -196,8 +343,8 @@ const BigOGraph = ({ algorithm, progress }) => {
       type === "quadratic"
         ? x * x
         : x === 0
-        ? 0
-        : (x * Math.log2(x * 10 + 1)) / 3.5;
+          ? 0
+          : (x * Math.log2(x * 10 + 1)) / 3.5;
     if (y > 1) y = 1;
 
     const px = padding + x * (width - 2 * padding);
@@ -211,8 +358,8 @@ const BigOGraph = ({ algorithm, progress }) => {
     type === "quadratic"
       ? cx * cx
       : cx === 0
-      ? 0
-      : (cx * Math.log2(cx * 10 + 1)) / 3.5;
+        ? 0
+        : (cx * Math.log2(cx * 10 + 1)) / 3.5;
   if (cy > 1) cy = 1;
   const dotX = padding + cx * (width - 2 * padding);
   const dotY = height - padding - cy * (height - 2 * padding);
@@ -256,7 +403,7 @@ const BigOGraph = ({ algorithm, progress }) => {
       </div>
       <div className="flex justify-between text-[10px] text-slate-500 mt-1 font-mono">
         <span>Start</span>
-        <span>Operations vs N</span>
+        <span>Operations vs N {data}</span>
         <span>End</span>
       </div>
     </div>
@@ -267,12 +414,72 @@ const CodeViewer = ({ code, activeLine }) => {
   const lines = code.split("\n");
   const scrollRef = useRef(null);
 
+  const highlightSyntax = (line) => {
+    if (line.includes('//')) {
+      const commentIndex = line.indexOf('//');
+      const codePart = line.substring(0, commentIndex);
+      const commentPart = line.substring(commentIndex);
+
+      return (
+        <>
+          {highlightCodePart(codePart)}
+          <span className="text-slate-500 italic">{commentPart}</span>
+        </>
+      );
+    }
+
+    return highlightCodePart(line);
+  };
+
+  const highlightCodePart = (text) => {
+    // Split by words and highlight accordingly
+    const words = text.split(/(\s+)/);
+
+    return words.map((word, idx) => {
+      // Skip whitespace
+      if (/^\s+$/.test(word)) {
+        return <span key={idx}>{word}</span>;
+      }
+
+      // Check for keywords
+      const keywords = ['void', 'int', 'bool', 'vector', 'for', 'while', 'if', 'else', 'return', 'swap', 'break', 'continue'];
+      const literals = ['true', 'false', 'nullptr'];
+
+      if (keywords.includes(word)) {
+        return <span key={idx} className="text-purple-400 font-bold">{word}</span>;
+      }
+
+      if (literals.includes(word)) {
+        return <span key={idx} className="text-red-400 font-bold">{word}</span>;
+      }
+
+      // Check for numbers
+      if (/^\d+$/.test(word)) {
+        return <span key={idx} className="text-green-400">{word}</span>;
+      }
+
+      // Default
+      return <span key={idx}>{word}</span>;
+    });
+  };
+
   useEffect(() => {
     if (scrollRef.current && activeLine > 0) {
-      // Simple scroll into view logic
-      const el = scrollRef.current.children[activeLine - 1];
-      if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "center" });
+      const container = scrollRef.current;
+      const el = container.children[activeLine - 1];
+      if (el && container) {
+        const containerRect = container.getBoundingClientRect();
+        const elRect = el.getBoundingClientRect();
+
+        // Calculate if element is outside visible area of container
+        const isAbove = elRect.top < containerRect.top;
+        const isBelow = elRect.bottom > containerRect.bottom;
+
+        if (isAbove || isBelow) {
+          // Scroll container, not page
+          const scrollOffset = elRect.top - containerRect.top - (containerRect.height / 2) + (elRect.height / 2);
+          container.scrollBy({ top: scrollOffset, behavior: "smooth" });
+        }
       }
     }
   }, [activeLine]);
@@ -281,55 +488,34 @@ const CodeViewer = ({ code, activeLine }) => {
     <div className="bg-[#1e1e1e] rounded-lg border border-slate-700 overflow-hidden flex flex-col h-full shadow-inner">
       <div className="flex items-center justify-between px-4 py-2 bg-[#2d2d2d] border-b border-slate-700">
         <span className="text-xs text-slate-400 font-bold flex items-center gap-2">
-          <Code size={14} /> PSEUDOCODE
+          <Code size={14} /> C++ CODE
         </span>
         <span className="text-[10px] text-slate-500 uppercase tracking-widest">
-          IDN
+          CPP
         </span>
       </div>
-      {/* Removed overflow-auto to allow container to stretch */}
-      <div className="flex-1 p-4 font-mono text-sm leading-6" ref={scrollRef}>
+      <div className="flex-1 p-4 font-mono text-sm leading-6 overflow-auto" ref={scrollRef}>
         {lines.map((line, idx) => {
           const lineNum = idx + 1;
           const isActive = activeLine === lineNum;
 
-          // Basic Syntax Highlighting Logic
-          const formattedLine = line
-            .replace(
-              /(PROCEDURE|FUNCTION|DECLARE|FOR|WHILE|IF|THEN|ELSE|END|RETURN|not|AND|OR|TO|DOWNTO|do|break)/gi,
-              '<span class="text-purple-400 font-bold">$1</span>'
-            )
-            .replace(
-              /(List of Integer|Integer|Boolean)/g,
-              '<span class="text-yellow-300">$1</span>'
-            )
-            .replace(
-              /(\/\/.*)/g,
-              '<span class="text-slate-500 italic">$1</span>'
-            )
-            .replace(
-              /(true|false)/gi,
-              '<span class="text-red-400 font-bold">$1</span>'
-            );
-
           return (
             <div
               key={idx}
-              className={`flex ${
-                isActive
-                  ? "bg-slate-700/50 -mx-4 px-4 border-l-2 border-orange-500"
-                  : ""
-              }`}
+              className={`flex ${isActive
+                ? "bg-slate-700/50 -mx-4 px-4 border-l-2 border-orange-500"
+                : ""
+                }`}
             >
               <span className="w-8 text-slate-600 text-right mr-4 select-none shrink-0">
                 {lineNum}
               </span>
               <span
-                className={`whitespace-pre ${
-                  isActive ? "text-orange-100" : "text-slate-300"
-                }`}
-                dangerouslySetInnerHTML={{ __html: formattedLine }}
-              />
+                className={`whitespace-pre ${isActive ? "text-orange-100" : "text-slate-300"
+                  }`}
+              >
+                {highlightSyntax(line)}
+              </span>
             </div>
           );
         })}
@@ -372,9 +558,9 @@ const SortAlgorithm = () => {
 
     if (algo === "bubble") {
       for (let i = 0; i < n - 1; i++) {
-        s.push(snapshot(arr, [], [], [], 5, `Loop Luar i=${i}`));
+        s.push(snapshot(arr, [], [], [], 4, `Loop Luar i=${i}`));
         let swapped = false;
-        s.push(snapshot(arr, [], [], [], 6, `swapped = FALSE`));
+        s.push(snapshot(arr, [], [], [], 5, `swapped = FALSE`));
 
         for (let j = 0; j < n - i - 1; j++) {
           s.push(
@@ -398,11 +584,11 @@ const SortAlgorithm = () => {
                 [],
                 [j, j + 1],
                 [],
-                10,
+                9,
                 `Tukar posisi ${j} dan ${j + 1}`
               )
             );
-            s.push(snapshot(arr, [], [], [], 12, `Set swapped = TRUE`));
+            s.push(snapshot(arr, [], [], [], 10, `Set swapped = TRUE`));
           }
         }
 
@@ -410,9 +596,9 @@ const SortAlgorithm = () => {
         let sorted = [];
         for (let k = 0; k <= i; k++) sorted.push(n - 1 - k);
 
-        s.push(snapshot(arr, [], [], sorted, 15, `Cek Swapped?`));
+        s.push(snapshot(arr, [], [], sorted, 14, `Cek Swapped?`));
         if (!swapped) {
-          s.push(snapshot(arr, [], [], sorted, 15, `Tidak ada swap, BREAK`));
+          s.push(snapshot(arr, [], [], sorted, 14, `Tidak ada swap, BREAK`));
           break;
         }
       }
@@ -429,7 +615,7 @@ const SortAlgorithm = () => {
               [minIdx, j],
               [],
               [],
-              7,
+              8,
               `Cek arr[${j}] < arr[${minIdx}]?`
             )
           );
@@ -441,7 +627,7 @@ const SortAlgorithm = () => {
                 [minIdx],
                 [],
                 [],
-                8,
+                9,
                 `Update minIdx = ${j} (${arr[j]})`
               )
             );
@@ -459,7 +645,7 @@ const SortAlgorithm = () => {
               [],
               [i, minIdx],
               [],
-              13,
+              14,
               `Swap arr[${i}] dan arr[${minIdx}]`
             )
           );
@@ -509,7 +695,7 @@ const SortAlgorithm = () => {
         );
 
         let i = low - 1;
-        s.push(snapshot(arr, [], [], [], 9, `Set i = ${low - 1}`));
+        s.push(snapshot(arr, [], [], [], 3, `Set i = ${low - 1}`));
 
         for (let j = low; j < high; j++) {
           s.push(
@@ -518,14 +704,14 @@ const SortAlgorithm = () => {
               [j, high],
               [],
               [],
-              11,
+              6,
               `Bandingkan arr[${j}] (${arr[j]}) < pivot (${pivot})?`
             )
           );
 
           if (arr[j] < pivot) {
             i++;
-            s.push(snapshot(arr, [i, j], [], [], 12, `i++, sekarang i = ${i}`));
+            s.push(snapshot(arr, [i, j], [], [], 7, `i++, sekarang i = ${i}`));
 
             if (i !== j) {
               [arr[i], arr[j]] = [arr[j], arr[i]];
@@ -535,7 +721,7 @@ const SortAlgorithm = () => {
                   [],
                   [i, j],
                   [],
-                  13,
+                  8,
                   `Tukar arr[${i}] dengan arr[${j}]`
                 )
               );
@@ -551,7 +737,7 @@ const SortAlgorithm = () => {
             [],
             [i + 1, high],
             [],
-            16,
+            12,
             `Tempatkan pivot di posisi ${i + 1}`
           )
         );
@@ -561,7 +747,7 @@ const SortAlgorithm = () => {
 
       const quickSortHelper = (low, high) => {
         if (low < high) {
-          s.push(snapshot(arr, [], [], [], 2, `QuickSort(${low}, ${high})`));
+          s.push(snapshot(arr, [], [], [], 17, `QuickSort(${low}, ${high})`));
 
           const pi = partition(low, high);
           s.push(
@@ -570,7 +756,7 @@ const SortAlgorithm = () => {
               [pi],
               [],
               [pi],
-              3,
+              18,
               `Partition selesai, pivot di ${pi}`
             )
           );
@@ -590,7 +776,7 @@ const SortAlgorithm = () => {
         const L = arr.slice(left, mid + 1);
         const R = arr.slice(mid + 1, right + 1);
 
-        s.push(snapshot(arr, [], [], [], 10, `Bagi array: L[${n1}], R[${n2}]`));
+        s.push(snapshot(arr, [], [], [], 2, `Bagi array: L[${n1}], R[${n2}]`));
 
         let i = 0,
           j = 0,
@@ -609,7 +795,7 @@ const SortAlgorithm = () => {
               [leftIdx, rightIdx],
               [],
               [],
-              13,
+              14,
               `Bandingkan L[${i}]=${L[i]} dengan R[${j}]=${R[j]}`
             )
           );
@@ -617,13 +803,13 @@ const SortAlgorithm = () => {
           if (L[i] <= R[j]) {
             arr[k] = L[i];
             s.push(
-              snapshot(arr, [k], [], [], 14, `arr[${k}] = L[${i}] = ${L[i]}`)
+              snapshot(arr, [k], [], [], 16, `arr[${k}] = L[${i}] = ${L[i]}`)
             );
             i++;
           } else {
             arr[k] = R[j];
             s.push(
-              snapshot(arr, [k], [], [], 15, `arr[${k}] = R[${j}] = ${R[j]}`)
+              snapshot(arr, [k], [], [], 18, `arr[${k}] = R[${j}] = ${R[j]}`)
             );
             j++;
           }
@@ -633,7 +819,7 @@ const SortAlgorithm = () => {
         while (i < n1) {
           arr[k] = L[i];
           s.push(
-            snapshot(arr, [k], [], [], 18, `Salin sisa L[${i}] = ${L[i]}`)
+            snapshot(arr, [k], [], [], 22, `Salin sisa L[${i}] = ${L[i]}`)
           );
           i++;
           k++;
@@ -642,7 +828,7 @@ const SortAlgorithm = () => {
         while (j < n2) {
           arr[k] = R[j];
           s.push(
-            snapshot(arr, [k], [], [], 18, `Salin sisa R[${j}] = ${R[j]}`)
+            snapshot(arr, [k], [], [], 23, `Salin sisa R[${j}] = ${R[j]}`)
           );
           j++;
           k++;
@@ -666,7 +852,7 @@ const SortAlgorithm = () => {
       const mergeSortHelper = (left, right) => {
         if (left < right) {
           const mid = Math.floor((left + right) / 2);
-          s.push(snapshot(arr, [], [], [], 3, `Bagi array: mid = ${mid}`));
+          s.push(snapshot(arr, [], [], [], 28, `Bagi array: mid = ${mid}`));
 
           mergeSortHelper(left, mid);
           mergeSortHelper(mid + 1, right);
@@ -688,7 +874,7 @@ const SortAlgorithm = () => {
             [i],
             [],
             [],
-            9,
+            2,
             `Heapify node ${i}, left=${l}, right=${r}`
           )
         );
@@ -701,7 +887,7 @@ const SortAlgorithm = () => {
               [l, largest],
               [],
               [],
-              12,
+              7,
               `arr[${l}] > arr[${i}], largest = ${l}`
             )
           );
@@ -715,7 +901,7 @@ const SortAlgorithm = () => {
               [r, largest],
               [],
               [],
-              13,
+              10,
               `arr[${r}] > arr[${largest}], largest = ${r}`
             )
           );
@@ -729,7 +915,7 @@ const SortAlgorithm = () => {
               [],
               [i, largest],
               [],
-              15,
+              13,
               `Tukar arr[${i}] dengan arr[${largest}]`
             )
           );
@@ -738,16 +924,16 @@ const SortAlgorithm = () => {
       };
 
       // Build max heap
-      s.push(snapshot(arr, [], [], [], 2, "Membangun Max Heap"));
+      s.push(snapshot(arr, [], [], [], 22, "Membangun Max Heap"));
       for (let i = Math.floor(n / 2) - 1; i >= 0; i--) {
         heapify(n, i);
       }
-      s.push(snapshot(arr, [], [], [], 2, "Max Heap selesai dibangun"));
+      s.push(snapshot(arr, [], [], [], 22, "Max Heap selesai dibangun"));
 
       // Extract elements from heap
       for (let i = n - 1; i > 0; i--) {
         s.push(
-          snapshot(arr, [0, i], [], [], 4, `Tukar root arr[0] dengan arr[${i}]`)
+          snapshot(arr, [0, i], [], [], 27, `Tukar root arr[0] dengan arr[${i}]`)
         );
         [arr[0], arr[i]] = [arr[i], arr[0]];
         s.push(
@@ -756,7 +942,7 @@ const SortAlgorithm = () => {
             [],
             [0, i],
             [i],
-            4,
+            27,
             `arr[${i}] = ${arr[i]} sudah di posisi akhir`
           )
         );
@@ -923,6 +1109,19 @@ const SortAlgorithm = () => {
             Space: <span className="text-slate-200">O(1)</span>
           </div>
         </div>
+
+        {/* STATIC PSEUDOCODE SECTION */}
+        <div className="mt-4 bg-slate-900 rounded-lg border border-slate-700 overflow-hidden">
+          <div className="px-4 py-2 bg-slate-800 border-b border-slate-700 flex items-center gap-2">
+            <MessageSquare size={12} className="text-slate-400" />
+            <span className="text-xs text-slate-400 font-bold">PSEUDOCODE</span>
+          </div>
+          <div className="p-4 max-h-64 overflow-auto">
+            <pre className="text-xs text-slate-300 font-mono whitespace-pre leading-relaxed">
+              {PSEUDOCODE[algorithm]}
+            </pre>
+          </div>
+        </div>
       </div>
 
       {/* MAIN BODY */}
@@ -930,7 +1129,10 @@ const SortAlgorithm = () => {
         {/* LEFT COLUMN: VISUALS (5/12) */}
         <div className="lg:col-span-5 bg-[#0f172a] border-r border-slate-800 flex flex-col p-4 gap-4">
           {/* 1. VISUAL BAR CHART (HERO) */}
-          <div className="bg-slate-900 border border-slate-700 rounded-xl p-4 shadow-2xl min-h-[220px] flex flex-col relative shrink-0">
+          <div
+            className="bg-slate-900 border border-slate-700 rounded-xl p-4 shadow-2xl min-h-[220px] flex flex-col relative shrink-0 overflow-hidden"
+            style={{ scrollMargin: 0 }}
+          >
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xs font-bold text-slate-400 uppercase flex items-center gap-2">
                 <Layers size={14} /> Visualisasi Grafik
@@ -939,13 +1141,12 @@ const SortAlgorithm = () => {
                 {["SORTED", "SWAP", "COMPARE"].map((label, idx) => (
                   <span
                     key={idx}
-                    className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${
-                      label === "SORTED"
-                        ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                        : label === "SWAP"
+                    className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${label === "SORTED"
+                      ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                      : label === "SWAP"
                         ? "bg-red-500/10 text-red-500 border-red-500/20"
                         : "bg-yellow-500/10 text-yellow-400 border-yellow-500/20"
-                    }`}
+                      }`}
                   >
                     {label}
                   </span>
@@ -953,7 +1154,10 @@ const SortAlgorithm = () => {
               </div>
             </div>
 
-            <div className="flex-1 flex items-end justify-center gap-[2px] pb-2">
+            <div
+              className={`flex-1 flex items-end justify-center gap-[2px] pb-2 ${isPlaying ? 'pointer-events-none' : ''}`}
+              style={{ scrollMargin: 0 }}
+            >
               {currentVisual.array.map((val, idx) => {
                 let color = "bg-slate-600";
                 if (currentVisual.sortedIndices.includes(idx))
@@ -971,6 +1175,7 @@ const SortAlgorithm = () => {
                     style={{
                       height: `${(val / 100) * 100}%`,
                       width: `${100 / arraySize}%`,
+                      scrollMargin: 0,
                     }}
                   />
                 );
@@ -988,19 +1193,19 @@ const SortAlgorithm = () => {
                 <div
                   key={idx}
                   className={`
-                                w-8 h-8 flex items-center justify-center rounded text-xs font-mono font-bold border-2 transition-colors duration-150
-                                ${
-                                  currentVisual.sortedIndices.includes(idx)
-                                    ? "border-emerald-500 bg-emerald-900/20 text-emerald-400"
-                                    : currentVisual.swapIndices.includes(idx)
-                                    ? "border-red-500 bg-red-900/20 text-red-400"
-                                    : currentVisual.activeIndices.includes(idx)
-                                    ? "border-yellow-400 bg-yellow-900/20 text-yellow-400"
-                                    : "border-slate-700 bg-slate-800 text-slate-300"
-                                }
+                                w-12 h-12 flex flex-col items-center justify-center rounded text-xs font-mono font-bold border-2 transition-colors duration-150
+                                ${currentVisual.sortedIndices.includes(idx)
+                      ? "border-emerald-500 bg-emerald-900/20 text-emerald-400"
+                      : currentVisual.swapIndices.includes(idx)
+                        ? "border-red-500 bg-red-900/20 text-red-400"
+                        : currentVisual.activeIndices.includes(idx)
+                          ? "border-yellow-400 bg-yellow-900/20 text-yellow-400"
+                          : "border-slate-700 bg-slate-800 text-slate-300"
+                    }
                             `}
                 >
-                  {val}
+                  <span className="text-[9px] text-slate-500 font-normal">{idx}</span>
+                  <span className="text-sm font-bold">{val}</span>
                 </div>
               ))}
             </div>
@@ -1011,6 +1216,7 @@ const SortAlgorithm = () => {
             <BigOGraph
               algorithm={algorithm}
               progress={currentStep / (steps.length || 1)}
+              arraySize={arraySize}
             />
           </div>
 
@@ -1063,10 +1269,10 @@ const SortAlgorithm = () => {
 
         {/* RIGHT COLUMN: INFO & PSEUDOCODE (7/12) */}
         <div className="lg:col-span-7 bg-[#1e1e1e] flex flex-col border-l border-slate-800">
-          {/* PSEUDOCODE PANEL */}
+          {/* C++ CODE PANEL */}
           <div className="p-4 bg-[#252526]">
             <CodeViewer
-              code={PSEUDOCODE[algorithm]}
+              code={ALGO_CPLUSPLUS[algorithm]}
               activeLine={currentVisual.activeLine}
             />
           </div>

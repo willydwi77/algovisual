@@ -294,8 +294,7 @@ const ALGO_CPLUSPLUS = {
   return true;
 }
 
-void solveNQueens(vector<vector<char>>& board, int row, int n,
-                  vector<vector<string>>& solutions) {
+void solveNQueens(vector<vector<char>>& board, int row, int n, vector<vector<string>>& solutions) {
   if (row == n) {
     vector<string> solution;
     for (auto& r : board) {
@@ -395,8 +394,7 @@ vector<vector<int>> permutations(vector<int>& nums) {
 }
 
 // Alternative with used array
-void permuteHelper(vector<int>& nums, vector<int>& path,
-                   vector<bool>& used, vector<vector<int>>& result) {
+void permuteHelper(vector<int>& nums, vector<int>& path, vector<bool>& used, vector<vector<int>>& result) {
   if (path.size() == nums.size()) {
     result.push_back(path);
     return;
@@ -415,9 +413,7 @@ void permuteHelper(vector<int>& nums, vector<int>& path,
   }
 }`,
 
-  subsetSum: `void findSubsets(vector<int>& arr, int index, int target,
-                int currentSum, vector<int>& current,
-                vector<vector<int>>& result) {
+  subsetSum: `void findSubsets(vector<int>& arr, int index, int target, int currentSum, vector<int>& current, vector<vector<int>>& result) {
   if (currentSum == target) {
     result.push_back(current);
     return;
@@ -428,8 +424,7 @@ void permuteHelper(vector<int>& nums, vector<int>& path,
   
   // Include current element
   current.push_back(arr[index]);
-  findSubsets(arr, index + 1, target, currentSum + arr[index],
-              current, result);
+  findSubsets(arr, index + 1, target, currentSum + arr[index], current, result);
   
   // Exclude current element (backtrack)
   current.pop_back();
@@ -469,8 +464,7 @@ bool subsetSumDP(vector<int>& arr, int target) {
   return x >= 0 && x < n && y >= 0 && y < n && maze[x][y] == 1;
 }
 
-bool solveMazeUtil(vector<vector<int>>& maze, int x, int y,
-                   vector<vector<int>>& sol, int n) {
+bool solveMazeUtil(vector<vector<int>>& maze, int x, int y, vector<vector<int>>& sol, int n) {
   // Reached destination
   if (x == n - 1 && y == n - 1 && maze[x][y] == 1) {
     sol[x][y] = 1;
@@ -557,8 +551,10 @@ const ALGO_INFO = {
 // ==========================================
 
 const GridVisualization = ({ grid, highlightCells = [], activeCells = [], title = 'Grid Visualization' }) => {
-  const cellSize = grid.length <= 9 ? 40 : 30
-  const gridSize = grid.length * cellSize
+  const isSudoku = grid.length === 9 && grid[0]?.length === 9
+  const isArray = grid.length <= 2 && grid[0]?.length <= 10
+  const cellSize = isSudoku ? 35 : isArray ? 50 : grid.length <= 9 ? 40 : 30
+  const gridSize = isArray ? 'auto' : grid.length * cellSize
 
   return (
     <div className='bg-slate-900 border border-slate-700 rounded-xl p-4 shadow-xl'>
@@ -577,41 +573,51 @@ const GridVisualization = ({ grid, highlightCells = [], activeCells = [], title 
         </div>
       </div>
 
-      <div
-        className='mx-auto'
-        style={{ width: gridSize, height: gridSize }}>
+      <div className='flex justify-center items-center overflow-x-auto'>
         <div
-          className='grid gap-[2px] bg-slate-700 p-[2px]'
-          style={{ gridTemplateColumns: `repeat(${grid.length}, 1fr)` }}>
-          {grid.map((row, i) =>
-            row.map((cell, j) => {
-              const isHighlight = highlightCells.some((c) => c.row === i && c.col === j)
-              const isActive = activeCells.some((c) => c.row === i && c.col === j)
+          className={`${isSudoku ? 'border-2 border-slate-700' : 'border-2 border-slate-700'} rounded-sm overflow-hidden`}
+          style={{ width: 'fit-content', height: 'fit-content', minWidth: isArray ? '100px' : 'auto' }}>
+          <div
+            className={`grid ${isSudoku ? 'gap-0' : 'gap-[2px]'} bg-slate-700 p-[2px]`}
+            style={{ gridTemplateColumns: `repeat(${grid[0]?.length || grid.length}, 1fr)` }}>
+            {grid.map((row, i) =>
+              row.map((cell, j) => {
+                const isHighlight = highlightCells.some((c) => c.row === i && c.col === j)
+                const isActive = activeCells.some((c) => c.row === i && c.col === j)
 
-              let bgColor = 'bg-slate-800'
-              let textColor = 'text-slate-300'
+                let bgColor = 'bg-slate-800'
+                let textColor = 'text-slate-300'
 
-              if (isActive) {
-                bgColor = 'bg-yellow-500/20 border-2 border-yellow-400'
-                textColor = 'text-yellow-400'
-              } else if (isHighlight) {
-                bgColor = 'bg-emerald-500/20 border-2 border-emerald-400'
-                textColor = 'text-emerald-400'
-              } else if (cell === 'Q' || cell === 1) {
-                bgColor = 'bg-blue-500/20'
-                textColor = 'text-blue-400'
-              }
+                if (isActive) {
+                  bgColor = 'bg-yellow-500/20 border-2 border-yellow-400'
+                  textColor = 'text-yellow-400'
+                } else if (isHighlight) {
+                  bgColor = 'bg-emerald-500/20 border-2 border-emerald-400'
+                  textColor = 'text-emerald-400'
+                } else if (cell === 'Q' || cell === 1) {
+                  bgColor = 'bg-blue-500/20'
+                  textColor = 'text-blue-400'
+                }
 
-              return (
-                <div
-                  key={`${i}-${j}`}
-                  className={`${bgColor} ${textColor} flex items-center justify-center font-mono text-xs font-bold transition-all duration-300`}
-                  style={{ width: cellSize, height: cellSize }}>
-                  {cell === 'Q' ? '♛' : cell === 0 || cell === '.' ? '' : cell}
-                </div>
-              )
-            })
-          )}
+                // Sudoku border styling
+                let borderClasses = ''
+                if (isSudoku) {
+                  borderClasses = 'border border-slate-700'
+                  if (j % 3 === 2 && j !== 8) borderClasses += ' border-r-2 border-r-slate-500'
+                  if (i % 3 === 2 && i !== 8) borderClasses += ' border-b-2 border-b-slate-500'
+                }
+
+                return (
+                  <div
+                    key={`${i}-${j}`}
+                    className={`${bgColor} ${textColor} ${borderClasses} flex items-center justify-center font-mono text-xs font-bold transition-all duration-300`}
+                    style={{ width: cellSize, height: cellSize }}>
+                    {cell === 'Q' ? '♛' : cell === 0 || cell === '.' ? '' : cell}
+                  </div>
+                )
+              })
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -640,36 +646,75 @@ const CodeViewer = ({ code, activeLine }) => {
   }
 
   const highlightCodePart = (text) => {
-    const words = text.split(/(\s+)/)
+    // Split by word boundaries but preserve operators and symbols
+    const tokens = text.split(/(\s+|[(){}\[\];,&<>*=+\-!|])/)
 
-    return words.map((word, idx) => {
-      if (/^\s+$/.test(word)) {
-        return <span key={idx}>{word}</span>
+    return tokens.map((token, idx) => {
+      // Skip whitespace and empty
+      if (!token || /^\s+$/.test(token)) {
+        return <span key={idx}>{token}</span>
       }
 
-      const keywords = ['void', 'int', 'bool', 'vector', 'for', 'while', 'if', 'else', 'return', 'swap', 'break', 'continue', 'true', 'false']
+      // C++ Keywords (kontrol alur)
+      const keywords = ['void', 'int', 'bool', 'char', 'float', 'double', 'long', 'short', 'unsigned', 'for', 'while', 'do', 'if', 'else', 'switch', 'case', 'default', 'return', 'break', 'continue', 'goto', 'true', 'false', 'nullptr', 'NULL', 'const', 'static', 'auto', 'this', 'class', 'struct', 'enum', 'typedef', 'public', 'private', 'protected', 'virtual', 'override', 'final']
 
-      if (keywords.includes(word)) {
+      // C++ Types and STL
+      const types = ['vector', 'string', 'map', 'set', 'queue', 'stack', 'pair', 'array']
+
+      if (keywords.includes(token)) {
         return (
           <span
             key={idx}
             className='text-purple-400 font-bold'>
-            {word}
+            {token}
           </span>
         )
       }
 
-      if (/^\d+$/.test(word)) {
+      if (types.includes(token)) {
+        return (
+          <span
+            key={idx}
+            className='text-cyan-400 font-semibold'>
+            {token}
+          </span>
+        )
+      }
+
+      // Numbers
+      if (/^\d+$/.test(token)) {
         return (
           <span
             key={idx}
             className='text-green-400'>
-            {word}
+            {token}
           </span>
         )
       }
 
-      return <span key={idx}>{word}</span>
+      // Operators
+      if (/^[(){}\[\];,&<>*=+\-!|]+$/.test(token)) {
+        return (
+          <span
+            key={idx}
+            className='text-yellow-400'>
+            {token}
+          </span>
+        )
+      }
+
+      // Function names (word followed by parenthesis)
+      if (idx + 1 < tokens.length && tokens[idx + 1] === '(') {
+        return (
+          <span
+            key={idx}
+            className='text-blue-300'>
+            {token}
+          </span>
+        )
+      }
+
+      return <span key={idx}>{token}</span>
     })
   }
 
@@ -732,6 +777,19 @@ const BTAlgo = () => {
   const [isPlaying, setIsPlaying] = useState(false)
   const intervalRef = useRef(null)
 
+  // Dynamic variables for each algorithm
+  const [variables, setVariables] = useState({
+    nQueens: { n: 4 },
+    sudokuSolver: { difficulty: 'easy' },
+    permutation: { array: [1, 2, 3] },
+    subsetSum: { array: [3, 34, 4, 12, 5, 2], target: 9 },
+    mazeSolver: { size: 5 },
+  })
+
+  // Local input states for array inputs (to allow comma typing)
+  const [permutationInput, setPermutationInput] = useState('1,2,3')
+  const [subsetSumInput, setSubsetSumInput] = useState('3,34,4,12,5,2')
+
   const snapshot = (grid, highlightCells, activeCells, line, desc) => ({
     grid: grid.map((row) => [...row]),
     highlightCells: [...highlightCells],
@@ -744,21 +802,21 @@ const BTAlgo = () => {
     let s = []
 
     if (algo === 'nQueens') {
-      const n = 4
+      const n = variables.nQueens.n
       const board = Array(n)
         .fill(null)
         .map(() => Array(n).fill('.'))
 
-      s.push(snapshot(board, [], [], 1, 'Mulai N-Queens untuk n=4'))
+      s.push(snapshot(board, [], [], 23, `Mulai N-Queens untuk n=${n}`))
 
       const solve = (row) => {
         if (row === n) {
-          s.push(snapshot(board, [], [], 7, 'Solusi ditemukan!'))
+          s.push(snapshot(board, [], [], 24, 'Solusi ditemukan!'))
           return true
         }
 
         for (let col = 0; col < n; col++) {
-          s.push(snapshot(board, [], [{ row, col }], 11, `Mencoba menempatkan ratu di (${row}, ${col})`))
+          s.push(snapshot(board, [], [{ row, col }], 33, `Mencoba menempatkan ratu di (${row}, ${col})`))
 
           // Check if safe
           let safe = true
@@ -772,16 +830,16 @@ const BTAlgo = () => {
 
           if (safe) {
             board[row][col] = 'Q'
-            s.push(snapshot(board, [{ row, col }], [], 13, `Ratu ditempatkan di (${row}, ${col})`))
+            s.push(snapshot(board, [{ row, col }], [], 35, `Ratu ditempatkan di (${row}, ${col})`))
 
             if (solve(row + 1)) {
               return true
             }
 
             board[row][col] = '.'
-            s.push(snapshot(board, [], [], 17, `Backtrack dari (${row}, ${col})`))
+            s.push(snapshot(board, [], [], 39, `Backtrack dari (${row}, ${col})`))
           } else {
-            s.push(snapshot(board, [], [], 14, `Posisi (${row}, ${col}) tidak aman`))
+            s.push(snapshot(board, [], [], 34, `Posisi (${row}, ${col}) tidak aman`))
           }
         }
 
@@ -789,9 +847,134 @@ const BTAlgo = () => {
       }
 
       solve(0)
+    } else if (algo === 'sudokuSolver') {
+      // Predefined Sudoku puzzles for different difficulties
+      const puzzles = {
+        easy: [
+          [5, 3, 0, 0, 7, 0, 0, 0, 0],
+          [6, 0, 0, 1, 9, 5, 0, 0, 0],
+          [0, 9, 8, 0, 0, 0, 0, 6, 0],
+          [8, 0, 0, 0, 6, 0, 0, 0, 3],
+          [4, 0, 0, 8, 0, 3, 0, 0, 1],
+          [7, 0, 0, 0, 2, 0, 0, 0, 6],
+          [0, 6, 0, 0, 0, 0, 2, 8, 0],
+          [0, 0, 0, 4, 1, 9, 0, 0, 5],
+          [0, 0, 0, 0, 8, 0, 0, 7, 9],
+        ],
+        medium: [
+          [0, 0, 0, 6, 0, 0, 4, 0, 0],
+          [7, 0, 0, 0, 0, 3, 6, 0, 0],
+          [0, 0, 0, 0, 9, 1, 0, 8, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 5, 0, 1, 8, 0, 0, 0, 3],
+          [0, 0, 0, 3, 0, 6, 0, 4, 5],
+          [0, 4, 0, 2, 0, 0, 0, 6, 0],
+          [9, 0, 3, 0, 0, 0, 0, 0, 0],
+          [0, 2, 0, 0, 0, 0, 1, 0, 0],
+        ],
+      }
+
+      const board = puzzles[variables.sudokuSolver.difficulty].map((row) => [...row])
+      s.push(snapshot(board, [], [], 28, `Mulai Sudoku Solver (${variables.sudokuSolver.difficulty})`))
+
+      const isValid = (row, col, num) => {
+        // Check row
+        for (let j = 0; j < 9; j++) {
+          if (board[row][j] === num) return false
+        }
+
+        // Check column
+        for (let i = 0; i < 9; i++) {
+          if (board[i][col] === num) return false
+        }
+
+        // Check 3x3 box
+        const startRow = Math.floor(row / 3) * 3
+        const startCol = Math.floor(col / 3) * 3
+
+        for (let i = 0; i < 3; i++) {
+          for (let j = 0; j < 3; j++) {
+            if (board[startRow + i][startCol + j] === num) return false
+          }
+        }
+
+        return true
+      }
+
+      const solve = () => {
+        for (let row = 0; row < 9; row++) {
+          for (let col = 0; col < 9; col++) {
+            if (board[row][col] === 0) {
+              s.push(snapshot(board, [], [{ row, col }], 31, `Mencoba mengisi sel (${row}, ${col})`))
+
+              for (let num = 1; num <= 9; num++) {
+                if (isValid(row, col, num)) {
+                  board[row][col] = num
+                  s.push(snapshot(board, [{ row, col }], [], 34, `Menempatkan ${num} di (${row}, ${col})`))
+
+                  if (solve()) {
+                    return true
+                  }
+
+                  board[row][col] = 0
+                  s.push(snapshot(board, [], [{ row, col }], 39, `Backtrack dari (${row}, ${col})`))
+                }
+              }
+              return false
+            }
+          }
+        }
+
+        s.push(snapshot(board, [], [], 46, 'Sudoku terpecahkan!'))
+        return true
+      }
+
+      solve()
+    } else if (algo === 'subsetSum') {
+      const arr = variables.subsetSum.array
+      const target = variables.subsetSum.target
+      const n = arr.length
+
+      // Create visualization grid
+      const gridData = [arr]
+      s.push(snapshot(gridData, [], [], 1, `Subset Sum: Target = ${target}, Array = [${arr.join(', ')}]`))
+
+      let found = false
+      const currentSubset = []
+
+      const findSubsets = (index, currentSum) => {
+        if (currentSum === target) {
+          s.push(snapshot([arr, currentSubset], [], [], 3, `✓ Subset ditemukan: [${currentSubset.join(', ')}] = ${target}`))
+          found = true
+          return
+        }
+
+        if (index === n || currentSum > target) {
+          return
+        }
+
+        // Include current element
+        currentSubset.push(arr[index])
+        const highlightInclude = Array.from(currentSubset, (_, i) => ({ row: 0, col: arr.indexOf(currentSubset[i]) }))
+        s.push(snapshot([arr, [...currentSubset]], highlightInclude, [{ row: 0, col: index }], 11, `Include ${arr[index]}: Subset = [${currentSubset.join(', ')}], Sum = ${currentSum + arr[index]}`))
+
+        findSubsets(index + 1, currentSum + arr[index])
+
+        // Exclude current element (backtrack)
+        currentSubset.pop()
+        s.push(snapshot([arr, [...currentSubset]], [], [], 15, `Backtrack: Exclude ${arr[index]}, Subset = [${currentSubset.join(', ')}]`))
+
+        findSubsets(index + 1, currentSum)
+      }
+
+      findSubsets(0, 0)
+
+      if (!found) {
+        s.push(snapshot([arr, []], [], [], -1, `Tidak ada subset yang menjumlahkan ke ${target}`))
+      }
     } else if (algo === 'permutation') {
-      const arr = [1, 2, 3]
-      s.push(snapshot([arr], [], [], 1, 'Mulai generate permutations untuk [1,2,3]'))
+      const arr = [...variables.permutation.array]
+      s.push(snapshot([arr], [], [], 1, `Mulai generate permutations untuk [${arr.join(',')}]`))
 
       const permute = (start) => {
         if (start === arr.length) {
@@ -800,20 +983,20 @@ const BTAlgo = () => {
         }
 
         for (let i = start; i < arr.length; i++) {
-          s.push(snapshot([arr], [], [{ row: 0, col: i }], 7, `Swap posisi ${start} dengan ${i}`))
+          s.push(snapshot([arr], [], [{ row: 0, col: i }], 8, `Swap posisi ${start} dengan ${i}`))
           ;[arr[start], arr[i]] = [arr[i], arr[start]]
 
           s.push(snapshot([arr], [{ row: 0, col: start }], [], 9, `Array setelah swap: ${arr.join(',')}`))
 
           permute(start + 1)
           ;[arr[start], arr[i]] = [arr[i], arr[start]]
-          s.push(snapshot([arr], [], [], 13, `Backtrack: restore ke ${arr.join(',')}`))
+          s.push(snapshot([arr], [], [], 12, `Backtrack: restore ke ${arr.join(',')}`))
         }
       }
 
       permute(0)
     } else if (algo === 'mazeSolver') {
-      const n = 5
+      const n = variables.mazeSolver.size
       const maze = [
         [1, 0, 0, 0, 0],
         [1, 1, 0, 1, 0],
@@ -825,7 +1008,7 @@ const BTAlgo = () => {
         .fill(null)
         .map(() => Array(n).fill(0))
 
-      s.push(snapshot(maze, [], [], 1, 'Mulai maze solver'))
+      s.push(snapshot(maze, [], [], 5, 'Mulai maze solver'))
 
       const solveMaze = (x, y) => {
         if (x === n - 1 && y === n - 1 && maze[x][y] === 1) {
@@ -855,12 +1038,13 @@ const BTAlgo = () => {
       }
 
       solveMaze(0, 0)
-    } else {
-      // Placeholder
-      s.push(snapshot([[]], [], [], 1, `${ALGO_INFO[algo].title} - Visualisasi dalam pengembangan`))
     }
 
-    s.push(snapshot(steps.length > 0 ? steps[steps.length - 1].grid : [[]], [], [], -1, 'Algoritma selesai'))
+    if (s.length === 0) {
+      s.push(snapshot([[]], [], [], 1, 'Tidak ada langkah yang dihasilkan'))
+    }
+
+    s.push(snapshot(s.length > 0 ? s[s.length - 1].grid : [[]], [], [], -1, 'Algoritma selesai'))
     return s
   }
 
@@ -871,9 +1055,55 @@ const BTAlgo = () => {
     setSteps(generated)
   }
 
+  const handleApply = () => {
+    // Parse and update variables from local input states before resetting
+
+    if (algorithm === 'permutation') {
+      const arr = permutationInput
+        .split(',')
+        .map((v) => parseInt(v.trim()))
+        .filter((v) => !isNaN(v))
+      if (arr.length > 0 && arr.length <= 5) {
+        setVariables((prev) => ({ ...prev, permutation: { array: arr } }))
+      }
+    } else if (algorithm === 'subsetSum') {
+      const arr = subsetSumInput
+        .split(',')
+        .map((v) => parseInt(v.trim()))
+        .filter((v) => !isNaN(v))
+      if (arr.length > 0 && arr.length <= 10) {
+        setVariables((prev) => ({ ...prev, subsetSum: { ...prev.subsetSum, array: arr } }))
+      }
+    }
+    // Reset will be triggered by useEffect when variables change
+  }
+
   useEffect(() => {
     reset()
   }, [algorithm])
+
+  // Trigger reset when permutation array changes (for Terapkan button)
+  useEffect(() => {
+    if (algorithm === 'permutation') {
+      reset()
+    }
+  }, [JSON.stringify(variables.permutation.array)])
+
+  // Trigger reset when subset sum array/target changes (for Terapkan button)
+  useEffect(() => {
+    if (algorithm === 'subsetSum') {
+      reset()
+    }
+  }, [JSON.stringify(variables.subsetSum.array), variables.subsetSum.target])
+
+  // Sync local input states when variables change externally
+  useEffect(() => {
+    setPermutationInput(variables.permutation.array.join(','))
+  }, [JSON.stringify(variables.permutation.array)])
+
+  useEffect(() => {
+    setSubsetSumInput(variables.subsetSum.array.join(','))
+  }, [JSON.stringify(variables.subsetSum.array)])
 
   useEffect(() => {
     if (isPlaying) {
@@ -936,6 +1166,89 @@ const BTAlgo = () => {
               />
             </div>
           </div>
+          <div className='relative'>
+            <div className='flex flex-wrap gap-4'>
+              {algorithm === 'nQueens' && (
+                <div className='flex items-center gap-2'>
+                  <label className='text-sm text-slate-400'>N (Ukuran Papan):</label>
+                  <select
+                    value={variables.nQueens.n}
+                    onChange={(e) => setVariables({ ...variables, nQueens: { n: parseInt(e.target.value) } })}
+                    className='bg-slate-700 text-slate-200 px-3 py-1 rounded border border-slate-600 text-sm'>
+                    <option value={4}>4</option>
+                    <option value={5}>5</option>
+                    <option value={6}>6</option>
+                    <option value={8}>8</option>
+                  </select>
+                </div>
+              )}
+              {algorithm === 'sudokuSolver' && (
+                <div className='flex items-center gap-2'>
+                  <label className='text-sm text-slate-400'>Tingkat Kesulitan</label>
+                  <select
+                    value={variables.sudokuSolver.difficulty}
+                    onChange={(e) => setVariables({ ...variables, sudokuSolver: { difficulty: e.target.value } })}
+                    className='bg-slate-700 text-slate-200 px-3 py-1 rounded border border-slate-600 text-sm'>
+                    <option value='easy'>Mudah</option>
+                    <option value='medium'>Sedang</option>
+                  </select>
+                </div>
+              )}
+              {algorithm === 'permutation' && (
+                <div className='flex items-center gap-2'>
+                  <label className='text-sm text-slate-400'>Array</label>
+                  <input
+                    type='text'
+                    value={permutationInput}
+                    onChange={(e) => setPermutationInput(e.target.value)}
+                    className='bg-slate-700 text-slate-200 px-3 py-1 rounded border border-slate-600 text-sm w-32'
+                    placeholder='1,2,3,4,5'
+                  />
+                </div>
+              )}
+              {algorithm === 'subsetSum' && (
+                <>
+                  <div className='flex items-center gap-2'>
+                    <label className='text-sm text-slate-400'>Array</label>
+                    <input
+                      type='text'
+                      value={subsetSumInput}
+                      onChange={(e) => setSubsetSumInput(e.target.value)}
+                      className='bg-slate-700 text-slate-200 px-3 py-1 rounded border border-slate-600 text-sm w-40'
+                      placeholder='3,34,4,12,5,2'
+                    />
+                  </div>
+                  <div className='flex items-center gap-2'>
+                    <label className='text-sm text-slate-400'>Target</label>
+                    <input
+                      type='number'
+                      value={variables.subsetSum.target}
+                      onChange={(e) => setVariables({ ...variables, subsetSum: { ...variables.subsetSum, target: parseInt(e.target.value) || 0 } })}
+                      className='bg-slate-700 text-slate-200 px-3 py-1 rounded border border-slate-600 text-sm w-20'
+                    />
+                  </div>
+                </>
+              )}
+              {algorithm === 'mazeSolver' && (
+                <div className='flex items-center gap-2'>
+                  <label className='text-sm text-slate-400'>Ukuran Maze</label>
+                  <select
+                    value={variables.mazeSolver.size}
+                    onChange={(e) => setVariables({ ...variables, mazeSolver: { size: parseInt(e.target.value) } })}
+                    className='bg-slate-700 text-slate-200 px-3 py-1 rounded border border-slate-600 text-sm'>
+                    <option value={5}>5x5</option>
+                    <option value={6}>6x6</option>
+                    <option value={7}>7x7</option>
+                  </select>
+                </div>
+              )}
+              <button
+                onClick={handleApply}
+                className='ml-auto bg-orange-500 hover:bg-orange-600 text-white text-sm font-bold px-4 py-1.5 rounded transition-colors'>
+                Terapkan
+              </button>
+            </div>
+          </div>
         </div>
 
         <div className='flex items-center gap-2'>
@@ -950,37 +1263,40 @@ const BTAlgo = () => {
 
       {/* TOP INFO CARD */}
       <div className='p-6 border-b border-slate-700 bg-[#151925]'>
-        <h2 className='text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-amber-200 mb-2'>{ALGO_INFO[algorithm].title}</h2>
-        <p className='text-sm text-slate-400 leading-relaxed max-w-2xl'>{ALGO_INFO[algorithm].description}</p>
+        {/* TWO COLUMN LAYOUT: INFO & PSEUDOCODE */}
+        <div className='grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4'>
+          {/* LEFT COLUMN: INFO */}
+          <div className='flex flex-col gap-4'>
+            <h2 className='text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-amber-200 mb-2'>{ALGO_INFO[algorithm].title}</h2>
+            <p className='text-sm text-slate-400 leading-relaxed max-w-2xl'>{ALGO_INFO[algorithm].description}</p>
+            <div className='flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700'>
+              <Activity
+                size={12}
+                className='text-orange-400'
+              />
+              Complexity: <span className='text-slate-200'>{ALGO_INFO[algorithm].complexity}</span>
+            </div>
+            <div className='flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700'>
+              <Undo2
+                size={12}
+                className='text-blue-400'
+              />
+              Use Case: <span className='text-slate-200'>{ALGO_INFO[algorithm].useCase}</span>
+            </div>
+          </div>
 
-        <div className='flex gap-4 mt-4'>
-          <div className='flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700'>
-            <Activity
-              size={12}
-              className='text-orange-400'
-            />
-            Complexity: <span className='text-slate-200'>{ALGO_INFO[algorithm].complexity}</span>
-          </div>
-          <div className='flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700'>
-            <Undo2
-              size={12}
-              className='text-blue-400'
-            />
-            Use Case: <span className='text-slate-200'>{ALGO_INFO[algorithm].useCase}</span>
-          </div>
-        </div>
-
-        {/* PSEUDOCODE */}
-        <div className='mt-4 bg-slate-900 rounded-lg border border-slate-700 overflow-hidden'>
-          <div className='px-4 py-2 bg-slate-800 border-b border-slate-700 flex items-center gap-2'>
-            <MessageSquare
-              size={12}
-              className='text-slate-400'
-            />
-            <span className='text-xs text-slate-400 font-bold'>PSEUDOCODE</span>
-          </div>
-          <div className='p-4 max-h-64 overflow-auto'>
-            <pre className='text-xs text-slate-300 font-mono whitespace-pre leading-relaxed'>{PSEUDOCODE[algorithm]}</pre>
+          {/* RIGHT COLUMN: Pseudocode */}
+          <div className='bg-slate-900 rounded-lg border border-slate-700 overflow-hidden'>
+            <div className='px-4 py-2 bg-slate-800 border-b border-slate-700 flex items-center gap-2'>
+              <MessageSquare
+                size={12}
+                className='text-slate-400'
+              />
+              <span className='text-xs text-slate-400 font-bold'>PSEUDOCODE</span>
+            </div>
+            <div className='p-4 max-h-64 overflow-auto'>
+              <pre className='text-xs text-slate-300 font-mono whitespace-pre leading-relaxed'>{PSEUDOCODE[algorithm]}</pre>
+            </div>
           </div>
         </div>
       </div>
@@ -1039,13 +1355,6 @@ const BTAlgo = () => {
 
         {/* RIGHT COLUMN */}
         <div className='lg:col-span-7 bg-[#1e1e1e] flex flex-col border-l border-slate-800'>
-          <div className='p-4 bg-[#252526]'>
-            <CodeViewer
-              code={ALGO_CPLUSPLUS[algorithm]}
-              activeLine={currentVisual.activeLine}
-            />
-          </div>
-
           <div className='p-6 border-b border-slate-800 bg-slate-900/50'>
             <div className='bg-slate-900 border border-orange-500/50 p-4 rounded-xl shadow-lg border-l-4 border-l-orange-500 flex items-start gap-4'>
               <div className='p-2 bg-orange-900/30 rounded-lg shrink-0'>
@@ -1059,6 +1368,13 @@ const BTAlgo = () => {
                 <p className='text-sm font-medium text-white leading-tight'>{currentVisual.description}</p>
               </div>
             </div>
+          </div>
+
+          <div className='p-4 bg-[#252526]'>
+            <CodeViewer
+              code={ALGO_CPLUSPLUS[algorithm]}
+              activeLine={currentVisual.activeLine}
+            />
           </div>
         </div>
       </main>

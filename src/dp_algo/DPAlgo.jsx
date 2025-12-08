@@ -201,8 +201,7 @@ int fibonacci(int n) {
       
       // Include item i if possible
       if (weights[i-1] <= w) {
-        dp[i][w] = max(dp[i][w],
-                      dp[i-1][w - weights[i-1]] + values[i-1]);
+        dp[i][w] = max(dp[i][w], dp[i-1][w - weights[i-1]] + values[i-1]);
       }
     }
   }
@@ -242,17 +241,19 @@ int knapsackOptimized(vector<int>& weights, vector<int>& values, int n, int W) {
 
 // Print actual LCS
 string printLCS(vector<vector<int>>& dp, string X, string Y, int i, int j) {
-  if (i == 0 || j == 0)
+  if (i == 0 || j == 0) {
     return "";
+  }
   
   if (X[i-1] == Y[j-1]) {
     return printLCS(dp, X, Y, i-1, j-1) + X[i-1];
   }
   
-  if (dp[i-1][j] > dp[i][j-1])
+  if (dp[i-1][j] > dp[i][j-1]) {
     return printLCS(dp, X, Y, i-1, j);
-  else
+  } else {
     return printLCS(dp, X, Y, i, j-1);
+  }
 }`,
 
   editDistance: `int editDistance(string str1, string str2) {
@@ -262,11 +263,13 @@ string printLCS(vector<vector<int>>& dp, string X, string Y, int i, int j) {
   vector<vector<int>> dp(m + 1, vector<int>(n + 1));
   
   // Base cases
-  for (int i = 0; i <= m; i++)
+  for (int i = 0; i <= m; i++) {
     dp[i][0] = i;
+  }
   
-  for (int j = 0; j <= n; j++)
+  for (int j = 0; j <= n; j++) {
     dp[0][j] = j;
+  }
   
   // Fill DP table
   for (int i = 1; i <= m; i++) {
@@ -455,36 +458,62 @@ const CodeViewer = ({ code, activeLine }) => {
   }
 
   const highlightCodePart = (text) => {
-    const words = text.split(/(\s+)/)
+    // Split by word boundaries but preserve operators and symbols
+    const tokens = text.split(/(\s+|[(){}\[\];,&<>*=+\-!|])/)
 
-    return words.map((word, idx) => {
-      if (/^\s+$/.test(word)) {
-        return <span key={idx}>{word}</span>
+    return tokens.map((token, idx) => {
+      // Skip whitespace and empty
+      if (!token || /^\s+$/.test(token)) {
+        return <span key={idx}>{token}</span>
       }
 
-      const keywords = ['void', 'int', 'bool', 'vector', 'string', 'for', 'while', 'if', 'else', 'return', 'break', 'continue', 'max', 'min']
+      // C++ Keywords (kontrol alur)
+      const keywords = ['void', 'int', 'bool', 'char', 'float', 'double', 'long', 'short', 'unsigned', 'for', 'while', 'do', 'if', 'else', 'switch', 'case', 'default', 'return', 'break', 'continue', 'goto', 'true', 'false', 'nullptr', 'NULL', 'const', 'static', 'auto', 'this', 'class', 'struct', 'enum', 'typedef', 'public', 'private', 'protected', 'virtual', 'override', 'final', 'vector', 'string', 'map', 'set', 'queue', 'stack', 'pair', 'array', 'max', 'min']
 
-      if (keywords.includes(word)) {
+      if (keywords.includes(token)) {
         return (
           <span
             key={idx}
             className='text-purple-400 font-bold'>
-            {word}
+            {token}
           </span>
         )
       }
 
-      if (/^\d+$/.test(word)) {
+      // Numbers
+      if (/^\d+$/.test(token)) {
         return (
           <span
             key={idx}
             className='text-green-400'>
-            {word}
+            {token}
           </span>
         )
       }
 
-      return <span key={idx}>{word}</span>
+      // Operators
+      if (/^[(){}\[\];,&<>*=+\-!|]+$/.test(token)) {
+        return (
+          <span
+            key={idx}
+            className='text-yellow-400'>
+            {token}
+          </span>
+        )
+      }
+
+      // Function names (word followed by parenthesis)
+      if (idx + 1 < tokens.length && tokens[idx + 1] === '(') {
+        return (
+          <span
+            key={idx}
+            className='text-blue-300'>
+            {token}
+          </span>
+        )
+      }
+
+      return <span key={idx}>{token}</span>
     })
   }
 
@@ -547,6 +576,17 @@ const DPAlgo = () => {
   const [isPlaying, setIsPlaying] = useState(false)
   const intervalRef = useRef(null)
 
+  // Dynamic Data States
+  const [fibN, setFibN] = useState(8)
+  const [knapWeights, setKnapWeights] = useState('2, 3, 4, 5')
+  const [knapValues, setKnapValues] = useState('3, 4, 5, 6')
+  const [knapW, setKnapW] = useState(8)
+  const [lcsStr1, setLcsStr1] = useState('ABCDGH')
+  const [lcsStr2, setLcsStr2] = useState('AEDFHR')
+  const [editStr1, setEditStr1] = useState('SUNDAY')
+  const [editStr2, setEditStr2] = useState('SATURDAY')
+  const [mcmDims, setMcmDims] = useState('10, 30, 5, 60')
+
   const snapshot = (table, activeCell, line, desc, rowHeaders = [], colHeaders = []) => ({
     table: table.map((row) => [...row]),
     activeCell: activeCell ? { ...activeCell } : null,
@@ -560,7 +600,7 @@ const DPAlgo = () => {
     let s = []
 
     if (algo === 'fibonacciDP') {
-      const n = 8
+      const n = fibN
       const dp = Array(n + 1).fill(null)
 
       s.push(
@@ -568,7 +608,7 @@ const DPAlgo = () => {
           [dp],
           null,
           1,
-          `Mulai Fibonacci DP untuk n=${n}`,
+          `Memulai Fibonacci DP untuk n=${n}`,
           ['dp'],
           Array.from({ length: n + 1 }, (_, i) => i)
         )
@@ -579,24 +619,26 @@ const DPAlgo = () => {
         snapshot(
           [dp],
           { row: 0, col: 0 },
-          4,
-          'Base case: dp[0] = 0',
+          6,
+          'Kasus dasar: dp[0] = 0',
           ['dp'],
           Array.from({ length: n + 1 }, (_, i) => i)
         )
       )
 
-      dp[1] = 1
-      s.push(
-        snapshot(
-          [dp],
-          { row: 0, col: 1 },
-          5,
-          'Base case: dp[1] = 1',
-          ['dp'],
-          Array.from({ length: n + 1 }, (_, i) => i)
+      if (n > 0) {
+        dp[1] = 1
+        s.push(
+          snapshot(
+            [dp],
+            { row: 0, col: 1 },
+            7,
+            'Kasus dasar: dp[1] = 1',
+            ['dp'],
+            Array.from({ length: n + 1 }, (_, i) => i)
+          )
         )
-      )
+      }
 
       for (let i = 2; i <= n; i++) {
         dp[i] = dp[i - 1] + dp[i - 2]
@@ -604,7 +646,7 @@ const DPAlgo = () => {
           snapshot(
             [dp],
             { row: 0, col: i },
-            8,
+            10,
             `dp[${i}] = dp[${i - 1}] + dp[${i - 2}] = ${dp[i - 1]} + ${dp[i - 2]} = ${dp[i]}`,
             ['dp'],
             Array.from({ length: n + 1 }, (_, i) => i)
@@ -616,17 +658,23 @@ const DPAlgo = () => {
         snapshot(
           [dp],
           null,
-          11,
+          13,
           `Selesai! Fibonacci(${n}) = ${dp[n]}`,
           ['dp'],
           Array.from({ length: n + 1 }, (_, i) => i)
         )
       )
     } else if (algo === 'knapsack01') {
-      const weights = [2, 3, 4, 5]
-      const values = [3, 4, 5, 6]
-      const n = weights.length
-      const W = 8
+      const weights = knapWeights
+        .split(',')
+        .map((x) => parseInt(x.trim()))
+        .filter((x) => !isNaN(x))
+      const values = knapValues
+        .split(',')
+        .map((x) => parseInt(x.trim()))
+        .filter((x) => !isNaN(x))
+      const n = Math.min(weights.length, values.length)
+      const W = knapW
 
       const dp = Array(n + 1)
         .fill(null)
@@ -637,7 +685,7 @@ const DPAlgo = () => {
           dp,
           null,
           1,
-          `Knapsack: ${n} items, capacity ${W}`,
+          `Knapsack: ${n} barang, kapasitas ${W}`,
           Array.from({ length: n + 1 }, (_, i) => (i === 0 ? '∅' : `i${i}`)),
           Array.from({ length: W + 1 }, (_, i) => i)
         )
@@ -655,8 +703,8 @@ const DPAlgo = () => {
                 snapshot(
                   dp,
                   { row: i, col: w },
-                  16,
-                  `dp[${i}][${w}] = max(${dp[i - 1][w]}, ${include}) = ${dp[i][w]} (include item ${i})`,
+                  12,
+                  `dp[${i}][${w}] = max(${dp[i - 1][w]}, ${include}) = ${dp[i][w]} (pilih barang ${i})`,
                   Array.from({ length: n + 1 }, (_, i) => (i === 0 ? '∅' : `i${i}`)),
                   Array.from({ length: W + 1 }, (_, i) => i)
                 )
@@ -666,8 +714,8 @@ const DPAlgo = () => {
                 snapshot(
                   dp,
                   { row: i, col: w },
-                  13,
-                  `dp[${i}][${w}] = ${dp[i][w]} (skip item ${i})`,
+                  8,
+                  `dp[${i}][${w}] = ${dp[i][w]} (lebih baik tidak pilih barang ${i})`,
                   Array.from({ length: n + 1 }, (_, i) => (i === 0 ? '∅' : `i${i}`)),
                   Array.from({ length: W + 1 }, (_, i) => i)
                 )
@@ -678,8 +726,8 @@ const DPAlgo = () => {
               snapshot(
                 dp,
                 { row: i, col: w },
-                13,
-                `dp[${i}][${w}] = ${dp[i][w]} (item too heavy)`,
+                8,
+                `dp[${i}][${w}] = ${dp[i][w]} (barang terlalu berat)`,
                 Array.from({ length: n + 1 }, (_, i) => (i === 0 ? '∅' : `i${i}`)),
                 Array.from({ length: W + 1 }, (_, i) => i)
               )
@@ -692,15 +740,15 @@ const DPAlgo = () => {
         snapshot(
           dp,
           null,
-          22,
-          `Max value = ${dp[n][W]}`,
+          17,
+          `Nilai maksimum = ${dp[n][W]}`,
           Array.from({ length: n + 1 }, (_, i) => (i === 0 ? '∅' : `i${i}`)),
           Array.from({ length: W + 1 }, (_, i) => i)
         )
       )
     } else if (algo === 'longestCommonSubsequence') {
-      const X = 'ABCDGH'
-      const Y = 'AEDFHR'
+      const X = lcsStr1
+      const Y = lcsStr2
       const m = X.length
       const n = Y.length
 
@@ -708,24 +756,24 @@ const DPAlgo = () => {
         .fill(null)
         .map(() => Array(n + 1).fill(0))
 
-      s.push(snapshot(dp, null, 1, `LCS("${X}", "${Y}")`, ['∅', ...X.split('')], ['∅', ...Y.split('')]))
+      s.push(snapshot(dp, null, 1, `LCS dari "${X}" dan "${Y}"`, ['∅', ...X.split('')], ['∅', ...Y.split('')]))
 
       for (let i = 1; i <= m; i++) {
         for (let j = 1; j <= n; j++) {
           if (X[i - 1] === Y[j - 1]) {
             dp[i][j] = dp[i - 1][j - 1] + 1
-            s.push(snapshot(dp, { row: i, col: j }, 18, `${X[i - 1]} == ${Y[j - 1]}: dp[${i}][${j}] = dp[${i - 1}][${j - 1}] + 1 = ${dp[i][j]}`, ['∅', ...X.split('')], ['∅', ...Y.split('')]))
+            s.push(snapshot(dp, { row: i, col: j }, 8, `${X[i - 1]} == ${Y[j - 1]}: dp[${i}][${j}] = dp[${i - 1}][${j - 1}] + 1 = ${dp[i][j]}`, ['∅', ...X.split('')], ['∅', ...Y.split('')]))
           } else {
             dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1])
-            s.push(snapshot(dp, { row: i, col: j }, 20, `${X[i - 1]} ≠ ${Y[j - 1]}: dp[${i}][${j}] = max(${dp[i - 1][j]}, ${dp[i][j - 1]}) = ${dp[i][j]}`, ['∅', ...X.split('')], ['∅', ...Y.split('')]))
+            s.push(snapshot(dp, { row: i, col: j }, 10, `${X[i - 1]} ≠ ${Y[j - 1]}: dp[${i}][${j}] = max(${dp[i - 1][j]}, ${dp[i][j - 1]}) = ${dp[i][j]}`, ['∅', ...X.split('')], ['∅', ...Y.split('')]))
           }
         }
       }
 
-      s.push(snapshot(dp, null, 24, `LCS length = ${dp[m][n]}`, ['∅', ...X.split('')], ['∅', ...Y.split('')]))
+      s.push(snapshot(dp, null, 15, `Panjang LCS = ${dp[m][n]}`, ['∅', ...X.split('')], ['∅', ...Y.split('')]))
     } else if (algo === 'editDistance') {
-      const str1 = 'SUNDAY'
-      const str2 = 'SATURDAY'
+      const str1 = editStr1
+      const str2 = editStr2
       const m = str1.length
       const n = str2.length
 
@@ -737,21 +785,84 @@ const DPAlgo = () => {
       for (let i = 0; i <= m; i++) dp[i][0] = i
       for (let j = 0; j <= n; j++) dp[0][j] = j
 
-      s.push(snapshot(dp, null, 1, `Edit Distance: "${str1}" → "${str2}"`, ['∅', ...str1.split('')], ['∅', ...str2.split('')]))
+      s.push(snapshot(dp, null, 1, `Jarak Edit: "${str1}" → "${str2}"`, ['∅', ...str1.split('')], ['∅', ...str2.split('')]))
 
       for (let i = 1; i <= m; i++) {
         for (let j = 1; j <= n; j++) {
           if (str1[i - 1] === str2[j - 1]) {
             dp[i][j] = dp[i - 1][j - 1]
-            s.push(snapshot(dp, { row: i, col: j }, 16, `${str1[i - 1]} == ${str2[j - 1]}: dp[${i}][${j}] = ${dp[i][j]} (no op)`, ['∅', ...str1.split('')], ['∅', ...str2.split('')]))
+            s.push(snapshot(dp, { row: i, col: j }, 20, `${str1[i - 1]} == ${str2[j - 1]}: dp[${i}][${j}] = ${dp[i][j]} (karakter sama)`, ['∅', ...str1.split('')], ['∅', ...str2.split('')]))
           } else {
             dp[i][j] = 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1])
-            s.push(snapshot(dp, { row: i, col: j }, 18, `${str1[i - 1]} ≠ ${str2[j - 1]}: dp[${i}][${j}] = 1 + min(del, ins, rep) = ${dp[i][j]}`, ['∅', ...str1.split('')], ['∅', ...str2.split('')]))
+            s.push(snapshot(dp, { row: i, col: j }, 22, `${str1[i - 1]} ≠ ${str2[j - 1]}: dp[${i}][${j}] = 1 + min(del, ins, rep) = ${dp[i][j]}`, ['∅', ...str1.split('')], ['∅', ...str2.split('')]))
           }
         }
       }
 
-      s.push(snapshot(dp, null, 25, `Min operations = ${dp[m][n]}`, ['∅', ...str1.split('')], ['∅', ...str2.split('')]))
+      s.push(snapshot(dp, null, 31, `Operasi minimum = ${dp[m][n]}`, ['∅', ...str1.split('')], ['∅', ...str2.split('')]))
+    } else if (algo === 'matrixChainMultiplication') {
+      const p = mcmDims
+        .split(',')
+        .map((x) => parseInt(x.trim()))
+        .filter((x) => !isNaN(x))
+      const n = p.length
+
+      const dp = Array(n)
+        .fill(null)
+        .map(() => Array(n).fill(0))
+
+      const numMatrices = n - 1
+
+      s.push(
+        snapshot(
+          dp,
+          null,
+          1,
+          `Matrix Chain Order: ${numMatrices} matrix`,
+          Array.from({ length: n }, (_, i) => i),
+          Array.from({ length: n }, (_, i) => i)
+        )
+      )
+
+      // L is chain length
+      for (let L = 2; L < n; L++) {
+        for (let i = 1; i < n - L + 1; i++) {
+          let j = i + L - 1
+          dp[i][j] = Number.MAX_SAFE_INTEGER
+
+          for (let k = i; k < j; k++) {
+            // q = m[i,k] + m[k+1,j] + p[i-1]p[k]p[j]
+            let cost = dp[i][k] + dp[k + 1][j] + p[i - 1] * p[k] * p[j]
+
+            if (cost < dp[i][j]) {
+              dp[i][j] = cost
+              // sTable[i][j] = k
+
+              s.push(
+                snapshot(
+                  dp,
+                  { row: i, col: j },
+                  14,
+                  `Split at k=${k}: Cost ${cost}`,
+                  Array.from({ length: n }, (_, i) => i),
+                  Array.from({ length: n }, (_, i) => i)
+                )
+              )
+            }
+          }
+        }
+      }
+
+      s.push(
+        snapshot(
+          dp,
+          null,
+          22,
+          `Min Multiplications: ${dp[1][n - 1]}`,
+          Array.from({ length: n }, (_, i) => i),
+          Array.from({ length: n }, (_, i) => i)
+        )
+      )
     } else {
       s.push(snapshot([[]], null, 1, `${ALGO_INFO[algo].title} - Visualisasi dalam pengembangan`, [], []))
     }
@@ -769,7 +880,7 @@ const DPAlgo = () => {
 
   useEffect(() => {
     reset()
-  }, [algorithm])
+  }, [algorithm, fibN, knapWeights, knapValues, knapW, lcsStr1, lcsStr2, editStr1, editStr2, mcmDims])
 
   useEffect(() => {
     if (isPlaying) {
@@ -833,6 +944,91 @@ const DPAlgo = () => {
               />
             </div>
           </div>
+
+          {/* DYNAMIC INPUTS */}
+          {algorithm === 'fibonacciDP' && (
+            <>
+              <label className='text-xs text-slate-400 font-bold'>N:</label>
+              <input
+                type='number'
+                value={fibN}
+                onChange={(e) => setFibN(Math.min(20, Math.max(0, parseInt(e.target.value) || 0)))}
+                className='w-16 bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-sm text-white font-mono focus:ring-2 focus:ring-orange-500/50 outline-none'
+                max={20}
+              />
+            </>
+          )}
+
+          {algorithm === 'knapsack01' && (
+            <>
+              <div className='flex flex-col gap-1'>
+                <div className='flex items-center gap-2'>
+                  <label className='text-[10px] text-slate-400 font-bold w-12'>Berat:</label>
+                  <input
+                    type='text'
+                    value={knapWeights}
+                    onChange={(e) => setKnapWeights(e.target.value)}
+                    className='w-32 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-white font-mono focus:ring-2 focus:ring-orange-500/50 outline-none'
+                    placeholder='2, 3, 4'
+                  />
+                </div>
+                <div className='flex items-center gap-2'>
+                  <label className='text-[10px] text-slate-400 font-bold w-12'>Nilai:</label>
+                  <input
+                    type='text'
+                    value={knapValues}
+                    onChange={(e) => setKnapValues(e.target.value)}
+                    className='w-32 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-white font-mono focus:ring-2 focus:ring-orange-500/50 outline-none'
+                    placeholder='3, 4, 5'
+                  />
+                </div>
+              </div>
+              <label className='text-xs text-slate-400 font-bold ml-2'>Kap(W):</label>
+              <input
+                type='number'
+                value={knapW}
+                onChange={(e) => setKnapW(Math.min(15, Math.max(1, parseInt(e.target.value) || 1)))}
+                className='w-14 bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-sm text-white font-mono focus:ring-2 focus:ring-orange-500/50 outline-none'
+                max={15}
+              />
+            </>
+          )}
+
+          {(algorithm === 'longestCommonSubsequence' || algorithm === 'editDistance') && (
+            <div className='flex flex-col gap-1'>
+              <div className='flex items-center gap-2'>
+                <label className='text-[10px] text-slate-400 font-bold w-8'>Str1:</label>
+                <input
+                  type='text'
+                  value={algorithm === 'longestCommonSubsequence' ? lcsStr1 : editStr1}
+                  onChange={(e) => (algorithm === 'longestCommonSubsequence' ? setLcsStr1(e.target.value.toUpperCase().slice(0, 10)) : setEditStr1(e.target.value.toUpperCase().slice(0, 10)))}
+                  className='w-28 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-white font-mono focus:ring-2 focus:ring-orange-500/50 outline-none'
+                />
+              </div>
+              <div className='flex items-center gap-2'>
+                <label className='text-[10px] text-slate-400 font-bold w-8'>Str2:</label>
+                <input
+                  type='text'
+                  value={algorithm === 'longestCommonSubsequence' ? lcsStr2 : editStr2}
+                  onChange={(e) => (algorithm === 'longestCommonSubsequence' ? setLcsStr2(e.target.value.toUpperCase().slice(0, 10)) : setEditStr2(e.target.value.toUpperCase().slice(0, 10)))}
+                  className='w-28 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-white font-mono focus:ring-2 focus:ring-orange-500/50 outline-none'
+                />
+              </div>
+            </div>
+          )}
+
+          {algorithm === 'matrixChainMultiplication' && (
+            <>
+              <label className='text-xs text-slate-400 font-bold'>Dimensi:</label>
+              <input
+                type='text'
+                value={mcmDims}
+                onChange={(e) => setMcmDims(e.target.value)}
+                className='w-40 bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-sm text-white font-mono focus:ring-2 focus:ring-orange-500/50 outline-none'
+                placeholder='10, 30, 5, 60'
+              />
+            </>
+          )}
         </div>
 
         <div className='flex items-center gap-2'>
@@ -847,37 +1043,40 @@ const DPAlgo = () => {
 
       {/* TOP INFO CARD */}
       <div className='p-6 border-b border-slate-700 bg-[#151925]'>
-        <h2 className='text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-amber-200 mb-2'>{ALGO_INFO[algorithm].title}</h2>
-        <p className='text-sm text-slate-400 leading-relaxed max-w-2xl'>{ALGO_INFO[algorithm].description}</p>
+        {/* TWO COLUMN LAYOUT: INFO & PSEUDOCODE */}
+        <div className='grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4'>
+          {/* LEFT COLUMN: INFO */}
+          <div className='flex flex-col gap-4'>
+            <h2 className='text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-amber-200 mb-2'>{ALGO_INFO[algorithm].title}</h2>
+            <p className='text-sm text-slate-400 leading-relaxed max-w-2xl'>{ALGO_INFO[algorithm].description}</p>
+            <div className='flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700'>
+              <Activity
+                size={12}
+                className='text-orange-400'
+              />
+              Complexity: <span className='text-slate-200'>{ALGO_INFO[algorithm].complexity}</span>
+            </div>
+            <div className='flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700'>
+              <BrainCircuit
+                size={12}
+                className='text-blue-400'
+              />
+              Use Case: <span className='text-slate-200'>{ALGO_INFO[algorithm].useCase}</span>
+            </div>
+          </div>
 
-        <div className='flex gap-4 mt-4'>
-          <div className='flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700'>
-            <Activity
-              size={12}
-              className='text-orange-400'
-            />
-            Complexity: <span className='text-slate-200'>{ALGO_INFO[algorithm].complexity}</span>
-          </div>
-          <div className='flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700'>
-            <BrainCircuit
-              size={12}
-              className='text-blue-400'
-            />
-            Use Case: <span className='text-slate-200'>{ALGO_INFO[algorithm].useCase}</span>
-          </div>
-        </div>
-
-        {/* PSEUDOCODE */}
-        <div className='mt-4 bg-slate-900 rounded-lg border border-slate-700 overflow-hidden'>
-          <div className='px-4 py-2 bg-slate-800 border-b border-slate-700 flex items-center gap-2'>
-            <MessageSquare
-              size={12}
-              className='text-slate-400'
-            />
-            <span className='text-xs text-slate-400 font-bold'>PSEUDOCODE</span>
-          </div>
-          <div className='p-4 max-h-64 overflow-auto'>
-            <pre className='text-xs text-slate-300 font-mono whitespace-pre leading-relaxed'>{PSEUDOCODE[algorithm]}</pre>
+          {/* RIGHT COLUMN: PSEUDOCODE */}
+          <div className='bg-slate-900 rounded-lg border border-slate-700 overflow-hidden'>
+            <div className='px-4 py-2 bg-slate-800 border-b border-slate-700 flex items-center gap-2'>
+              <MessageSquare
+                size={12}
+                className='text-slate-400'
+              />
+              <span className='text-xs text-slate-400 font-bold'>PSEUDOCODE</span>
+            </div>
+            <div className='p-4 max-h-64 overflow-auto'>
+              <pre className='text-xs text-slate-300 font-mono whitespace-pre leading-relaxed'>{PSEUDOCODE[algorithm]}</pre>
+            </div>
           </div>
         </div>
       </div>
@@ -937,13 +1136,6 @@ const DPAlgo = () => {
 
         {/* RIGHT COLUMN */}
         <div className='lg:col-span-7 bg-[#1e1e1e] flex flex-col border-l border-slate-800'>
-          <div className='p-4 bg-[#252526]'>
-            <CodeViewer
-              code={ALGO_CPLUSPLUS[algorithm]}
-              activeLine={currentVisual.activeLine}
-            />
-          </div>
-
           <div className='p-6 border-b border-slate-800 bg-slate-900/50'>
             <div className='bg-slate-900 border border-orange-500/50 p-4 rounded-xl shadow-lg border-l-4 border-l-orange-500 flex items-start gap-4'>
               <div className='p-2 bg-orange-900/30 rounded-lg shrink-0'>
@@ -957,6 +1149,13 @@ const DPAlgo = () => {
                 <p className='text-sm font-medium text-white leading-tight'>{currentVisual.description}</p>
               </div>
             </div>
+          </div>
+
+          <div className='p-4 bg-[#252526]'>
+            <CodeViewer
+              code={ALGO_CPLUSPLUS[algorithm]}
+              activeLine={currentVisual.activeLine}
+            />
           </div>
         </div>
       </main>

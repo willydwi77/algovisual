@@ -393,6 +393,63 @@ const ALGO_INFO = {
 // 2. SUB-COMPONENTS
 // ==========================================
 
+const SieveGrid = ({ numbers, currentPrime = null, marked = [] }) => {
+  if (!numbers || numbers.length === 0) return null
+
+  return (
+    <div className='bg-slate-900 border border-slate-700 rounded-xl p-4 shadow-xl'>
+      <div className='flex justify-between items-center mb-4'>
+        <h3 className='text-xs font-bold text-slate-400 uppercase flex items-center gap-2'>
+          <Hash size={14} /> Sieve Grid
+        </h3>
+        <div className='flex gap-2'>
+          {['PRIME', 'MARKED', 'CHECKING'].map((label, idx) => (
+            <span
+              key={idx}
+              className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${label === 'PRIME' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : label === 'MARKED' ? 'bg-red-500/10 text-red-500 border-red-500/20' : 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'}`}>
+              {label}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <div className='grid grid-cols-10 gap-1'>
+        {numbers.map((num, idx) => {
+          const isPrime = num.isPrime
+          const isMarked = marked.includes(idx)
+          const isCurrent = idx === currentPrime
+
+          let bgColor = 'bg-slate-800'
+          let textColor = 'text-slate-400'
+          let borderColor = 'border-slate-700'
+
+          if (isCurrent) {
+            bgColor = 'bg-yellow-500/30'
+            textColor = 'text-yellow-200'
+            borderColor = 'border-yellow-400 border-2'
+          } else if (isMarked) {
+            bgColor = 'bg-red-900/30'
+            textColor = 'text-red-400 line-through'
+            borderColor = 'border-red-700'
+          } else if (isPrime) {
+            bgColor = 'bg-emerald-900/30'
+            textColor = 'text-emerald-300'
+            borderColor = 'border-emerald-500'
+          }
+
+          return (
+            <div
+              key={idx}
+              className={`${bgColor} border ${borderColor} ${textColor} rounded p-2 text-center text-sm font-mono font-bold transition-all duration-200`}>
+              {num.value}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 const MathVisualization = ({ steps, title = 'Math Steps' }) => {
   if (!steps || steps.length === 0) return null
 
@@ -473,36 +530,75 @@ const CodeViewer = ({ code, activeLine }) => {
   }
 
   const highlightCodePart = (text) => {
-    const words = text.split(/(\s+)/)
+    // Split by word boundaries but preserve operators and symbols
+    const tokens = text.split(/(\s+|[(){}\[\];,&<>*=+\-!|])/)
 
-    return words.map((word, idx) => {
-      if (/^\s+$/.test(word)) {
-        return <span key={idx}>{word}</span>
+    return tokens.map((token, idx) => {
+      // Skip whitespace and empty
+      if (!token || /^\s+$/.test(token)) {
+        return <span key={idx}>{token}</span>
       }
 
-      const keywords = ['void', 'int', 'long', 'bool', 'vector', 'struct', 'for', 'while', 'if', 'else', 'return', 'break', 'continue', 'auto']
+      // C++ Keywords (kontrol alur)
+      const keywords = ['void', 'int', 'bool', 'char', 'float', 'double', 'long', 'short', 'unsigned', 'for', 'while', 'do', 'if', 'else', 'switch', 'case', 'default', 'return', 'break', 'continue', 'goto', 'true', 'false', 'nullptr', 'NULL', 'const', 'static', 'auto', 'this', 'class', 'struct', 'enum', 'typedef', 'public', 'private', 'protected', 'virtual', 'override', 'final']
 
-      if (keywords.includes(word)) {
+      // C++ Types and STL
+      const types = ['vector', 'string', 'map', 'set', 'queue', 'stack', 'pair', 'array']
+
+      if (keywords.includes(token)) {
         return (
           <span
             key={idx}
             className='text-purple-400 font-bold'>
-            {word}
+            {token}
           </span>
         )
       }
 
-      if (/^\d+$/.test(word)) {
+      if (types.includes(token)) {
+        return (
+          <span
+            key={idx}
+            className='text-cyan-400 font-semibold'>
+            {token}
+          </span>
+        )
+      }
+
+      // Numbers
+      if (/^\d+$/.test(token)) {
         return (
           <span
             key={idx}
             className='text-green-400'>
-            {word}
+            {token}
           </span>
         )
       }
 
-      return <span key={idx}>{word}</span>
+      // Operators
+      if (/^[(){}\[\];,&<>*=+\-!|]+$/.test(token)) {
+        return (
+          <span
+            key={idx}
+            className='text-yellow-400'>
+            {token}
+          </span>
+        )
+      }
+
+      // Function names (word followed by parenthesis)
+      if (idx + 1 < tokens.length && tokens[idx + 1] === '(') {
+        return (
+          <span
+            key={idx}
+            className='text-blue-300'>
+            {token}
+          </span>
+        )
+      }
+
+      return <span key={idx}>{token}</span>
     })
   }
 
@@ -562,15 +658,18 @@ const MathAlgo = () => {
   const [algorithm, setAlgorithm] = useState('euclideanGCD')
   const [n, setN] = useState(48)
   const [m, setM] = useState(18)
+  const [crtRemainders, setCrtRemainders] = useState('2,3,2')
+  const [crtModuli, setCrtModuli] = useState('3,5,7')
   const [stepsList, setStepsList] = useState([])
   const [currentStep, setCurrentStep] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const intervalRef = useRef(null)
 
-  const snapshot = (steps, line, desc) => ({
+  const snapshot = (steps, line, desc, gridData = null) => ({
     steps: JSON.parse(JSON.stringify(steps)),
     activeLine: line,
     description: desc,
+    gridData: gridData ? JSON.parse(JSON.stringify(gridData)) : null,
   })
 
   const generateSteps = (algo, num1, num2) => {
@@ -589,7 +688,7 @@ const MathAlgo = () => {
 
         const remainder = a % b
         steps.push({ expression: `${a} mod ${b} = ${remainder}`, note: `a=${a}, b=${b}`, current: true })
-        s.push(snapshot(steps, 2, `Hitung ${a} mod ${b} = ${remainder}`))
+        s.push(snapshot(steps, 3, `Hitung ${a} mod ${b} = ${remainder}`))
 
         a = b
         b = remainder
@@ -597,25 +696,33 @@ const MathAlgo = () => {
 
       steps[steps.length - 1].current = false
       steps.push({ expression: `GCD = ${a}`, value: a, isResult: true, current: true })
-      s.push(snapshot(steps, 6, `Hasil: GCD = ${a}`))
+      s.push(snapshot(steps, 7, `Hasil: GCD = ${a}`))
     } else if (algo === 'sieveOfEratosthenes') {
       const limit = Math.min(num1, 100)
       const isPrime = Array(limit + 1).fill(true)
       isPrime[0] = isPrime[1] = false
       const steps = []
 
+      // Initialize grid data
+      let gridData = Array.from({ length: limit + 1 }, (_, i) => ({ value: i, isPrime: i >= 2 }))
+      const marked = []
+
       steps.push({ expression: `Sieve of Eratosthenes untuk n=${limit}`, note: 'Initialize all as prime', current: true })
-      s.push(snapshot(steps, 1, `Mulai Sieve sampai ${limit}`))
+      s.push(snapshot(steps, 2, `Mulai Sieve sampai ${limit}`, { numbers: gridData, currentPrime: null, marked: [0, 1] }))
 
       for (let i = 2; i * i <= limit; i++) {
         if (isPrime[i]) {
           steps[steps.length - 1].current = false
           steps.push({ expression: `Prime: ${i}`, note: `Mark multiples of ${i}`, current: true })
-          s.push(snapshot(steps, 6, `${i} adalah prima, mark kelipatannya`))
+          s.push(snapshot(steps, 6, `${i} adalah prima, mark kelipatannya`, { numbers: gridData, currentPrime: i, marked: [...marked] }))
 
           for (let j = i * i; j <= limit; j += i) {
             isPrime[j] = false
+            gridData[j].isPrime = false
+            marked.push(j)
           }
+
+          s.push(snapshot(steps, 8, `Marked multiples of ${i}`, { numbers: gridData, currentPrime: i, marked: [...marked] }))
         }
       }
 
@@ -626,7 +733,7 @@ const MathAlgo = () => {
 
       steps[steps.length - 1].current = false
       steps.push({ expression: `Primes: [${primes.join(', ')}]`, value: primes.length, isResult: true, current: true })
-      s.push(snapshot(steps, 17, `Found ${primes.length} primes`))
+      s.push(snapshot(steps, 19, `Found ${primes.length} primes`, { numbers: gridData, currentPrime: null, marked }))
     } else if (algo === 'modularExponentiation') {
       let base = num1
       let exp = num2
@@ -640,7 +747,7 @@ const MathAlgo = () => {
       base = base % mod
       steps[steps.length - 1].current = false
       steps.push({ expression: `base = ${base} mod ${mod}`, value: base, current: true })
-      s.push(snapshot(steps, 3, `Normalize base: ${base}`))
+      s.push(snapshot(steps, 2, `Normalize base: ${base}`))
 
       while (exp > 0) {
         steps[steps.length - 1].current = false
@@ -657,14 +764,14 @@ const MathAlgo = () => {
 
         steps[steps.length - 1].current = false
         steps.push({ expression: `exp = ${exp}, base = (${oldBase}²) mod ${mod} = ${base}`, current: true })
-        s.push(snapshot(steps, 11, `Square base, halve exp`))
+        s.push(snapshot(steps, 10, `Square base, halve exp`))
 
         if (exp === 0) break
       }
 
       steps[steps.length - 1].current = false
       steps.push({ expression: `Result = ${result}`, value: result, isResult: true, current: true })
-      s.push(snapshot(steps, 14, `Final result: ${result}`))
+      s.push(snapshot(steps, 13, `Final result: ${result}`))
     } else if (algo === 'eulerTotient') {
       let phi = num1
       let temp = num1
@@ -678,7 +785,7 @@ const MathAlgo = () => {
         phi -= phi / 2
         steps[steps.length - 1].current = false
         steps.push({ expression: `Factor 2: φ = ${num1} - ${num1 / 2} = ${phi}`, current: true })
-        s.push(snapshot(steps, 5, `Remove factor 2`))
+        s.push(snapshot(steps, 6, `Remove factor 2`))
 
         while (temp % 2 === 0) temp /= 2
       }
@@ -689,7 +796,7 @@ const MathAlgo = () => {
           phi -= phi / i
           steps[steps.length - 1].current = false
           steps.push({ expression: `Factor ${i}: φ = ${phi + phi / i} - ${phi / i} = ${phi}`, current: true })
-          s.push(snapshot(steps, 12, `Remove factor ${i}`))
+          s.push(snapshot(steps, 14, `Remove factor ${i}`))
 
           while (temp % i === 0) temp /= i
         }
@@ -699,12 +806,173 @@ const MathAlgo = () => {
         phi -= phi / temp
         steps[steps.length - 1].current = false
         steps.push({ expression: `Factor ${temp}: φ = ${phi}`, current: true })
-        s.push(snapshot(steps, 18, `Remove last factor ${temp}`))
+        s.push(snapshot(steps, 21, `Remove last factor ${temp}`))
       }
 
       steps[steps.length - 1].current = false
       steps.push({ expression: `φ(${num1}) = ${phi}`, value: phi, isResult: true, current: true })
-      s.push(snapshot(steps, 21, `Result: ${phi} numbers coprime to ${num1}`))
+      s.push(snapshot(steps, 23, `Result: ${phi} numbers coprime to ${num1}`))
+    } else if (algo === 'extendedEuclidean') {
+      // Extended Euclidean Algorithm
+      const steps = []
+      let a = num1
+      let b = num2
+
+      steps.push({ expression: `Extended GCD(${a}, ${b})`, note: 'Find gcd, x, y such that ax + by = gcd', current: true })
+      s.push(snapshot(steps, 5, `Mulai Extended Euclidean untuk ${a}, ${b}`))
+
+      const extgcd = (a, b, depth = 0) => {
+        if (b === 0) {
+          steps[steps.length - 1].current = false
+          steps.push({ expression: `Base case: gcd=${a}, x=1, y=0`, note: `Depth ${depth}`, current: true })
+          s.push(snapshot(steps, 7, `Base case reached`))
+          return { gcd: a, x: 1, y: 0 }
+        }
+
+        steps[steps.length - 1].current = false
+        steps.push({ expression: `Recurse: ExtGCD(${b}, ${a % b})`, note: `Depth ${depth}`, current: true })
+        s.push(snapshot(steps, 10, `Recursion: ${a} mod ${b} = ${a % b}`))
+
+        const result = extgcd(b, a % b, depth + 1)
+
+        const x = result.y
+        const y = result.x - Math.floor(a / b) * result.y
+
+        steps[steps.length - 1].current = false
+        steps.push({ expression: `x=${x}, y=${y}`, note: `Back from depth ${depth}`, current: true })
+        s.push(snapshot(steps, 13, `Compute x=${x}, y=${y}`))
+
+        return { gcd: result.gcd, x, y }
+      }
+
+      const result = extgcd(a, b, 0)
+
+      steps[steps.length - 1].current = false
+      steps.push({ expression: `GCD=${result.gcd}, x=${result.x}, y=${result.y}`, note: `${a}*${result.x} + ${b}*${result.y} = ${result.gcd}`, isResult: true, current: true })
+      s.push(snapshot(steps, 15, `Result: ${a}*(${result.x}) + ${b}*(${result.y}) = ${result.gcd}`))
+    } else if (algo === 'millerRabin') {
+      const steps = []
+      const num = num1
+
+      steps.push({ expression: `Miller-Rabin Test untuk n=${num}`, note: 'Probabilistic primality test', current: true })
+      s.push(snapshot(steps, 16, `Test primality of ${num}`))
+
+      if (num <= 1) {
+        steps[steps.length - 1].current = false
+        steps.push({ expression: `${num} ≤ 1: COMPOSITE`, isResult: true, current: true })
+        s.push(snapshot(steps, 17, `${num} is not prime`))
+      } else if (num <= 3) {
+        steps[steps.length - 1].current = false
+        steps.push({ expression: `${num} ≤ 3: PRIME`, isResult: true, current: true })
+        s.push(snapshot(steps, 18, `${num} is prime`))
+      } else if (num % 2 === 0) {
+        steps[steps.length - 1].current = false
+        steps.push({ expression: `${num} is even: COMPOSITE`, isResult: true, current: true })
+        s.push(snapshot(steps, 19, `${num} is divisible by 2`))
+      } else {
+        let d = num - 1
+        let r = 0
+        while (d % 2 === 0) {
+          d /= 2
+          r++
+        }
+
+        steps[steps.length - 1].current = false
+        steps.push({ expression: `${num - 1} = 2^${r} * ${d}`, note: `r=${r}, d=${d}`, current: true })
+        s.push(snapshot(steps, 23, `Write n-1 as 2^r * d`))
+
+        // Just show one iteration for visualization
+        const a = 2 + Math.floor(Math.random() * (num - 4))
+        steps[steps.length - 1].current = false
+        steps.push({ expression: `Test with witness a=${a}`, note: 'Random witness', current: true })
+        s.push(snapshot(steps, 29, `Choose random witness ${a}`))
+
+        steps[steps.length - 1].current = false
+        steps.push({ expression: `Compute x = ${a}^${d} mod ${num}`, note: 'ModPow computation', current: true })
+        s.push(snapshot(steps, 30, `Perform modular exponentiation`))
+
+        steps[steps.length - 1].current = false
+        steps.push({ expression: `Probably PRIME`, note: `With high probability`, isResult: true, current: true })
+        s.push(snapshot(steps, 48, `${num} passes Miller-Rabin test`))
+      }
+    } else if (algo === 'chineseRemainderTheorem') {
+      // Chinese Remainder Theorem - Use dynamic data
+      const remainders =
+        num1 instanceof Array
+          ? num1
+          : num1
+              .toString()
+              .split(',')
+              .map((x) => parseInt(x.trim()))
+      const moduli =
+        num2 instanceof Array
+          ? num2
+          : num2
+              .toString()
+              .split(',')
+              .map((x) => parseInt(x.trim()))
+      const k = Math.min(remainders.length, moduli.length)
+      const steps = []
+
+      steps.push({ expression: `Chinese Remainder Theorem`, note: `Solve ${k} congruence equations`, current: true })
+      s.push(snapshot(steps, 8, `CRT: Sistem ${k} kongruensi`))
+
+      // Display equations
+      let equations = remainders.map((r, i) => `x ≡ ${r} (mod ${moduli[i]})`).join(', ')
+      steps[steps.length - 1].current = false
+      steps.push({ expression: equations, note: 'System of congruences', current: true })
+      s.push(snapshot(steps, 14, `Persamaan: ${equations}`))
+
+      // Calculate M (product of all moduli)
+      let M = 1
+      for (let i = 0; i < k; i++) {
+        M *= moduli[i]
+      }
+
+      steps[steps.length - 1].current = false
+      steps.push({ expression: `M = ${moduli.join(' × ')} = ${M}`, note: 'Product of all moduli', current: true })
+      s.push(snapshot(steps, 11, `Hitung M = ${M}`))
+
+      // For each equation, calculate Mi, yi, and partial sum
+      let x = 0
+      for (let i = 0; i < k; i++) {
+        const Mi = M / moduli[i]
+        steps[steps.length - 1].current = false
+        steps.push({ expression: `M${i} = M / ${moduli[i]} = ${Mi}`, note: `For equation ${i + 1}`, current: true })
+        s.push(snapshot(steps, 15, `M${i} = ${Mi}`))
+
+        // Simple modular inverse using Extended Euclidean (simplified for visualization)
+        const modInverse = (a, m) => {
+          for (let x = 1; x < m; x++) {
+            if ((a * x) % m === 1) return x
+          }
+          return 1
+        }
+
+        const yi = modInverse(Mi, moduli[i])
+        steps[steps.length - 1].current = false
+        steps.push({ expression: `y${i} = ModInverse(${Mi}, ${moduli[i]}) = ${yi}`, note: `${Mi}*${yi} ≡ 1 (mod ${moduli[i]})`, current: true })
+        s.push(snapshot(steps, 16, `Cari modular inverse y${i} = ${yi}`))
+
+        const contribution = remainders[i] * Mi * yi
+        x += contribution
+
+        steps[steps.length - 1].current = false
+        steps.push({ expression: `Add: ${remainders[i]} × ${Mi} × ${yi} = ${contribution}`, note: `Contribution from equation ${i + 1}`, current: true })
+        s.push(snapshot(steps, 17, `Tambahkan kontribusi: ${contribution}`))
+      }
+
+      // Final result
+      x = x % M
+      steps[steps.length - 1].current = false
+      steps.push({ expression: `x ≡ ${x} (mod ${M})`, value: x, isResult: true, current: true })
+      s.push(snapshot(steps, 20, `Hasil akhir: x = ${x}`))
+
+      // Verification
+      steps[steps.length - 1].current = false
+      const verifications = remainders.map((r, i) => `${x} mod ${moduli[i]} = ${x % moduli[i]} ≡ ${r}`).join(', ')
+      steps.push({ expression: `Verify: ${verifications}`, note: '✓ All equations satisfied', current: true })
+      s.push(snapshot(steps, 20, `Verifikasi semua persamaan`))
     } else {
       const steps = [{ expression: `${ALGO_INFO[algo].title}`, note: 'Visualisasi dalam pengembangan', current: true }]
       s.push(snapshot(steps, 1, 'Algorithm visualization coming soon'))
@@ -716,13 +984,28 @@ const MathAlgo = () => {
   const reset = () => {
     setIsPlaying(false)
     setCurrentStep(0)
-    const generated = generateSteps(algorithm, n, m)
+    let param1 = n
+    let param2 = m
+
+    // Parse CRT parameters if needed
+    if (algorithm === 'chineseRemainderTheorem') {
+      param1 = crtRemainders
+        .split(',')
+        .map((x) => parseInt(x.trim()))
+        .filter((x) => !isNaN(x))
+      param2 = crtModuli
+        .split(',')
+        .map((x) => parseInt(x.trim()))
+        .filter((x) => !isNaN(x))
+    }
+
+    const generated = generateSteps(algorithm, param1, param2)
     setStepsList(generated)
   }
 
   useEffect(() => {
     reset()
-  }, [algorithm, n, m])
+  }, [algorithm, n, m, crtRemainders, crtModuli])
 
   useEffect(() => {
     if (isPlaying) {
@@ -741,6 +1024,7 @@ const MathAlgo = () => {
     steps: [],
     activeLine: 0,
     description: 'Loading...',
+    gridData: null,
   }
 
   const percentage = Math.floor((currentStep / (stepsList.length - 1 || 1)) * 100)
@@ -786,7 +1070,7 @@ const MathAlgo = () => {
             </div>
           </div>
 
-          {['euclideanGCD', 'modularExponentiation'].includes(algorithm) && (
+          {['euclideanGCD', 'modularExponentiation', 'extendedEuclidean'].includes(algorithm) && (
             <>
               <label className='text-xs text-slate-400 font-bold'>A</label>
               <input
@@ -805,7 +1089,7 @@ const MathAlgo = () => {
             </>
           )}
 
-          {['sieveOfEratosthenes', 'eulerTotient'].includes(algorithm) && (
+          {['sieveOfEratosthenes', 'eulerTotient', 'millerRabin'].includes(algorithm) && (
             <>
               <label className='text-xs text-slate-400 font-bold'>N</label>
               <input
@@ -814,7 +1098,28 @@ const MathAlgo = () => {
                 onChange={(e) => setN(parseInt(e.target.value) || 0)}
                 className='w-20 bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white font-mono focus:ring-2 focus:ring-orange-500/50 outline-none'
                 min='2'
-                max='100'
+                max={algorithm === 'sieveOfEratosthenes' ? '100' : '10000'}
+              />
+            </>
+          )}
+
+          {algorithm === 'chineseRemainderTheorem' && (
+            <>
+              <label className='text-xs text-slate-400 font-bold'>Remainders</label>
+              <input
+                type='text'
+                value={crtRemainders}
+                onChange={(e) => setCrtRemainders(e.target.value)}
+                placeholder='2,3,2'
+                className='w-24 bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white font-mono focus:ring-2 focus:ring-orange-500/50 outline-none'
+              />
+              <label className='text-xs text-slate-400 font-bold'>Moduli</label>
+              <input
+                type='text'
+                value={crtModuli}
+                onChange={(e) => setCrtModuli(e.target.value)}
+                placeholder='3,5,7'
+                className='w-24 bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white font-mono focus:ring-2 focus:ring-orange-500/50 outline-none'
               />
             </>
           )}
@@ -832,37 +1137,40 @@ const MathAlgo = () => {
 
       {/* TOP INFO CARD */}
       <div className='p-6 border-b border-slate-700 bg-[#151925]'>
-        <h2 className='text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-amber-200 mb-2'>{ALGO_INFO[algorithm].title}</h2>
-        <p className='text-sm text-slate-400 leading-relaxed max-w-2xl'>{ALGO_INFO[algorithm].description}</p>
+        {/* TWO COLUMN LAYOUT: INFO & PSEUDOCODE */}
+        <div className='grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4'>
+          {/* LEFT COLUMN: INFO */}
+          <div className='flex flex-col gap-4'>
+            <h2 className='text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-amber-200 mb-2'>{ALGO_INFO[algorithm].title}</h2>
+            <p className='text-sm text-slate-400 leading-relaxed max-w-2xl'>{ALGO_INFO[algorithm].description}</p>
+            <div className='flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700'>
+              <Activity
+                size={12}
+                className='text-orange-400'
+              />
+              Complexity: <span className='text-slate-200'>{ALGO_INFO[algorithm].complexity}</span>
+            </div>
+            <div className='flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700'>
+              <Calculator
+                size={12}
+                className='text-blue-400'
+              />
+              Use Case: <span className='text-slate-200'>{ALGO_INFO[algorithm].useCase}</span>
+            </div>
+          </div>
 
-        <div className='flex gap-4 mt-4'>
-          <div className='flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700'>
-            <Activity
-              size={12}
-              className='text-orange-400'
-            />
-            Complexity: <span className='text-slate-200'>{ALGO_INFO[algorithm].complexity}</span>
-          </div>
-          <div className='flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700'>
-            <Calculator
-              size={12}
-              className='text-blue-400'
-            />
-            Use Case: <span className='text-slate-200'>{ALGO_INFO[algorithm].useCase}</span>
-          </div>
-        </div>
-
-        {/* PSEUDOCODE */}
-        <div className='mt-4 bg-slate-900 rounded-lg border border-slate-700 overflow-hidden'>
-          <div className='px-4 py-2 bg-slate-800 border-b border-slate-700 flex items-center gap-2'>
-            <MessageSquare
-              size={12}
-              className='text-slate-400'
-            />
-            <span className='text-xs text-slate-400 font-bold'>PSEUDOCODE</span>
-          </div>
-          <div className='p-4 max-h-64 overflow-auto'>
-            <pre className='text-xs text-slate-300 font-mono whitespace-pre leading-relaxed'>{PSEUDOCODE[algorithm]}</pre>
+          {/* RIGHT COLUMN: Pseudocode */}
+          <div className='bg-slate-900 rounded-lg border border-slate-700 overflow-hidden'>
+            <div className='px-4 py-2 bg-slate-800 border-b border-slate-700 flex items-center gap-2'>
+              <MessageSquare
+                size={12}
+                className='text-slate-400'
+              />
+              <span className='text-xs text-slate-400 font-bold'>PSEUDOCODE</span>
+            </div>
+            <div className='p-4 max-h-64 overflow-auto'>
+              <pre className='text-xs text-slate-300 font-mono whitespace-pre leading-relaxed'>{PSEUDOCODE[algorithm]}</pre>
+            </div>
           </div>
         </div>
       </div>
@@ -871,10 +1179,18 @@ const MathAlgo = () => {
       <main className='flex-1 grid grid-cols-1 lg:grid-cols-12 gap-0'>
         {/* LEFT COLUMN */}
         <div className='lg:col-span-5 bg-[#0f172a] border-r border-slate-800 flex flex-col p-4 gap-4'>
-          <MathVisualization
-            steps={currentVisual.steps}
-            title={ALGO_INFO[algorithm].title}
-          />
+          {algorithm === 'sieveOfEratosthenes' && currentVisual.gridData ? (
+            <SieveGrid
+              numbers={currentVisual.gridData.numbers}
+              currentPrime={currentVisual.gridData.currentPrime}
+              marked={currentVisual.gridData.marked}
+            />
+          ) : (
+            <MathVisualization
+              steps={currentVisual.steps}
+              title={ALGO_INFO[algorithm].title}
+            />
+          )}
 
           {/* PLAYBACK CONTROLS */}
           <div className='bg-slate-800/50 border border-slate-700/50 rounded-xl p-3'>
@@ -919,13 +1235,6 @@ const MathAlgo = () => {
 
         {/* RIGHT COLUMN */}
         <div className='lg:col-span-7 bg-[#1e1e1e] flex flex-col border-l border-slate-800'>
-          <div className='p-4 bg-[#252526]'>
-            <CodeViewer
-              code={ALGO_CPLUSPLUS[algorithm]}
-              activeLine={currentVisual.activeLine}
-            />
-          </div>
-
           <div className='p-6 border-b border-slate-800 bg-slate-900/50'>
             <div className='bg-slate-900 border border-orange-500/50 p-4 rounded-xl shadow-lg border-l-4 border-l-orange-500 flex items-start gap-4'>
               <div className='p-2 bg-orange-900/30 rounded-lg shrink-0'>
@@ -939,6 +1248,13 @@ const MathAlgo = () => {
                 <p className='text-sm font-medium text-white leading-tight'>{currentVisual.description}</p>
               </div>
             </div>
+          </div>
+
+          <div className='p-4 bg-[#252526]'>
+            <CodeViewer
+              code={ALGO_CPLUSPLUS[algorithm]}
+              activeLine={currentVisual.activeLine}
+            />
           </div>
         </div>
       </main>

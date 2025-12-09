@@ -119,7 +119,9 @@ FUNCTION IsValid(board: Matrix, row: Integer, col: Integer, num: Integer)
   RETURN TRUE
 END FUNCTION`,
 
-  permutation: `PROCEDURE GeneratePermutations(arr: Array, start: Integer, end: Integer)
+  permutation: {
+    swap: `// Swap-based Permutation
+PROCEDURE GeneratePermutations(arr: Array, start: Integer, end: Integer)
   IF start == end THEN
     PrintArray(arr)
     RETURN
@@ -132,15 +134,8 @@ END FUNCTION`,
     
     Swap(arr[start], arr[i])  // Backtrack
   END FOR
-END PROCEDURE
-
-PROCEDURE Swap(a: Integer, b: Integer)
-  temp <- a
-  a <- b
-  b <- temp
-END PROCEDURE
-
-// Alternative: Using boolean array
+END PROCEDURE`,
+    visited: `// Visited Array Permutation
 PROCEDURE PermuteWithVisited(nums: Array, path: List, used: Array[Boolean], result: List)
   IF path.size() == nums.length THEN
     result.add(CopyList(path))
@@ -159,8 +154,11 @@ PROCEDURE PermuteWithVisited(nums: Array, path: List, used: Array[Boolean], resu
     END IF
   END FOR
 END PROCEDURE`,
+  },
 
-  subsetSum: `FUNCTION FindSubsetSum(arr: Array, n: Integer, target: Integer)
+  subsetSum: {
+    backtracking: `// Backtracking Subset Sum
+FUNCTION FindSubsetSum(arr: Array, n: Integer, target: Integer)
   DECLARE result: List
   DECLARE current: List
   
@@ -169,8 +167,7 @@ END PROCEDURE`,
   RETURN result
 END FUNCTION
 
-PROCEDURE FindSubsets(arr: Array, index: Integer, n: Integer, target: Integer, 
-                      currentSum: Integer, current: List, result: List)
+PROCEDURE FindSubsets(arr, index, n, target, currentSum, current, result)
   IF currentSum == target THEN
     result.add(CopyList(current))
     RETURN
@@ -187,9 +184,8 @@ PROCEDURE FindSubsets(arr: Array, index: Integer, n: Integer, target: Integer,
   // Exclude current element (backtrack)
   current.removeLast()
   FindSubsets(arr, index + 1, n, target, currentSum, current, result)
-END PROCEDURE
-
-// Dynamic Programming version
+END PROCEDURE`,
+    dp: `// Dynamic Programming Subset Sum
 FUNCTION SubsetSumDP(arr: Array, n: Integer, target: Integer)
   DECLARE dp: Matrix[n+1][target+1] of Boolean
   
@@ -209,6 +205,7 @@ FUNCTION SubsetSumDP(arr: Array, n: Integer, target: Integer)
   
   RETURN dp[n][target]
 END FUNCTION`,
+  },
 
   mazeSolver: `FUNCTION SolveMaze(maze: Matrix, n: Integer)
   DECLARE solution: Matrix[n][n]
@@ -372,7 +369,9 @@ bool solveSudoku(vector<vector<int>>& board) {
   return true;
 }`,
 
-  permutation: `void permute(vector<int>& nums, int start, vector<vector<int>>& result) {
+  permutation: {
+    swap: `// Swap-based Permutation
+void permute(vector<int>& nums, int start, vector<vector<int>>& result) {
   if (start == nums.size()) {
     result.push_back(nums);
     return;
@@ -391,9 +390,8 @@ vector<vector<int>> permutations(vector<int>& nums) {
   vector<vector<int>> result;
   permute(nums, 0, result);
   return result;
-}
-
-// Alternative with used array
+}`,
+    visited: `// Visited Array Permutation
 void permuteHelper(vector<int>& nums, vector<int>& path, vector<bool>& used, vector<vector<int>>& result) {
   if (path.size() == nums.size()) {
     result.push_back(path);
@@ -412,8 +410,11 @@ void permuteHelper(vector<int>& nums, vector<int>& path, vector<bool>& used, vec
     }
   }
 }`,
+  },
 
-  subsetSum: `void findSubsets(vector<int>& arr, int index, int target, int currentSum, vector<int>& current, vector<vector<int>>& result) {
+  subsetSum: {
+    backtracking: `// Backtracking Subset Sum
+void findSubsets(vector<int>& arr, int index, int target, int currentSum, vector<int>& current, vector<vector<int>>& result) {
   if (currentSum == target) {
     result.push_back(current);
     return;
@@ -438,9 +439,8 @@ vector<vector<int>> subsetSum(vector<int>& arr, int target) {
   findSubsets(arr, 0, target, 0, current, result);
   
   return result;
-}
-
-// DP version
+}`,
+    dp: `// Dynamic Programming Subset Sum
 bool subsetSumDP(vector<int>& arr, int target) {
   int n = arr.size();
   vector<vector<bool>> dp(n + 1, vector<bool>(target + 1, false));
@@ -459,6 +459,7 @@ bool subsetSumDP(vector<int>& arr, int target) {
   
   return dp[n][target];
 }`,
+  },
 
   mazeSolver: `bool isSafe(vector<vector<int>>& maze, int x, int y, int n) {
   return x >= 0 && x < n && y >= 0 && y < n && maze[x][y] == 1;
@@ -793,6 +794,10 @@ const BTAlgo = () => {
   const [sudokuInput, setSudokuInput] = useState('easy')
   const [mazeInput, setMazeInput] = useState(5)
 
+  // Algorithm variant states
+  const [permutationVariant, setPermutationVariant] = useState('swap') // 'swap' or 'visited'
+  const [subsetSumVariant, setSubsetSumVariant] = useState('backtracking') // 'backtracking' or 'dp'
+
   const snapshot = (grid, highlightCells, activeCells, line, desc) => ({
     grid: grid.map((row) => [...row]),
     highlightCells: [...highlightCells],
@@ -938,66 +943,155 @@ const BTAlgo = () => {
       const target = variables.subsetSum.target
       const n = arr.length
 
-      // Create visualization grid
-      const gridData = [arr]
-      s.push(snapshot(gridData, [], [], 1, `Subset Sum: Target = ${target}, Array = [${arr.join(', ')}]`))
+      if (subsetSumVariant === 'backtracking') {
+        // Backtracking variant - lines 1-18 in subsetSum ALGO_CPLUSPLUS
+        const gridData = [arr]
+        s.push(snapshot(gridData, [], [], 1, `Subset Sum (Backtracking): Target = ${target}, Array = [${arr.join(', ')}]`))
 
-      let found = false
-      const currentSubset = []
+        let found = false
+        const currentSubset = []
 
-      const findSubsets = (index, currentSum) => {
-        if (currentSum === target) {
-          s.push(snapshot([arr, currentSubset], [], [], 3, `✓ Subset ditemukan: [${currentSubset.join(', ')}] = ${target}`))
-          found = true
-          return
+        const findSubsets = (index, currentSum) => {
+          // Line 2: if (currentSum == target)
+          if (currentSum === target) {
+            s.push(snapshot([arr, [...currentSubset]], [], [], 2, `✓ Subset ditemukan: [${currentSubset.join(', ')}] = ${target}`))
+            found = true
+            return
+          }
+
+          // Line 6: if (index == arr.size() || currentSum > target)
+          if (index === n || currentSum > target) {
+            return
+          }
+
+          // Line 11: current.push_back(arr[index])
+          currentSubset.push(arr[index])
+          const highlightInclude = Array.from(currentSubset, (_, i) => ({ row: 0, col: arr.indexOf(currentSubset[i]) }))
+          s.push(snapshot([arr, [...currentSubset]], highlightInclude, [{ row: 0, col: index }], 11, `Include ${arr[index]}: Subset = [${currentSubset.join(', ')}], Sum = ${currentSum + arr[index]}`))
+
+          // Line 11: findSubsets(arr, index + 1, ...)
+          findSubsets(index + 1, currentSum + arr[index])
+
+          // Line 15: current.pop_back()
+          currentSubset.pop()
+          s.push(snapshot([arr, [...currentSubset]], [], [], 15, `Backtrack: Exclude ${arr[index]}, Subset = [${currentSubset.join(', ')}]`))
+
+          // Line 15: findSubsets(arr, index + 1, ...)
+          findSubsets(index + 1, currentSum)
         }
 
-        if (index === n || currentSum > target) {
-          return
+        findSubsets(0, 0)
+
+        if (!found) {
+          s.push(snapshot([arr, []], [], [], -1, `Tidak ada subset yang menjumlahkan ke ${target}`))
+        }
+      } else {
+        // DP variant - lines 28-45 in subsetSum ALGO_CPLUSPLUS
+        const dp = Array(n + 1)
+          .fill(null)
+          .map(() => Array(target + 1).fill(false))
+
+        // Line 29: bool subsetSumDP(...)
+        s.push(snapshot([arr], [], [], 29, `Subset Sum (DP): Target = ${target}, Array = [${arr.join(', ')}]`))
+
+        // Line 33: for (int i = 0; i <= n; i++) dp[i][0] = true
+        for (let i = 0; i <= n; i++) {
+          dp[i][0] = true
+        }
+        s.push(snapshot([arr], [], [], 33, `Inisialisasi: dp[i][0] = true untuk semua i`))
+
+        // Line 35-41: Main DP loops
+        for (let i = 1; i <= n; i++) {
+          for (let j = 1; j <= target; j++) {
+            // Line 37: dp[i][j] = dp[i-1][j]
+            dp[i][j] = dp[i - 1][j]
+
+            // Line 39: if (j >= arr[i-1])
+            if (j >= arr[i - 1]) {
+              // Line 41: dp[i][j] = dp[i][j] || dp[i-1][j - arr[i-1]]
+              const prevVal = dp[i][j]
+              dp[i][j] = dp[i][j] || dp[i - 1][j - arr[i - 1]]
+              if (dp[i][j] && !prevVal) {
+                s.push(snapshot([arr], [{ row: 0, col: i - 1 }], [], 41, `dp[${i}][${j}] = true (menggunakan ${arr[i - 1]})`))
+              }
+            }
+          }
         }
 
-        // Include current element
-        currentSubset.push(arr[index])
-        const highlightInclude = Array.from(currentSubset, (_, i) => ({ row: 0, col: arr.indexOf(currentSubset[i]) }))
-        s.push(snapshot([arr, [...currentSubset]], highlightInclude, [{ row: 0, col: index }], 11, `Include ${arr[index]}: Subset = [${currentSubset.join(', ')}], Sum = ${currentSum + arr[index]}`))
-
-        findSubsets(index + 1, currentSum + arr[index])
-
-        // Exclude current element (backtrack)
-        currentSubset.pop()
-        s.push(snapshot([arr, [...currentSubset]], [], [], 15, `Backtrack: Exclude ${arr[index]}, Subset = [${currentSubset.join(', ')}]`))
-
-        findSubsets(index + 1, currentSum)
-      }
-
-      findSubsets(0, 0)
-
-      if (!found) {
-        s.push(snapshot([arr, []], [], [], -1, `Tidak ada subset yang menjumlahkan ke ${target}`))
+        // Line 45: return dp[n][target]
+        const result = dp[n][target]
+        s.push(snapshot([arr], [], [], 45, result ? `✓ Subset dengan sum ${target} ADA` : `✗ Subset dengan sum ${target} TIDAK ADA`))
       }
     } else if (algo === 'permutation') {
       const arr = [...variables.permutation.array]
-      s.push(snapshot([arr], [], [], 1, `Mulai generate permutations untuk [${arr.join(',')}]`))
 
-      const permute = (start) => {
-        if (start === arr.length) {
-          s.push(snapshot([arr], [], [], 3, `Permutasi: ${arr.join(',')}`))
-          return
+      if (permutationVariant === 'swap') {
+        // Swap-based variant - lines 1-14 in permutation ALGO_CPLUSPLUS
+        s.push(snapshot([arr], [], [], 1, `Mulai generate permutations (Swap) untuk [${arr.join(',')}]`))
+
+        const permute = (start) => {
+          // Line 2: if (start == nums.size())
+          if (start === arr.length) {
+            s.push(snapshot([arr], [], [], 2, `Permutasi: [${arr.join(',')}]`))
+            return
+          }
+
+          // Line 6: for (int i = start; i < nums.size(); i++)
+          for (let i = start; i < arr.length; i++) {
+            // Line 8: swap(nums[start], nums[i])
+            s.push(snapshot([arr], [], [{ row: 0, col: i }], 8, `Swap posisi ${start} dengan ${i}`))
+            ;[arr[start], arr[i]] = [arr[i], arr[start]]
+
+            s.push(snapshot([arr], [{ row: 0, col: start }], [], 8, `Array setelah swap: [${arr.join(',')}]`))
+
+            // Line 10: permute(nums, start + 1, result)
+            permute(start + 1)
+            ;[arr[start], arr[i]] = [arr[i], arr[start]]
+            // Line 12: swap(nums[start], nums[i]) // Backtrack
+            s.push(snapshot([arr], [], [], 12, `Backtrack: restore ke [${arr.join(',')}]`))
+          }
         }
 
-        for (let i = start; i < arr.length; i++) {
-          s.push(snapshot([arr], [], [{ row: 0, col: i }], 8, `Swap posisi ${start} dengan ${i}`))
-          ;[arr[start], arr[i]] = [arr[i], arr[start]]
+        permute(0)
+      } else {
+        // Visited array variant - lines 21-39 in permutation ALGO_CPLUSPLUS
+        const path = []
+        const used = Array(arr.length).fill(false)
 
-          s.push(snapshot([arr], [{ row: 0, col: start }], [], 9, `Array setelah swap: ${arr.join(',')}`))
+        // Line 23: void permuteHelper(...)
+        s.push(snapshot([arr, path], [], [], 23, `Mulai generate permutations (Visited) untuk [${arr.join(',')}]`))
 
-          permute(start + 1)
-          ;[arr[start], arr[i]] = [arr[i], arr[start]]
-          s.push(snapshot([arr], [], [], 12, `Backtrack: restore ke ${arr.join(',')}`))
+        const permuteHelper = () => {
+          // Line 24: if (path.size() == nums.size())
+          if (path.length === arr.length) {
+            s.push(snapshot([arr, [...path]], [], [], 24, `Permutasi: [${path.join(',')}]`))
+            return
+          }
+
+          // Line 27: for (int i = 0; i < nums.size(); i++)
+          for (let i = 0; i < arr.length; i++) {
+            // Line 28: if (!used[i])
+            if (!used[i]) {
+              // Line 29: used[i] = true
+              used[i] = true
+              path.push(arr[i])
+              // Line 32: path.push_back(nums[i])
+              s.push(snapshot([arr, [...path]], [{ row: 0, col: i }], [], 32, `Tambah ${arr[i]} ke path: [${path.join(',')}]`))
+
+              // Line 34: permuteHelper(nums, path, used, result)
+              permuteHelper()
+
+              // Line 36: path.pop_back() // Backtrack
+              path.pop()
+              // Line 37: used[i] = false
+              used[i] = false
+              s.push(snapshot([arr, [...path]], [], [], 36, `Backtrack: hapus ${arr[i]}, path: [${path.join(',')}]`))
+            }
+          }
         }
+
+        permuteHelper()
       }
-
-      permute(0)
     } else if (algo === 'mazeSolver') {
       const n = variables.mazeSolver.size
       const maze = [
@@ -1016,7 +1110,7 @@ const BTAlgo = () => {
       const solveMaze = (x, y) => {
         if (x === n - 1 && y === n - 1 && maze[x][y] === 1) {
           sol[x][y] = 1
-          s.push(snapshot(sol, [{ row: x, col: y }], [], 8, 'Mencapai tujuan!'))
+          s.push(snapshot(sol, [{ row: x, col: y }], [], 7, 'Mencapai tujuan!'))
           return true
         }
 
@@ -1125,6 +1219,20 @@ const BTAlgo = () => {
       reset()
     }
   }, [variables.mazeSolver.size])
+
+  // Trigger reset when permutation variant changes
+  useEffect(() => {
+    if (algorithm === 'permutation') {
+      reset()
+    }
+  }, [permutationVariant])
+
+  // Trigger reset when subset sum variant changes
+  useEffect(() => {
+    if (algorithm === 'subsetSum') {
+      reset()
+    }
+  }, [subsetSumVariant])
 
   // Sync local input states when variables change externally
   useEffect(() => {
@@ -1239,19 +1347,41 @@ const BTAlgo = () => {
                 </div>
               )}
               {algorithm === 'permutation' && (
-                <div className='flex items-center gap-2'>
-                  <label className='text-xs text-slate-400 font-bold'>ARRAY</label>
-                  <input
-                    type='text'
-                    value={permutationInput}
-                    onChange={(e) => setPermutationInput(e.target.value)}
-                    className='bg-slate-700 border border-slate-600 rounded px-2 py-1 text-sm text-center font-mono w-32 outline-none focus:border-orange-500 text-orange-500 transition-colors'
-                    placeholder='1,2,3,4,5'
-                  />
-                </div>
+                <>
+                  <div className='flex items-center gap-2'>
+                    <label className='text-xs text-slate-400 font-bold'>VARIANT</label>
+                    <select
+                      value={permutationVariant}
+                      onChange={(e) => setPermutationVariant(e.target.value)}
+                      className='bg-slate-700 text-slate-200 px-3 py-1 rounded border border-slate-600 text-sm outline-none focus:border-orange-500 transition-colors'>
+                      <option value='swap'>Swap-based</option>
+                      <option value='visited'>Visited Array</option>
+                    </select>
+                  </div>
+                  <div className='flex items-center gap-2'>
+                    <label className='text-xs text-slate-400 font-bold'>ARRAY</label>
+                    <input
+                      type='text'
+                      value={permutationInput}
+                      onChange={(e) => setPermutationInput(e.target.value)}
+                      className='bg-slate-700 border border-slate-600 rounded px-2 py-1 text-sm text-center font-mono w-32 outline-none focus:border-orange-500 text-orange-500 transition-colors'
+                      placeholder='1,2,3,4,5'
+                    />
+                  </div>
+                </>
               )}
               {algorithm === 'subsetSum' && (
                 <>
+                  <div className='flex items-center gap-2'>
+                    <label className='text-xs text-slate-400 font-bold'>VARIANT</label>
+                    <select
+                      value={subsetSumVariant}
+                      onChange={(e) => setSubsetSumVariant(e.target.value)}
+                      className='bg-slate-700 text-slate-200 px-3 py-1 rounded border border-slate-600 text-sm outline-none focus:border-orange-500 transition-colors'>
+                      <option value='backtracking'>Backtracking</option>
+                      <option value='dp'>Dynamic Programming</option>
+                    </select>
+                  </div>
                   <div className='flex items-center gap-2'>
                     <label className='text-xs text-slate-400 font-bold'>ARRAY</label>
                     <input
@@ -1312,7 +1442,7 @@ const BTAlgo = () => {
           {/* LEFT COLUMN: INFO */}
           <div className='flex flex-col gap-4'>
             <h2 className='text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-amber-200 mb-2'>{ALGO_INFO[algorithm].title}</h2>
-            <p className='text-xs text-slate-400 font-bold leading-relaxed max-w-2xl'>{ALGO_INFO[algorithm].description}</p>
+            <p className='text-sm text-slate-400 leading-relaxed max-w-2xl'>{ALGO_INFO[algorithm].description}</p>
             <div className='flex gap-4'>
               <div className='flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700'>
                 <Activity
@@ -1341,7 +1471,7 @@ const BTAlgo = () => {
               <span className='text-xs text-slate-400 font-bold'>PSEUDOCODE</span>
             </div>
             <div className='p-4 max-h-64 overflow-auto'>
-              <pre className='text-xs text-slate-300 font-mono whitespace-pre leading-relaxed'>{PSEUDOCODE[algorithm]}</pre>
+              <pre className='text-xs text-slate-300 font-mono whitespace-pre leading-relaxed'>{algorithm === 'permutation' ? PSEUDOCODE[algorithm][permutationVariant] : algorithm === 'subsetSum' ? PSEUDOCODE[algorithm][subsetSumVariant] : PSEUDOCODE[algorithm]}</pre>
             </div>
           </div>
         </div>
@@ -1418,7 +1548,7 @@ const BTAlgo = () => {
 
           <div className='p-4 bg-[#252526]'>
             <CodeViewer
-              code={ALGO_CPLUSPLUS[algorithm]}
+              code={algorithm === 'permutation' ? ALGO_CPLUSPLUS[algorithm][permutationVariant] : algorithm === 'subsetSum' ? ALGO_CPLUSPLUS[algorithm][subsetSumVariant] : ALGO_CPLUSPLUS[algorithm]}
               activeLine={currentVisual.activeLine}
             />
           </div>

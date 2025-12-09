@@ -6,10 +6,12 @@ import { Play, Pause, RotateCcw, BrainCircuit, Code, MessageSquare, SkipForward,
 // ==========================================
 
 const PSEUDOCODE = {
-  fibonacciDP: `// Tabulation (Bottom-Up)
+  fibonacciDP: {
+    tabulation: `// Tabulation (Bottom-Up)
 FUNCTION FibonacciDP(n: Integer)
-  DECLARE dp: Array[n+1]
+  IF n <= 1 THEN RETURN n
   
+  DECLARE dp: Array[n+1]
   dp[0] <- 0
   dp[1] <- 1
   
@@ -18,57 +20,60 @@ FUNCTION FibonacciDP(n: Integer)
   END FOR
   
   RETURN dp[n]
-END FUNCTION
-
-// Memoization (Top-Down)
+END FUNCTION`,
+    memoization: `// Memoization (Top-Down)
 FUNCTION FibMemo(n: Integer, memo: Array)
   IF n <= 1 THEN RETURN n
   IF memo[n] != -1 THEN RETURN memo[n]
   
   memo[n] <- FibMemo(n-1, memo) + FibMemo(n-2, memo)
   RETURN memo[n]
-END FUNCTION`,
+END FUNCTION
 
-  knapsack01: `FUNCTION Knapsack01(weights: Array, values: Array, n: Integer, W: Integer)
-  DECLARE dp: Matrix[n+1][W+1]
+FUNCTION Fibonacci(n: Integer)
+  DECLARE memo: Array[n+1] = -1
+  RETURN FibMemo(n, memo)
+END FUNCTION`,
+  },
+
+  knapsack01: {
+    standard: `// Standard 2D DP
+FUNCTION Knapsack(weights, values, n, W)
+  DECLARE dp: Matrix[n+1][W+1] = 0
   
-  // Initialize base cases
-  FOR i FROM 0 TO n DO
-    dp[i][0] <- 0
-  END FOR
-  FOR w FROM 0 TO W DO
-    dp[0][w] <- 0
-  END FOR
-  
-  // Fill DP table
   FOR i FROM 1 TO n DO
     FOR w FROM 1 TO W DO
-      // Don't include item i
-      dp[i][w] <- dp[i-1][w]
+      dp[i][w] <- dp[i-1][w]  // Don't include
       
-      // Include item i if possible
       IF weights[i-1] <= w THEN
         dp[i][w] <- MAX(dp[i][w], 
-                        dp[i-1][w - weights[i-1]] + values[i-1])
+          dp[i-1][w-weights[i-1]] + values[i-1])
       END IF
     END FOR
   END FOR
   
   RETURN dp[n][W]
 END FUNCTION`,
+    optimized: `// Space-Optimized 1D DP
+FUNCTION KnapsackOptimized(weights, values, n, W)
+  DECLARE dp: Array[W+1] = 0
+  
+  FOR i FROM 0 TO n-1 DO
+    FOR w FROM W DOWN TO weights[i] DO
+      dp[w] <- MAX(dp[w], dp[w-weights[i]] + values[i])
+    END FOR
+  END FOR
+  
+  RETURN dp[W]
+END FUNCTION`,
+  },
 
-  longestCommonSubsequence: `FUNCTION LCS(X: String, Y: String, m: Integer, n: Integer)
-  DECLARE dp: Matrix[m+1][n+1]
+  longestCommonSubsequence: `// LCS dengan DP
+FUNCTION LCS(X: String, Y: String)
+  m <- LENGTH(X)
+  n <- LENGTH(Y)
+  DECLARE dp: Matrix[m+1][n+1] = 0
   
-  // Initialize base cases
-  FOR i FROM 0 TO m DO
-    dp[i][0] <- 0
-  END FOR
-  FOR j FROM 0 TO n DO
-    dp[0][j] <- 0
-  END FOR
-  
-  // Fill DP table
   FOR i FROM 1 TO m DO
     FOR j FROM 1 TO n DO
       IF X[i-1] == Y[j-1] THEN
@@ -80,39 +85,27 @@ END FUNCTION`,
   END FOR
   
   RETURN dp[m][n]
-END FUNCTION
-
-// Backtrack to find actual LCS
-FUNCTION PrintLCS(dp: Matrix, X: String, Y: String, i: Integer, j: Integer)
-  IF i == 0 OR j == 0 THEN RETURN ""
-  
-  IF X[i-1] == Y[j-1] THEN
-    RETURN PrintLCS(dp, X, Y, i-1, j-1) + X[i-1]
-  ELSE
-    IF dp[i-1][j] > dp[i][j-1] THEN
-      RETURN PrintLCS(dp, X, Y, i-1, j)
-    ELSE
-      RETURN PrintLCS(dp, X, Y, i, j-1)
-    END IF
-  END IF
 END FUNCTION`,
 
-  editDistance: `FUNCTION EditDistance(str1: String, str2: String, m: Integer, n: Integer)
+  editDistance: `// Edit Distance (Levenshtein)
+FUNCTION EditDistance(str1, str2)
+  m <- LENGTH(str1)
+  n <- LENGTH(str2)
   DECLARE dp: Matrix[m+1][n+1]
   
-  // Base cases: empty string
+  // Base cases
   FOR i FROM 0 TO m DO
-    dp[i][0] <- i  // Delete all
+    dp[i][0] <- i
   END FOR
   FOR j FROM 0 TO n DO
-    dp[0][j] <- j  // Insert all
+    dp[0][j] <- j
   END FOR
   
   // Fill DP table
   FOR i FROM 1 TO m DO
     FOR j FROM 1 TO n DO
       IF str1[i-1] == str2[j-1] THEN
-        dp[i][j] <- dp[i-1][j-1]  // No operation needed
+        dp[i][j] <- dp[i-1][j-1]
       ELSE
         dp[i][j] <- 1 + MIN(
           dp[i-1][j],      // Delete
@@ -126,27 +119,19 @@ END FUNCTION`,
   RETURN dp[m][n]
 END FUNCTION`,
 
-  matrixChainMultiplication: `FUNCTION MatrixChainOrder(p: Array, n: Integer)
-  DECLARE dp: Matrix[n][n]  // Min cost
-  DECLARE s: Matrix[n][n]   // Split point
+  matrixChainMultiplication: `// Matrix Chain Multiplication
+FUNCTION MatrixChainOrder(p: Array, n: Integer)
+  DECLARE dp: Matrix[n][n] = 0
   
-  // Cost is 0 for single matrix
-  FOR i FROM 1 TO n-1 DO
-    dp[i][i] <- 0
-  END FOR
-  
-  // L is chain length
-  FOR L FROM 2 TO n-1 DO
+  FOR L FROM 2 TO n-1 DO      // Chain length
     FOR i FROM 1 TO n-L DO
       j <- i + L - 1
       dp[i][j] <- INFINITY
       
       FOR k FROM i TO j-1 DO
-        cost <- dp[i][k] + dp[k+1][j] + p[i-1] * p[k] * p[j]
-        
+        cost <- dp[i][k] + dp[k+1][j] + p[i-1]*p[k]*p[j]
         IF cost < dp[i][j] THEN
           dp[i][j] <- cost
-          s[i][j] <- k
         END IF
       END FOR
     END FOR
@@ -161,7 +146,8 @@ END FUNCTION`,
 // ==========================================
 
 const ALGO_CPLUSPLUS = {
-  fibonacciDP: `// Tabulation (Bottom-Up)
+  fibonacciDP: {
+    tabulation: `// Tabulation (Bottom-Up)
 int fibonacciDP(int n) {
   if (n <= 1) return n;
   
@@ -174,9 +160,8 @@ int fibonacciDP(int n) {
   }
   
   return dp[n];
-}
-
-// Memoization (Top-Down)
+}`,
+    memoization: `// Memoization (Top-Down)
 int fibMemo(int n, vector<int>& memo) {
   if (n <= 1) return n;
   if (memo[n] != -1) return memo[n];
@@ -189,17 +174,17 @@ int fibonacci(int n) {
   vector<int> memo(n + 1, -1);
   return fibMemo(n, memo);
 }`,
+  },
 
-  knapsack01: `int knapsack(vector<int>& weights, vector<int>& values, int n, int W) {
+  knapsack01: {
+    standard: `// Standard 2D DP Knapsack
+int knapsack(vector<int>& weights, vector<int>& values, int n, int W) {
   vector<vector<int>> dp(n + 1, vector<int>(W + 1, 0));
   
-  // Fill DP table
   for (int i = 1; i <= n; i++) {
     for (int w = 1; w <= W; w++) {
-      // Don't include item i
       dp[i][w] = dp[i-1][w];
       
-      // Include item i if possible
       if (weights[i-1] <= w) {
         dp[i][w] = max(dp[i][w], dp[i-1][w - weights[i-1]] + values[i-1]);
       }
@@ -207,9 +192,8 @@ int fibonacci(int n) {
   }
   
   return dp[n][W];
-}
-
-// Space-optimized version
+}`,
+    optimized: `// Space-Optimized 1D DP Knapsack  
 int knapsackOptimized(vector<int>& weights, vector<int>& values, int n, int W) {
   vector<int> dp(W + 1, 0);
   
@@ -221,11 +205,14 @@ int knapsackOptimized(vector<int>& weights, vector<int>& values, int n, int W) {
   
   return dp[W];
 }`,
+  },
 
-  longestCommonSubsequence: `int lcs(string X, string Y, int m, int n) {
+  longestCommonSubsequence: `// Longest Common Subsequence
+int lcs(string X, string Y) {
+  int m = X.length();
+  int n = Y.length();
   vector<vector<int>> dp(m + 1, vector<int>(n + 1, 0));
   
-  // Fill DP table
   for (int i = 1; i <= m; i++) {
     for (int j = 1; j <= n; j++) {
       if (X[i-1] == Y[j-1]) {
@@ -237,50 +224,30 @@ int knapsackOptimized(vector<int>& weights, vector<int>& values, int n, int W) {
   }
   
   return dp[m][n];
-}
-
-// Print actual LCS
-string printLCS(vector<vector<int>>& dp, string X, string Y, int i, int j) {
-  if (i == 0 || j == 0) {
-    return "";
-  }
-  
-  if (X[i-1] == Y[j-1]) {
-    return printLCS(dp, X, Y, i-1, j-1) + X[i-1];
-  }
-  
-  if (dp[i-1][j] > dp[i][j-1]) {
-    return printLCS(dp, X, Y, i-1, j);
-  } else {
-    return printLCS(dp, X, Y, i, j-1);
-  }
 }`,
 
-  editDistance: `int editDistance(string str1, string str2) {
+  editDistance: `// Edit Distance (Levenshtein)
+int editDistance(string str1, string str2) {
   int m = str1.length();
   int n = str2.length();
-  
   vector<vector<int>> dp(m + 1, vector<int>(n + 1));
   
-  // Base cases
   for (int i = 0; i <= m; i++) {
     dp[i][0] = i;
   }
-  
   for (int j = 0; j <= n; j++) {
     dp[0][j] = j;
   }
   
-  // Fill DP table
   for (int i = 1; i <= m; i++) {
     for (int j = 1; j <= n; j++) {
       if (str1[i-1] == str2[j-1]) {
         dp[i][j] = dp[i-1][j-1];
       } else {
         dp[i][j] = 1 + min({
-          dp[i-1][j],      // Delete
-          dp[i][j-1],      // Insert
-          dp[i-1][j-1]     // Replace
+          dp[i-1][j],
+          dp[i][j-1],
+          dp[i-1][j-1]
         });
       }
     }
@@ -289,11 +256,10 @@ string printLCS(vector<vector<int>>& dp, string X, string Y, int i, int j) {
   return dp[m][n];
 }`,
 
-  matrixChainMultiplication: `int matrixChainOrder(vector<int>& p, int n) {
+  matrixChainMultiplication: `// Matrix Chain Multiplication
+int matrixChainOrder(vector<int>& p, int n) {
   vector<vector<int>> dp(n, vector<int>(n, 0));
-  vector<vector<int>> s(n, vector<int>(n, 0));
   
-  // L is chain length
   for (int L = 2; L < n; L++) {
     for (int i = 1; i < n - L + 1; i++) {
       int j = i + L - 1;
@@ -301,27 +267,14 @@ string printLCS(vector<vector<int>>& dp, string X, string Y, int i, int j) {
       
       for (int k = i; k < j; k++) {
         int cost = dp[i][k] + dp[k+1][j] + p[i-1] * p[k] * p[j];
-        
         if (cost < dp[i][j]) {
           dp[i][j] = cost;
-          s[i][j] = k;
         }
       }
     }
   }
   
   return dp[1][n-1];
-}
-
-void printOptimalParens(vector<vector<int>>& s, int i, int j) {
-  if (i == j) {
-    cout << "A" << i;
-  } else {
-    cout << "(";
-    printOptimalParens(s, i, s[i][j]);
-    printOptimalParens(s, s[i][j] + 1, j);
-    cout << ")";
-  }
 }`,
 }
 
@@ -587,6 +540,10 @@ const DPAlgo = () => {
   const [editStr2, setEditStr2] = useState('SATURDAY')
   const [mcmDims, setMcmDims] = useState('10, 30, 5, 60')
 
+  // Algorithm Variant States
+  const [fibVariant, setFibVariant] = useState('tabulation') // 'tabulation' | 'memoization'
+  const [knapVariant, setKnapVariant] = useState('standard') // 'standard' | 'optimized'
+
   const snapshot = (table, activeCell, line, desc, rowHeaders = [], colHeaders = []) => ({
     table: table.map((row) => [...row]),
     activeCell: activeCell ? { ...activeCell } : null,
@@ -603,67 +560,143 @@ const DPAlgo = () => {
       const n = fibN
       const dp = Array(n + 1).fill(null)
 
-      s.push(
-        snapshot(
-          [dp],
-          null,
-          1,
-          `Memulai Fibonacci DP untuk n=${n}`,
-          ['dp'],
-          Array.from({ length: n + 1 }, (_, i) => i)
-        )
-      )
-
-      dp[0] = 0
-      s.push(
-        snapshot(
-          [dp],
-          { row: 0, col: 0 },
-          6,
-          'Kasus dasar: dp[0] = 0',
-          ['dp'],
-          Array.from({ length: n + 1 }, (_, i) => i)
-        )
-      )
-
-      if (n > 0) {
-        dp[1] = 1
+      if (fibVariant === 'tabulation') {
+        // Tabulation (Bottom-Up) - Lines match ALGO_CPLUSPLUS.fibonacciDP.tabulation
         s.push(
           snapshot(
             [dp],
-            { row: 0, col: 1 },
+            null,
+            2,
+            `Memulai Fibonacci Tabulation untuk n=${n}`,
+            ['dp'],
+            Array.from({ length: n + 1 }, (_, i) => i)
+          )
+        )
+
+        dp[0] = 0
+        s.push(
+          snapshot(
+            [dp],
+            { row: 0, col: 0 },
+            6,
+            'Kasus dasar: dp[0] = 0',
+            ['dp'],
+            Array.from({ length: n + 1 }, (_, i) => i)
+          )
+        )
+
+        if (n > 0) {
+          dp[1] = 1
+          s.push(
+            snapshot(
+              [dp],
+              { row: 0, col: 1 },
+              7,
+              'Kasus dasar: dp[1] = 1',
+              ['dp'],
+              Array.from({ length: n + 1 }, (_, i) => i)
+            )
+          )
+        }
+
+        for (let i = 2; i <= n; i++) {
+          dp[i] = dp[i - 1] + dp[i - 2]
+          s.push(
+            snapshot(
+              [dp],
+              { row: 0, col: i },
+              10,
+              `dp[${i}] = dp[${i - 1}] + dp[${i - 2}] = ${dp[i - 1]} + ${dp[i - 2]} = ${dp[i]}`,
+              ['dp'],
+              Array.from({ length: n + 1 }, (_, i) => i)
+            )
+          )
+        }
+
+        s.push(
+          snapshot(
+            [dp],
+            null,
+            13,
+            `Selesai! Fibonacci(${n}) = ${dp[n]}`,
+            ['dp'],
+            Array.from({ length: n + 1 }, (_, i) => i)
+          )
+        )
+      } else {
+        // Memoization (Top-Down) - Lines match ALGO_CPLUSPLUS.fibonacciDP.memoization
+        const memo = Array(n + 1).fill(-1)
+        const callStack = []
+
+        s.push(
+          snapshot(
+            [memo],
+            null,
+            2,
+            `Memulai Fibonacci Memoization untuk n=${n}`,
+            ['memo'],
+            Array.from({ length: n + 1 }, (_, i) => i)
+          )
+        )
+
+        // Simulate memoization recursion
+        const fibMemoSimulate = (x) => {
+          if (x <= 1) {
+            memo[x] = x
+            s.push(
+              snapshot(
+                [memo],
+                { row: 0, col: x },
+                3,
+                `Base case: memo[${x}] = ${x}`,
+                ['memo'],
+                Array.from({ length: n + 1 }, (_, i) => i)
+              )
+            )
+            return x
+          }
+          if (memo[x] !== -1) {
+            s.push(
+              snapshot(
+                [memo],
+                { row: 0, col: x },
+                4,
+                `Cache hit: memo[${x}] = ${memo[x]}`,
+                ['memo'],
+                Array.from({ length: n + 1 }, (_, i) => i)
+              )
+            )
+            return memo[x]
+          }
+
+          const result = fibMemoSimulate(x - 1) + fibMemoSimulate(x - 2)
+          memo[x] = result
+          s.push(
+            snapshot(
+              [memo],
+              { row: 0, col: x },
+              6,
+              `memo[${x}] = fibMemo(${x - 1}) + fibMemo(${x - 2}) = ${result}`,
+              ['memo'],
+              Array.from({ length: n + 1 }, (_, i) => i)
+            )
+          )
+          return result
+        }
+
+        fibMemoSimulate(n)
+
+        s.push(
+          snapshot(
+            [memo],
+            null,
             7,
-            'Kasus dasar: dp[1] = 1',
-            ['dp'],
+            `Selesai! Fibonacci(${n}) = ${memo[n]}`,
+            ['memo'],
             Array.from({ length: n + 1 }, (_, i) => i)
           )
         )
       }
-
-      for (let i = 2; i <= n; i++) {
-        dp[i] = dp[i - 1] + dp[i - 2]
-        s.push(
-          snapshot(
-            [dp],
-            { row: 0, col: i },
-            10,
-            `dp[${i}] = dp[${i - 1}] + dp[${i - 2}] = ${dp[i - 1]} + ${dp[i - 2]} = ${dp[i]}`,
-            ['dp'],
-            Array.from({ length: n + 1 }, (_, i) => i)
-          )
-        )
-      }
-
-      s.push(
-        snapshot(
-          [dp],
-          null,
-          13,
-          `Selesai! Fibonacci(${n}) = ${dp[n]}`,
-          ['dp'],
-          Array.from({ length: n + 1 }, (_, i) => i)
-        )
-      )
     } else if (algo === 'knapsack01') {
       const weights = knapWeights
         .split(',')
@@ -676,76 +709,124 @@ const DPAlgo = () => {
       const n = Math.min(weights.length, values.length)
       const W = knapW
 
-      const dp = Array(n + 1)
-        .fill(null)
-        .map(() => Array(W + 1).fill(0))
+      if (knapVariant === 'standard') {
+        // Standard 2D DP - Lines match ALGO_CPLUSPLUS.knapsack01.standard
+        const dp = Array(n + 1)
+          .fill(null)
+          .map(() => Array(W + 1).fill(0))
 
-      s.push(
-        snapshot(
-          dp,
-          null,
-          1,
-          `Knapsack: ${n} barang, kapasitas ${W}`,
-          Array.from({ length: n + 1 }, (_, i) => (i === 0 ? '∅' : `i${i}`)),
-          Array.from({ length: W + 1 }, (_, i) => i)
+        s.push(
+          snapshot(
+            dp,
+            null,
+            2,
+            `Knapsack Standard: ${n} barang, kapasitas ${W}`,
+            Array.from({ length: n + 1 }, (_, i) => (i === 0 ? '∅' : `i${i}`)),
+            Array.from({ length: W + 1 }, (_, i) => i)
+          )
         )
-      )
 
-      for (let i = 1; i <= n; i++) {
-        for (let w = 1; w <= W; w++) {
-          dp[i][w] = dp[i - 1][w]
+        for (let i = 1; i <= n; i++) {
+          for (let w = 1; w <= W; w++) {
+            dp[i][w] = dp[i - 1][w]
 
-          if (weights[i - 1] <= w) {
-            const include = dp[i - 1][w - weights[i - 1]] + values[i - 1]
-            if (include > dp[i][w]) {
-              dp[i][w] = include
-              s.push(
-                snapshot(
-                  dp,
-                  { row: i, col: w },
-                  12,
-                  `dp[${i}][${w}] = max(${dp[i - 1][w]}, ${include}) = ${dp[i][w]} (pilih barang ${i})`,
-                  Array.from({ length: n + 1 }, (_, i) => (i === 0 ? '∅' : `i${i}`)),
-                  Array.from({ length: W + 1 }, (_, i) => i)
+            if (weights[i - 1] <= w) {
+              const include = dp[i - 1][w - weights[i - 1]] + values[i - 1]
+              if (include > dp[i][w]) {
+                dp[i][w] = include
+                s.push(
+                  snapshot(
+                    dp,
+                    { row: i, col: w },
+                    10,
+                    `dp[${i}][${w}] = max(${dp[i - 1][w]}, ${include}) = ${dp[i][w]} (pilih barang ${i})`,
+                    Array.from({ length: n + 1 }, (_, i) => (i === 0 ? '∅' : `i${i}`)),
+                    Array.from({ length: W + 1 }, (_, i) => i)
+                  )
                 )
-              )
+              } else {
+                s.push(
+                  snapshot(
+                    dp,
+                    { row: i, col: w },
+                    7,
+                    `dp[${i}][${w}] = ${dp[i][w]} (lebih baik tidak pilih barang ${i})`,
+                    Array.from({ length: n + 1 }, (_, i) => (i === 0 ? '∅' : `i${i}`)),
+                    Array.from({ length: W + 1 }, (_, i) => i)
+                  )
+                )
+              }
             } else {
               s.push(
                 snapshot(
                   dp,
                   { row: i, col: w },
-                  8,
-                  `dp[${i}][${w}] = ${dp[i][w]} (lebih baik tidak pilih barang ${i})`,
+                  7,
+                  `dp[${i}][${w}] = ${dp[i][w]} (barang terlalu berat)`,
                   Array.from({ length: n + 1 }, (_, i) => (i === 0 ? '∅' : `i${i}`)),
                   Array.from({ length: W + 1 }, (_, i) => i)
                 )
               )
             }
-          } else {
-            s.push(
-              snapshot(
-                dp,
-                { row: i, col: w },
-                8,
-                `dp[${i}][${w}] = ${dp[i][w]} (barang terlalu berat)`,
-                Array.from({ length: n + 1 }, (_, i) => (i === 0 ? '∅' : `i${i}`)),
-                Array.from({ length: W + 1 }, (_, i) => i)
-              )
-            )
           }
         }
-      }
 
-      s.push(
-        snapshot(
-          dp,
-          null,
-          17,
-          `Nilai maksimum = ${dp[n][W]}`,
-          Array.from({ length: n + 1 }, (_, i) => (i === 0 ? '∅' : `i${i}`)),
-          Array.from({ length: W + 1 }, (_, i) => i)
+        s.push(
+          snapshot(
+            dp,
+            null,
+            15,
+            `Nilai maksimum = ${dp[n][W]}`,
+            Array.from({ length: n + 1 }, (_, i) => (i === 0 ? '∅' : `i${i}`)),
+            Array.from({ length: W + 1 }, (_, i) => i)
+          )
         )
-      )
+      } else {
+        // Space-Optimized 1D DP - Lines match ALGO_CPLUSPLUS.knapsack01.optimized
+        const dp = Array(W + 1).fill(0)
+
+        s.push(
+          snapshot(
+            [dp],
+            null,
+            2,
+            `Knapsack Optimized: ${n} barang, kapasitas ${W}`,
+            ['dp'],
+            Array.from({ length: W + 1 }, (_, i) => i)
+          )
+        )
+
+        for (let i = 0; i < n; i++) {
+          for (let w = W; w >= weights[i]; w--) {
+            const oldVal = dp[w]
+            const newVal = dp[w - weights[i]] + values[i]
+            if (newVal > dp[w]) {
+              dp[w] = newVal
+              s.push(
+                snapshot(
+                  [dp],
+                  { row: 0, col: w },
+                  6,
+                  `dp[${w}] = max(${oldVal}, dp[${w - weights[i]}] + ${values[i]}) = ${dp[w]}`,
+                  ['dp'],
+                  Array.from({ length: W + 1 }, (_, j) => j)
+                )
+              )
+            }
+          }
+        }
+
+        s.push(
+          snapshot(
+            [dp],
+            null,
+            10,
+            `Nilai maksimum = ${dp[W]}`,
+            ['dp'],
+            Array.from({ length: W + 1 }, (_, i) => i)
+          )
+        )
+      }
     } else if (algo === 'longestCommonSubsequence') {
       const X = lcsStr1
       const Y = lcsStr2
@@ -756,21 +837,21 @@ const DPAlgo = () => {
         .fill(null)
         .map(() => Array(n + 1).fill(0))
 
-      s.push(snapshot(dp, null, 1, `LCS dari "${X}" dan "${Y}"`, ['∅', ...X.split('')], ['∅', ...Y.split('')]))
+      s.push(snapshot(dp, null, 2, `LCS dari "${X}" dan "${Y}"`, ['∅', ...X.split('')], ['∅', ...Y.split('')]))
 
       for (let i = 1; i <= m; i++) {
         for (let j = 1; j <= n; j++) {
           if (X[i - 1] === Y[j - 1]) {
             dp[i][j] = dp[i - 1][j - 1] + 1
-            s.push(snapshot(dp, { row: i, col: j }, 8, `${X[i - 1]} == ${Y[j - 1]}: dp[${i}][${j}] = dp[${i - 1}][${j - 1}] + 1 = ${dp[i][j]}`, ['∅', ...X.split('')], ['∅', ...Y.split('')]))
+            s.push(snapshot(dp, { row: i, col: j }, 10, `${X[i - 1]} == ${Y[j - 1]}: dp[${i}][${j}] = dp[${i - 1}][${j - 1}] + 1 = ${dp[i][j]}`, ['∅', ...X.split('')], ['∅', ...Y.split('')]))
           } else {
             dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1])
-            s.push(snapshot(dp, { row: i, col: j }, 10, `${X[i - 1]} ≠ ${Y[j - 1]}: dp[${i}][${j}] = max(${dp[i - 1][j]}, ${dp[i][j - 1]}) = ${dp[i][j]}`, ['∅', ...X.split('')], ['∅', ...Y.split('')]))
+            s.push(snapshot(dp, { row: i, col: j }, 12, `${X[i - 1]} ≠ ${Y[j - 1]}: dp[${i}][${j}] = max(${dp[i - 1][j]}, ${dp[i][j - 1]}) = ${dp[i][j]}`, ['∅', ...X.split('')], ['∅', ...Y.split('')]))
           }
         }
       }
 
-      s.push(snapshot(dp, null, 15, `Panjang LCS = ${dp[m][n]}`, ['∅', ...X.split('')], ['∅', ...Y.split('')]))
+      s.push(snapshot(dp, null, 17, `Panjang LCS = ${dp[m][n]}`, ['∅', ...X.split('')], ['∅', ...Y.split('')]))
     } else if (algo === 'editDistance') {
       const str1 = editStr1
       const str2 = editStr2
@@ -785,21 +866,21 @@ const DPAlgo = () => {
       for (let i = 0; i <= m; i++) dp[i][0] = i
       for (let j = 0; j <= n; j++) dp[0][j] = j
 
-      s.push(snapshot(dp, null, 1, `Jarak Edit: "${str1}" → "${str2}"`, ['∅', ...str1.split('')], ['∅', ...str2.split('')]))
+      s.push(snapshot(dp, null, 2, `Jarak Edit: "${str1}" → "${str2}"`, ['∅', ...str1.split('')], ['∅', ...str2.split('')]))
 
       for (let i = 1; i <= m; i++) {
         for (let j = 1; j <= n; j++) {
           if (str1[i - 1] === str2[j - 1]) {
             dp[i][j] = dp[i - 1][j - 1]
-            s.push(snapshot(dp, { row: i, col: j }, 20, `${str1[i - 1]} == ${str2[j - 1]}: dp[${i}][${j}] = ${dp[i][j]} (karakter sama)`, ['∅', ...str1.split('')], ['∅', ...str2.split('')]))
+            s.push(snapshot(dp, { row: i, col: j }, 15, `${str1[i - 1]} == ${str2[j - 1]}: dp[${i}][${j}] = ${dp[i][j]} (karakter sama)`, ['∅', ...str1.split('')], ['∅', ...str2.split('')]))
           } else {
             dp[i][j] = 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1])
-            s.push(snapshot(dp, { row: i, col: j }, 22, `${str1[i - 1]} ≠ ${str2[j - 1]}: dp[${i}][${j}] = 1 + min(del, ins, rep) = ${dp[i][j]}`, ['∅', ...str1.split('')], ['∅', ...str2.split('')]))
+            s.push(snapshot(dp, { row: i, col: j }, 17, `${str1[i - 1]} ≠ ${str2[j - 1]}: dp[${i}][${j}] = 1 + min(del, ins, rep) = ${dp[i][j]}`, ['∅', ...str1.split('')], ['∅', ...str2.split('')]))
           }
         }
       }
 
-      s.push(snapshot(dp, null, 31, `Operasi minimum = ${dp[m][n]}`, ['∅', ...str1.split('')], ['∅', ...str2.split('')]))
+      s.push(snapshot(dp, null, 26, `Operasi minimum = ${dp[m][n]}`, ['∅', ...str1.split('')], ['∅', ...str2.split('')]))
     } else if (algo === 'matrixChainMultiplication') {
       const p = mcmDims
         .split(',')
@@ -817,7 +898,7 @@ const DPAlgo = () => {
         snapshot(
           dp,
           null,
-          1,
+          2,
           `Matrix Chain Order: ${numMatrices} matrix`,
           Array.from({ length: n }, (_, i) => i),
           Array.from({ length: n }, (_, i) => i)
@@ -842,7 +923,7 @@ const DPAlgo = () => {
                 snapshot(
                   dp,
                   { row: i, col: j },
-                  14,
+                  11,
                   `Split at k=${k}: Cost ${cost}`,
                   Array.from({ length: n }, (_, i) => i),
                   Array.from({ length: n }, (_, i) => i)
@@ -857,7 +938,7 @@ const DPAlgo = () => {
         snapshot(
           dp,
           null,
-          22,
+          19,
           `Min Multiplications: ${dp[1][n - 1]}`,
           Array.from({ length: n }, (_, i) => i),
           Array.from({ length: n }, (_, i) => i)
@@ -880,7 +961,7 @@ const DPAlgo = () => {
 
   useEffect(() => {
     reset()
-  }, [algorithm, fibN, knapWeights, knapValues, knapW, lcsStr1, lcsStr2, editStr1, editStr2, mcmDims])
+  }, [algorithm, fibN, knapWeights, knapValues, knapW, lcsStr1, lcsStr2, editStr1, editStr2, mcmDims, fibVariant, knapVariant])
 
   useEffect(() => {
     if (isPlaying) {
@@ -950,7 +1031,14 @@ const DPAlgo = () => {
           {/* DYNAMIC INPUTS */}
           {algorithm === 'fibonacciDP' && (
             <>
-              <label className='text-xs text-slate-400 font-bold'>ARRAY</label>
+              <select
+                value={fibVariant}
+                onChange={(e) => setFibVariant(e.target.value)}
+                className='bg-slate-800 text-xs font-bold text-slate-200 py-1.5 px-2 rounded-lg cursor-pointer hover:bg-slate-700 outline-none focus:ring-2 focus:ring-orange-500/50 border border-slate-700'>
+                <option value='tabulation'>Tabulation</option>
+                <option value='memoization'>Memoization</option>
+              </select>
+              <label className='text-xs text-slate-400 font-bold'>N</label>
               <input
                 type='number'
                 value={fibN}
@@ -963,6 +1051,13 @@ const DPAlgo = () => {
 
           {algorithm === 'knapsack01' && (
             <>
+              <select
+                value={knapVariant}
+                onChange={(e) => setKnapVariant(e.target.value)}
+                className='bg-slate-800 text-xs font-bold text-slate-200 py-1.5 px-2 rounded-lg cursor-pointer hover:bg-slate-700 outline-none focus:ring-2 focus:ring-orange-500/50 border border-slate-700'>
+                <option value='standard'>Standard 2D</option>
+                <option value='optimized'>Optimized 1D</option>
+              </select>
               <div className='flex flex-col gap-1'>
                 <div className='flex items-center gap-2'>
                   <label className='text-[10px] text-slate-400 font-bold w-12'>WEIGHTS</label>
@@ -1079,7 +1174,7 @@ const DPAlgo = () => {
               <span className='text-xs text-slate-400 font-bold'>PSEUDOCODE</span>
             </div>
             <div className='p-4 max-h-64 overflow-auto'>
-              <pre className='text-xs text-slate-300 font-mono whitespace-pre leading-relaxed'>{PSEUDOCODE[algorithm]}</pre>
+              <pre className='text-xs text-slate-300 font-mono whitespace-pre leading-relaxed'>{algorithm === 'fibonacciDP' ? PSEUDOCODE[algorithm][fibVariant] : algorithm === 'knapsack01' ? PSEUDOCODE[algorithm][knapVariant] : PSEUDOCODE[algorithm]}</pre>
             </div>
           </div>
         </div>
@@ -1157,7 +1252,7 @@ const DPAlgo = () => {
 
           <div className='p-4 bg-[#252526]'>
             <CodeViewer
-              code={ALGO_CPLUSPLUS[algorithm]}
+              code={algorithm === 'fibonacciDP' ? ALGO_CPLUSPLUS[algorithm][fibVariant] : algorithm === 'knapsack01' ? ALGO_CPLUSPLUS[algorithm][knapVariant] : ALGO_CPLUSPLUS[algorithm]}
               activeLine={currentVisual.activeLine}
             />
           </div>

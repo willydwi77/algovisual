@@ -1077,14 +1077,14 @@ const MathAlgo = () => {
                 type='number'
                 value={n}
                 onChange={(e) => setN(parseInt(e.target.value) || 0)}
-                className='w-20 bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white font-mono focus:ring-2 focus:ring-orange-500/50 outline-none'
+                className='w-20 bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-sm text-orange-500 font-mono focus:ring-2 focus:ring-orange-500/50 outline-none text-center transition-colors'
               />
               <label className='text-xs text-slate-400 font-bold'>B</label>
               <input
                 type='number'
                 value={m}
                 onChange={(e) => setM(parseInt(e.target.value) || 0)}
-                className='w-20 bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white font-mono focus:ring-2 focus:ring-orange-500/50 outline-none'
+                className='w-20 bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-sm text-orange-500 font-mono focus:ring-2 focus:ring-orange-500/50 outline-none text-center transition-colors'
               />
             </>
           )}
@@ -1096,7 +1096,7 @@ const MathAlgo = () => {
                 type='number'
                 value={n}
                 onChange={(e) => setN(parseInt(e.target.value) || 0)}
-                className='w-20 bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white font-mono focus:ring-2 focus:ring-orange-500/50 outline-none'
+                className='w-20 bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-sm text-orange-500 font-mono focus:ring-2 focus:ring-orange-500/50 outline-none text-center transition-colors'
                 min='2'
                 max={algorithm === 'sieveOfEratosthenes' ? '100' : '10000'}
               />
@@ -1111,7 +1111,7 @@ const MathAlgo = () => {
                 value={crtRemainders}
                 onChange={(e) => setCrtRemainders(e.target.value)}
                 placeholder='2,3,2'
-                className='w-24 bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white font-mono focus:ring-2 focus:ring-orange-500/50 outline-none'
+                className='w-24 bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-sm text-orange-500 font-mono focus:ring-2 focus:ring-orange-500/50 outline-none text-center transition-colors'
               />
               <label className='text-xs text-slate-400 font-bold'>Moduli</label>
               <input
@@ -1119,7 +1119,7 @@ const MathAlgo = () => {
                 value={crtModuli}
                 onChange={(e) => setCrtModuli(e.target.value)}
                 placeholder='3,5,7'
-                className='w-24 bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white font-mono focus:ring-2 focus:ring-orange-500/50 outline-none'
+                className='w-24 bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-sm text-orange-500 font-mono focus:ring-2 focus:ring-orange-500/50 outline-none text-center transition-colors'
               />
             </>
           )}

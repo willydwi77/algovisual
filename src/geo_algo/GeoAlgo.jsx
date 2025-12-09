@@ -1,11 +1,154 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react'
-import { Play, Pause, RotateCcw, Compass, Code, Variable, MessageSquare, SkipBack, SkipForward, StepBack, StepForward, Square, Hash, Clock, Search } from 'lucide-react'
+import { Play, Pause, RotateCcw, Compass, Code, Variable, MessageSquare, SkipBack, SkipForward, StepBack, StepForward, Square, Hash, Clock, Search, Activity, Calculator } from 'lucide-react'
 
 /**
  * GeoAlgo Component
  * Visualizes various computational geometry algorithms with step-by-step execution,
  * code highlighting, and variable tracking.
  */
+
+const CodeViewer = ({ code, activeLine }) => {
+  const lines = code.split('\n')
+  const scrollRef = useRef(null)
+
+  const highlightSyntax = (line) => {
+    if (line.includes('//')) {
+      const commentIndex = line.indexOf('//')
+      const codePart = line.substring(0, commentIndex)
+      const commentPart = line.substring(commentIndex)
+
+      return (
+        <>
+          {highlightCodePart(codePart)}
+          <span className='text-slate-500 italic'>{commentPart}</span>
+        </>
+      )
+    }
+
+    return highlightCodePart(line)
+  }
+
+  const highlightCodePart = (text) => {
+    // Split by word boundaries but preserve operators and symbols
+    const tokens = text.split(/(\s+|[(){}\[\];,&<>*=+\-!|])/)
+
+    return tokens.map((token, idx) => {
+      // Skip whitespace and empty
+      if (!token || /^\s+$/.test(token)) {
+        return <span key={idx}>{token}</span>
+      }
+
+      // Keywords (JS & C++ mix)
+      const keywords = ['function', 'let', 'const', 'var', 'void', 'int', 'bool', 'char', 'float', 'double', 'long', 'short', 'unsigned', 'for', 'while', 'do', 'if', 'else', 'switch', 'case', 'default', 'return', 'break', 'continue', 'goto', 'true', 'false', 'nullptr', 'NULL', 'static', 'auto', 'this', 'class', 'struct', 'enum', 'headers', 'import', 'export', 'new']
+
+      // Types and Common Objects
+      const types = ['vector', 'string', 'map', 'set', 'queue', 'stack', 'pair', 'array', 'Math', 'Array', 'Object', 'console']
+
+      if (keywords.includes(token)) {
+        return (
+          <span
+            key={idx}
+            className='text-purple-400 font-bold'>
+            {token}
+          </span>
+        )
+      }
+
+      if (types.includes(token)) {
+        return (
+          <span
+            key={idx}
+            className='text-cyan-400 font-semibold'>
+            {token}
+          </span>
+        )
+      }
+
+      // Numbers
+      if (/^\d+$/.test(token)) {
+        return (
+          <span
+            key={idx}
+            className='text-green-400'>
+            {token}
+          </span>
+        )
+      }
+
+      // Operators
+      if (/^[(){}\[\];,&<>*=+\-!|]+$/.test(token)) {
+        return (
+          <span
+            key={idx}
+            className='text-yellow-400'>
+            {token}
+          </span>
+        )
+      }
+
+      // Function names (word followed by parenthesis)
+      if (idx + 1 < tokens.length && tokens[idx + 1] === '(') {
+        return (
+          <span
+            key={idx}
+            className='text-blue-300'>
+            {token}
+          </span>
+        )
+      }
+
+      return <span key={idx}>{token}</span>
+    })
+  }
+
+  useEffect(() => {
+    if (scrollRef.current && activeLine > 0) {
+      const container = scrollRef.current
+      const el = container.children[activeLine - 1]
+      if (el && container) {
+        const containerRect = container.getBoundingClientRect()
+        const elRect = el.getBoundingClientRect()
+
+        const isAbove = elRect.top < containerRect.top
+        const isBelow = elRect.bottom > containerRect.bottom
+
+        if (isAbove || isBelow) {
+          const scrollOffset = elRect.top - containerRect.top - containerRect.height / 2 + elRect.height / 2
+          container.scrollBy({ top: scrollOffset, behavior: 'smooth' })
+        }
+      }
+    }
+  }, [activeLine])
+
+  return (
+    <div className='bg-[#1e1e1e] rounded-lg border border-slate-700 overflow-hidden flex flex-col h-full shadow-inner'>
+      <div className='flex items-center justify-between px-4 py-2 bg-[#2d2d2d] border-b border-slate-700'>
+        <span className='text-xs text-slate-400 font-bold flex items-center gap-2'>
+          <Code size={14} /> ALGORITHM CODE
+        </span>
+        <span className='text-[10px] text-slate-500 uppercase tracking-widest'>JS</span>
+      </div>
+      <div
+        className='flex-1 p-4 font-mono text-sm leading-6 overflow-auto'
+        ref={scrollRef}>
+        {lines.map((line, idx) => {
+          const lineNum = idx + 1
+          const isActive = activeLine === lineNum
+
+          return (
+            <div
+              key={idx}
+              className={`flex ${isActive ? 'bg-slate-700/50 -mx-4 px-4 border-l-2 border-orange-500' : ''}`}>
+              <span className='w-8 text-slate-600 text-right mr-4 select-none shrink-0'>{lineNum}</span>
+              <span className={`whitespace-pre ${isActive ? 'text-orange-100' : 'text-slate-300'}`}>{highlightSyntax(line)}</span>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 const GeoAlgo = () => {
   // ==========================================
   // 1. CONSTANTS & DEFINITIONS
@@ -569,28 +712,6 @@ function direction(p1, p2, p3) {
   )
 
   /**
-   * Renders the algorithm code block with highlighting.
-   */
-  const CodeBlock = ({ code }) => {
-    const lines = code.trim().split('\n')
-    return (
-      <div className='font-mono text-xs overflow-auto'>
-        {lines.map((line, index) => {
-          const isActive = currentVisual.activeCodeLine === index + 1
-          return (
-            <div
-              key={index}
-              className={`flex px-2 py-0.5 ${isActive ? 'bg-orange-900/60 border-l-4 border-orange-400' : 'border-l-4 border-transparent'}`}>
-              <span className='w-8 text-slate-600 text-right mr-3 leading-5 select-none'>{index + 1}</span>
-              <span className={`whitespace-pre ${isActive ? 'text-orange-200 font-bold' : 'text-slate-300'}`}>{line}</span>
-            </div>
-          )
-        })}
-      </div>
-    )
-  }
-
-  /**
    * Renders the geometric visualization (SVG) based on the current algorithm.
    */
   const VisualizationCanvas = () => {
@@ -907,35 +1028,43 @@ function direction(p1, p2, p3) {
           </div>
         </header>
 
-        {/* ALGORITHM DESCRIPTION */}
+        {/* TOP INFO CARD */}
         <section className='w-full max-w-7xl mb-4'>
-          <div className='bg-gradient-to-r from-orange-900/30 to-orange-900/30 border border-orange-700/50 rounded-xl p-4 shadow-lg'>
-            <div className='flex items-start gap-3'>
-              <div className='p-2 bg-orange-600 rounded-lg shadow-lg shadow-orange-500/20 mt-1'>
-                <Search
-                  size={20}
-                  className='text-white'
-                />
-              </div>
-              <div className='flex-1'>
-                <h3 className='text-lg font-bold text-orange-200 mb-2'>{algorithmDescriptions[algorithm].title}</h3>
-                <p className='text-sm text-slate-300 mb-2 leading-relaxed'>{algorithmDescriptions[algorithm].description}</p>
-                <div className='grid grid-cols-1 md:grid-cols-2 gap-2 text-xs'>
-                  <div className='bg-slate-800/60 rounded-lg p-2 border border-slate-700'>
-                    <span className='text-slate-400 font-semibold'>Kompleksitas:</span>
-                    <span className='text-orange-300 ml-2 font-mono'>{algorithmDescriptions[algorithm].complexity}</span>
-                  </div>
-                  <div className='bg-slate-800/60 rounded-lg p-2 border border-slate-700'>
-                    <span className='text-slate-400 font-semibold'>Kegunaan:</span>
-                    <span className='text-slate-300 ml-2'>{algorithmDescriptions[algorithm].useCase}</span>
-                  </div>
+          {/* TWO COLUMN LAYOUT: INFO & PSEUDOCODE */}
+          <div className='bg-[#151925] border border-slate-700 rounded-xl p-6 shadow-lg'>
+            <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
+              {/* LEFT COLUMN: INFO */}
+              <div className='flex flex-col gap-4'>
+                <h2 className='text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-amber-200 mb-2'>{algorithmDescriptions[algorithm].title}</h2>
+                <p className='text-sm text-slate-400 leading-relaxed max-w-2xl'>{algorithmDescriptions[algorithm].description}</p>
+                <div className='flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700'>
+                  <Activity
+                    size={12}
+                    className='text-orange-400'
+                  />
+                  Complexity: <span className='text-slate-200'>{algorithmDescriptions[algorithm].complexity}</span>
                 </div>
-                {algorithmDescriptions[algorithm].pseudocode && (
-                  <div className='mt-3 bg-slate-950/50 rounded-lg p-3 border border-slate-700/50 font-mono text-xs text-slate-400 whitespace-pre overflow-x-auto'>
-                    <div className='text-orange-400 font-bold mb-1'>Pseudocode:</div>
-                    {algorithmDescriptions[algorithm].pseudocode}
-                  </div>
-                )}
+                <div className='flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700'>
+                  <Calculator
+                    size={12}
+                    className='text-blue-400'
+                  />
+                  Use Case: <span className='text-slate-200'>{algorithmDescriptions[algorithm].useCase}</span>
+                </div>
+              </div>
+
+              {/* RIGHT COLUMN: Pseudocode */}
+              <div className='bg-slate-900 rounded-lg border border-slate-700 overflow-hidden'>
+                <div className='px-4 py-2 bg-slate-800 border-b border-slate-700 flex items-center gap-2'>
+                  <MessageSquare
+                    size={12}
+                    className='text-slate-400'
+                  />
+                  <span className='text-xs text-slate-400 font-bold'>PSEUDOCODE</span>
+                </div>
+                <div className='p-4 max-h-64 overflow-auto'>
+                  <pre className='text-xs text-slate-300 font-mono whitespace-pre leading-relaxed'>{algorithmDescriptions[algorithm].pseudocode}</pre>
+                </div>
               </div>
             </div>
           </div>
@@ -1062,21 +1191,31 @@ function direction(p1, p2, p3) {
 
           {/* RIGHT COLUMN: CODE & LOG */}
           <section className='flex flex-col gap-4 h-[calc(100vh-200px)] min-h-[600px]'>
-            {/* 1. Code View */}
-            <div className='flex flex-col flex-1 bg-[#1e1e1e] border border-slate-700 rounded-xl overflow-hidden shadow-xl min-h-[300px]'>
-              <div className='bg-slate-800 p-3 border-b border-slate-700 flex items-center gap-2 text-slate-200 text-sm font-semibold'>
-                <Code
-                  size={16}
-                  className='text-orange-400'
-                />
-                Implementasi Algoritma
-              </div>
-              <div className='flex-1 overflow-auto py-2 scrollbar-thin scrollbar-thumb-slate-700'>
-                <CodeBlock code={algoCode[algorithm]} />
+            {/* 1. Status Execution (NEW) */}
+            <div className='bg-slate-900 border border-slate-700 rounded-xl overflow-hidden shadow-xl p-4'>
+              <div className='bg-slate-800 border-l-4 border-orange-500 p-3 rounded flex items-start gap-3'>
+                <div className='mt-1'>
+                  <MessageSquare
+                    size={16}
+                    className='text-orange-400'
+                  />
+                </div>
+                <div>
+                  <h4 className='text-[10px] font-bold text-orange-400 uppercase mb-1'>Status Eksekusi</h4>
+                  <p className='text-sm font-medium text-white'>{currentVisual.stepDescription}</p>
+                </div>
               </div>
             </div>
 
-            {/* 2. Execution Log (Stack) */}
+            {/* 2. Code View */}
+            <div className='flex flex-col flex-1 bg-[#1e1e1e] border border-slate-700 rounded-xl overflow-hidden shadow-xl min-h-[300px]'>
+              <CodeViewer
+                code={algoCode[algorithm]}
+                activeLine={currentVisual.activeCodeLine}
+              />
+            </div>
+
+            {/* 3. Execution Log (Stack) */}
             <div className='flex-1 bg-slate-900 border border-slate-700 rounded-xl overflow-hidden shadow-xl min-h-[250px]'>
               <ExecutionLog />
             </div>

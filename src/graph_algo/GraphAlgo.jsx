@@ -735,47 +735,75 @@ const CodeViewer = ({ code, activeLine }) => {
   }
 
   const highlightCodePart = (text) => {
-    const words = text.split(/(\s+)/)
+    // Split by word boundaries but preserve operators and symbols
+    const tokens = text.split(/(\s+|[(){}\[\];,&<>*=+\-!|])/)
 
-    return words.map((word, idx) => {
-      if (/^\s+$/.test(word)) {
-        return <span key={idx}>{word}</span>
+    return tokens.map((token, idx) => {
+      // Skip whitespace and empty
+      if (!token || /^\s+$/.test(token)) {
+        return <span key={idx}>{token}</span>
       }
 
-      const keywords = ['void', 'int', 'bool', 'vector', 'for', 'while', 'if', 'else', 'return', 'swap', 'break', 'continue', 'struct', 'const', 'auto']
-      const literals = ['true', 'false', 'nullptr']
+      // C++ Keywords (kontrol alur)
+      const keywords = ['void', 'int', 'bool', 'char', 'float', 'double', 'long', 'short', 'unsigned', 'for', 'while', 'do', 'if', 'else', 'switch', 'case', 'default', 'return', 'break', 'continue', 'goto', 'true', 'false', 'nullptr', 'NULL', 'const', 'static', 'auto', 'this', 'class', 'struct', 'enum', 'typedef', 'public', 'private', 'protected', 'virtual', 'override', 'final']
 
-      if (keywords.includes(word)) {
+      // C++ Types and STL
+      const types = ['vector', 'string', 'map', 'set', 'queue', 'stack', 'pair', 'array', 'priority_queue', 'TreeNode', 'Node', 'Edge']
+
+      if (keywords.includes(token)) {
         return (
           <span
             key={idx}
             className='text-purple-400 font-bold'>
-            {word}
+            {token}
           </span>
         )
       }
 
-      if (literals.includes(word)) {
+      if (types.includes(token)) {
         return (
           <span
             key={idx}
-            className='text-red-400 font-bold'>
-            {word}
+            className='text-cyan-400 font-semibold'>
+            {token}
           </span>
         )
       }
 
-      if (/^\d+$/.test(word)) {
+      // Numbers
+      if (/^\d+$/.test(token)) {
         return (
           <span
             key={idx}
             className='text-green-400'>
-            {word}
+            {token}
           </span>
         )
       }
 
-      return <span key={idx}>{word}</span>
+      // Operators
+      if (/^[(){}\[\];,&<>*=+\-!|]+$/.test(token)) {
+        return (
+          <span
+            key={idx}
+            className='text-yellow-400'>
+            {token}
+          </span>
+        )
+      }
+
+      // Function names (word followed by parenthesis)
+      if (idx + 1 < tokens.length && tokens[idx + 1] === '(') {
+        return (
+          <span
+            key={idx}
+            className='text-blue-300'>
+            {token}
+          </span>
+        )
+      }
+
+      return <span key={idx}>{token}</span>
     })
   }
 
@@ -833,9 +861,11 @@ const CodeViewer = ({ code, activeLine }) => {
 
 const GraphAlgo = () => {
   const [algorithm, setAlgorithm] = useState('bfs')
+  const [nodeCount, setNodeCount] = useState(6)
   const [steps, setSteps] = useState([])
   const [currentStep, setCurrentStep] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
+  const [dynamicGraph, setDynamicGraph] = useState(null)
   const intervalRef = useRef(null)
 
   // Select appropriate graph based on algorithm
@@ -845,7 +875,63 @@ const GraphAlgo = () => {
     return 'weighted'
   }
 
-  const currentGraph = SAMPLE_GRAPHS[getGraphType(algorithm)]
+  const generateRandomGraph = (n, type) => {
+    const nodes = []
+    const edges = []
+    const width = 600
+    const height = 300
+
+    // Random layouts basically
+    for (let i = 0; i < n; i++) {
+      nodes.push({
+        id: i,
+        x: Math.random() * (width - 100) + 50,
+        y: Math.random() * (height - 100) + 50,
+        label: i.toString(),
+      })
+    }
+
+    // Connect to ensure connectivity (simplified)
+    for (let i = 1; i < n; i++) {
+      const parent = Math.floor(Math.random() * i)
+      const weight = Math.floor(Math.random() * 9) + 1
+      edges.push({ from: parent, to: i, weight })
+    }
+
+    // Add extra random edges
+    const extraEdges = Math.floor(n / 2)
+    for (let i = 0; i < extraEdges; i++) {
+      const u = Math.floor(Math.random() * n)
+      const v = Math.floor(Math.random() * n)
+      if (u !== v && !edges.some((e) => (e.from === u && e.to === v) || (e.from === v && e.to === u))) {
+        const weight = Math.floor(Math.random() * 9) + 1
+        edges.push({ from: u, to: v, weight })
+      }
+    }
+
+    // Direct edges correctly if DAG
+    if (type === 'dag') {
+      const dagEdges = []
+      for (let i = 0; i < n; i++) {
+        for (let j = i + 1; j < n; j++) {
+          if (Math.random() > 0.7) {
+            dagEdges.push({ from: i, to: j, weight: 1 })
+          }
+        }
+      }
+      // Ensure connectivity for visualization sake
+      for (let i = 0; i < n - 1; i++) {
+        if (!dagEdges.some((e) => e.from === i)) {
+          dagEdges.push({ from: i, to: i + 1, weight: 1 })
+        }
+      }
+      return { nodes, edges: dagEdges }
+    }
+
+    return { nodes, edges }
+  }
+
+  const currentGraph = dynamicGraph || SAMPLE_GRAPHS[getGraphType(algorithm)]
 
   // --- ALGORITHM GENERATORS ---
 
@@ -1209,13 +1295,19 @@ const GraphAlgo = () => {
   const reset = () => {
     setIsPlaying(false)
     setCurrentStep(0)
-    const generated = generateSteps(currentGraph, algorithm)
+
+    // Regenerate graph
+    const type = getGraphType(algorithm)
+    const graph = generateRandomGraph(nodeCount, type)
+    setDynamicGraph(graph)
+
+    const generated = generateSteps(graph, algorithm)
     setSteps(generated)
   }
 
   useEffect(() => {
     reset()
-  }, [algorithm])
+  }, [algorithm, nodeCount])
 
   useEffect(() => {
     if (isPlaying) {
@@ -1287,6 +1379,19 @@ const GraphAlgo = () => {
               />
             </div>
           </div>
+
+          {/* Node Count Input */}
+          <div className='flex items-center gap-2'>
+            <label className='text-xs text-slate-400 font-bold'>NODES</label>
+            <input
+              type='number'
+              min='3'
+              max='10'
+              value={nodeCount}
+              onChange={(e) => setNodeCount(Number(e.target.value))}
+              className='w-16 bg-slate-700 text-orange-500 px-2 py-1 rounded border border-slate-600 text-sm text-center outline-none focus:border-orange-500 transition-colors'
+            />
+          </div>
         </div>
 
         <div className='flex items-center gap-2'>
@@ -1301,37 +1406,42 @@ const GraphAlgo = () => {
 
       {/* TOP INFO CARD */}
       <div className='p-6 border-b border-slate-700 bg-[#151925]'>
-        <h2 className='text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-amber-200 mb-2'>{ALGO_INFO[algorithm].title}</h2>
-        <p className='text-sm text-slate-400 leading-relaxed max-w-2xl'>{ALGO_INFO[algorithm].description}</p>
+        <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
+          {/* LEFT COLUMN: INFO */}
+          <div className='flex flex-col gap-4'>
+            <h2 className='text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-amber-200 mb-2'>{ALGO_INFO[algorithm].title}</h2>
+            <p className='text-sm text-slate-400 leading-relaxed max-w-2xl'>{ALGO_INFO[algorithm].description}</p>
 
-        <div className='flex gap-4 mt-4'>
-          <div className='flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700'>
-            <Activity
-              size={12}
-              className='text-orange-400'
-            />
-            Time: <span className='text-slate-200'>{ALGO_INFO[algorithm].complexity}</span>
+            <div className='flex gap-4'>
+              <div className='flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700'>
+                <Activity
+                  size={12}
+                  className='text-orange-400'
+                />
+                Time: <span className='text-slate-200'>{ALGO_INFO[algorithm].complexity}</span>
+              </div>
+              <div className='flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700'>
+                <GitBranch
+                  size={12}
+                  className='text-blue-400'
+                />
+                Use Case: <span className='text-slate-200'>{ALGO_INFO[algorithm].useCase}</span>
+              </div>
+            </div>
           </div>
-          <div className='flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700'>
-            <GitBranch
-              size={12}
-              className='text-blue-400'
-            />
-            Use Case: <span className='text-slate-200'>{ALGO_INFO[algorithm].useCase}</span>
-          </div>
-        </div>
 
-        {/* STATIC PSEUDOCODE SECTION */}
-        <div className='mt-4 bg-slate-900 rounded-lg border border-slate-700 overflow-hidden'>
-          <div className='px-4 py-2 bg-slate-800 border-b border-slate-700 flex items-center gap-2'>
-            <MessageSquare
-              size={12}
-              className='text-slate-400'
-            />
-            <span className='text-xs text-slate-400 font-bold'>PSEUDOCODE</span>
-          </div>
-          <div className='p-4 max-h-64 overflow-auto'>
-            <pre className='text-xs text-slate-300 font-mono whitespace-pre leading-relaxed'>{PSEUDOCODE[algorithm]}</pre>
+          {/* RIGHT COLUMN: PSEUDOCODE */}
+          <div className='bg-slate-900 rounded-lg border border-slate-700 overflow-hidden'>
+            <div className='px-4 py-2 bg-slate-800 border-b border-slate-700 flex items-center gap-2'>
+              <MessageSquare
+                size={12}
+                className='text-slate-400'
+              />
+              <span className='text-xs text-slate-400 font-bold'>PSEUDOCODE</span>
+            </div>
+            <div className='p-4 max-h-64 overflow-auto'>
+              <pre className='text-xs text-slate-300 font-mono whitespace-pre leading-relaxed'>{PSEUDOCODE[algorithm]}</pre>
+            </div>
           </div>
         </div>
       </div>
@@ -1390,14 +1500,6 @@ const GraphAlgo = () => {
 
         {/* RIGHT COLUMN: INFO & CODE (7/12) */}
         <div className='lg:col-span-7 bg-[#1e1e1e] flex flex-col border-l border-slate-800'>
-          {/* C++ CODE PANEL */}
-          <div className='p-4 bg-[#252526]'>
-            <CodeViewer
-              code={ALGO_CPLUSPLUS[algorithm]}
-              activeLine={currentVisual.activeLine}
-            />
-          </div>
-
           {/* CURRENT ACTION INDICATOR */}
           <div className='p-6 border-b border-slate-800 bg-slate-900/50'>
             <div className='bg-slate-900 border border-orange-500/50 p-4 rounded-xl shadow-lg border-l-4 border-l-orange-500 flex items-start gap-4'>
@@ -1412,6 +1514,14 @@ const GraphAlgo = () => {
                 <p className='text-sm font-medium text-white leading-tight'>{currentVisual.description}</p>
               </div>
             </div>
+          </div>
+
+          {/* C++ CODE PANEL */}
+          <div className='p-4 bg-[#252526] flex-1 overflow-hidden'>
+            <CodeViewer
+              code={ALGO_CPLUSPLUS[algorithm]}
+              activeLine={currentVisual.activeLine}
+            />
           </div>
         </div>
       </main>

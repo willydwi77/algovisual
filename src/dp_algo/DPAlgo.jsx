@@ -948,12 +948,12 @@ const DPAlgo = () => {
           {/* DYNAMIC INPUTS */}
           {algorithm === 'fibonacciDP' && (
             <>
-              <label className='text-xs text-slate-400 font-bold'>N:</label>
+              <label className='text-xs text-slate-400 font-bold'>ARRAY</label>
               <input
                 type='number'
                 value={fibN}
                 onChange={(e) => setFibN(Math.min(20, Math.max(0, parseInt(e.target.value) || 0)))}
-                className='w-16 bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-sm text-white font-mono focus:ring-2 focus:ring-orange-500/50 outline-none'
+                className='w-16 bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-sm text-orange-500 font-mono focus:ring-2 focus:ring-orange-500/50 outline-none text-center transition-colors'
                 max={20}
               />
             </>
@@ -963,55 +963,55 @@ const DPAlgo = () => {
             <>
               <div className='flex flex-col gap-1'>
                 <div className='flex items-center gap-2'>
-                  <label className='text-[10px] text-slate-400 font-bold w-12'>Berat:</label>
+                  <label className='text-[10px] text-slate-400 font-bold w-12'>WEIGHTS</label>
                   <input
                     type='text'
                     value={knapWeights}
                     onChange={(e) => setKnapWeights(e.target.value)}
-                    className='w-32 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-white font-mono focus:ring-2 focus:ring-orange-500/50 outline-none'
+                    className='w-32 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-orange-500 font-mono focus:ring-2 focus:ring-orange-500/50 outline-none text-center transition-colors'
                     placeholder='2, 3, 4'
                   />
                 </div>
                 <div className='flex items-center gap-2'>
-                  <label className='text-[10px] text-slate-400 font-bold w-12'>Nilai:</label>
+                  <label className='text-[10px] text-slate-400 font-bold w-12'>VALUES</label>
                   <input
                     type='text'
                     value={knapValues}
                     onChange={(e) => setKnapValues(e.target.value)}
-                    className='w-32 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-white font-mono focus:ring-2 focus:ring-orange-500/50 outline-none'
+                    className='w-32 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-orange-500 font-mono focus:ring-2 focus:ring-orange-500/50 outline-none text-center transition-colors'
                     placeholder='3, 4, 5'
                   />
                 </div>
               </div>
-              <label className='text-xs text-slate-400 font-bold ml-2'>Kap(W):</label>
+              <label className='text-xs text-slate-400 font-bold ml-2'>Kap(W)</label>
               <input
                 type='number'
                 value={knapW}
                 onChange={(e) => setKnapW(Math.min(15, Math.max(1, parseInt(e.target.value) || 1)))}
-                className='w-14 bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-sm text-white font-mono focus:ring-2 focus:ring-orange-500/50 outline-none'
+                className='w-14 bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-sm text-orange-500 font-mono focus:ring-2 focus:ring-orange-500/50 outline-none text-center transition-colors'
                 max={15}
               />
             </>
           )}
 
           {(algorithm === 'longestCommonSubsequence' || algorithm === 'editDistance') && (
-            <div className='flex flex-col gap-1'>
+            <div className='flex flex-wrap gap-1'>
               <div className='flex items-center gap-2'>
-                <label className='text-[10px] text-slate-400 font-bold w-8'>Str1:</label>
+                <label className='text-xs text-slate-400 font-bold'>TEXT 1</label>
                 <input
                   type='text'
                   value={algorithm === 'longestCommonSubsequence' ? lcsStr1 : editStr1}
                   onChange={(e) => (algorithm === 'longestCommonSubsequence' ? setLcsStr1(e.target.value.toUpperCase().slice(0, 10)) : setEditStr1(e.target.value.toUpperCase().slice(0, 10)))}
-                  className='w-28 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-white font-mono focus:ring-2 focus:ring-orange-500/50 outline-none'
+                  className='w-28 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-orange-500 font-mono focus:ring-2 focus:ring-orange-500/50 outline-none text-center transition-colors'
                 />
               </div>
               <div className='flex items-center gap-2'>
-                <label className='text-[10px] text-slate-400 font-bold w-8'>Str2:</label>
+                <label className='text-xs text-slate-400 font-bold'>TEXT 2</label>
                 <input
                   type='text'
                   value={algorithm === 'longestCommonSubsequence' ? lcsStr2 : editStr2}
                   onChange={(e) => (algorithm === 'longestCommonSubsequence' ? setLcsStr2(e.target.value.toUpperCase().slice(0, 10)) : setEditStr2(e.target.value.toUpperCase().slice(0, 10)))}
-                  className='w-28 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-white font-mono focus:ring-2 focus:ring-orange-500/50 outline-none'
+                  className='w-28 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-orange-500 font-mono focus:ring-2 focus:ring-orange-500/50 outline-none text-center transition-colors'
                 />
               </div>
             </div>
@@ -1019,12 +1019,12 @@ const DPAlgo = () => {
 
           {algorithm === 'matrixChainMultiplication' && (
             <>
-              <label className='text-xs text-slate-400 font-bold'>Dimensi:</label>
+              <label className='text-xs text-slate-400 font-bold'>DIMENSION</label>
               <input
                 type='text'
                 value={mcmDims}
                 onChange={(e) => setMcmDims(e.target.value)}
-                className='w-40 bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-sm text-white font-mono focus:ring-2 focus:ring-orange-500/50 outline-none'
+                className='w-40 bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-sm text-orange-500 font-mono focus:ring-2 focus:ring-orange-500/50 outline-none text-center transition-colors'
                 placeholder='10, 30, 5, 60'
               />
             </>

@@ -784,9 +784,18 @@ const TreeVisualization = ({ tree, step }) => {
   const { nodes, edges } = tree
   const { visitedNodes = [], activeNodes = [], highlightedEdges = [], description = '' } = step
 
+  const xValues = nodes.map((n) => n.x)
+  const yValues = nodes.map((n) => n.y)
+  const minX = Math.min(...xValues, 0)
+  const maxX = Math.max(...xValues, 600) // Default min width
+  const maxY = Math.max(...yValues, 250) // Default min height
+
+  const svgWidth = Math.max(600, maxX + 50)
+  const svgHeight = Math.max(250, maxY + 50)
+
   return (
-    <div className='bg-slate-900 border border-slate-700 rounded-xl p-4 shadow-xl min-h-[300px]'>
-      <div className='flex justify-between items-center mb-4'>
+    <div className='bg-slate-900 border border-slate-700 rounded-xl p-4 shadow-xl min-h-[300px] overflow-auto'>
+      <div className='flex justify-between items-center mb-4 sticky left-0'>
         <h3 className='text-xs font-bold text-slate-400 uppercase flex items-center gap-2'>
           <GitBranch size={14} /> Visualisasi Pohon
         </h3>
@@ -802,8 +811,8 @@ const TreeVisualization = ({ tree, step }) => {
       </div>
 
       <svg
-        width='600'
-        height='250'
+        width={svgWidth}
+        height={svgHeight}
         className='mx-auto'>
         {/* Draw Edges */}
         {edges.map((edge, idx) => {
@@ -904,47 +913,75 @@ const CodeViewer = ({ code, activeLine }) => {
   }
 
   const highlightCodePart = (text) => {
-    const words = text.split(/(\s+)/)
+    // Split by word boundaries but preserve operators and symbols
+    const tokens = text.split(/(\s+|[(){}\[\];,&<>*=+\-!|])/)
 
-    return words.map((word, idx) => {
-      if (/^\s+$/.test(word)) {
-        return <span key={idx}>{word}</span>
+    return tokens.map((token, idx) => {
+      // Skip whitespace and empty
+      if (!token || /^\s+$/.test(token)) {
+        return <span key={idx}>{token}</span>
       }
 
-      const keywords = ['void', 'int', 'bool', 'vector', 'for', 'while', 'if', 'else', 'return', 'swap', 'break', 'continue', 'struct', 'enum', 'nullptr', 'new', 'delete']
-      const literals = ['true', 'false', 'RED', 'BLACK']
+      // C++ Keywords (kontrol alur)
+      const keywords = ['void', 'int', 'bool', 'char', 'float', 'double', 'long', 'short', 'unsigned', 'for', 'while', 'do', 'if', 'else', 'switch', 'case', 'default', 'return', 'break', 'continue', 'goto', 'true', 'false', 'nullptr', 'NULL', 'const', 'static', 'auto', 'this', 'class', 'struct', 'enum', 'typedef', 'public', 'private', 'protected', 'virtual', 'override', 'final']
 
-      if (keywords.includes(word)) {
+      // C++ Types and STL
+      const types = ['vector', 'string', 'map', 'set', 'queue', 'stack', 'pair', 'array', 'priority_queue', 'TreeNode', 'Node']
+
+      if (keywords.includes(token)) {
         return (
           <span
             key={idx}
             className='text-purple-400 font-bold'>
-            {word}
+            {token}
           </span>
         )
       }
 
-      if (literals.includes(word)) {
+      if (types.includes(token)) {
         return (
           <span
             key={idx}
-            className='text-red-400 font-bold'>
-            {word}
+            className='text-cyan-400 font-semibold'>
+            {token}
           </span>
         )
       }
 
-      if (/^\d+$/.test(word)) {
+      // Numbers
+      if (/^\d+$/.test(token)) {
         return (
           <span
             key={idx}
             className='text-green-400'>
-            {word}
+            {token}
           </span>
         )
       }
 
-      return <span key={idx}>{word}</span>
+      // Operators
+      if (/^[(){}\[\];,&<>*=+\-!|]+$/.test(token)) {
+        return (
+          <span
+            key={idx}
+            className='text-yellow-400'>
+            {token}
+          </span>
+        )
+      }
+
+      // Function names (word followed by parenthesis)
+      if (idx + 1 < tokens.length && tokens[idx + 1] === '(') {
+        return (
+          <span
+            key={idx}
+            className='text-blue-300'>
+            {token}
+          </span>
+        )
+      }
+
+      return <span key={idx}>{token}</span>
     })
   }
 
@@ -1002,17 +1039,88 @@ const CodeViewer = ({ code, activeLine }) => {
 
 const TreeAlgo = () => {
   const [algorithm, setAlgorithm] = useState('treeTraversal')
+  const [nodeCount, setNodeCount] = useState(7)
   const [steps, setSteps] = useState([])
   const [currentStep, setCurrentStep] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
+  const [dynamicTree, setDynamicTree] = useState(null)
   const intervalRef = useRef(null)
+
+  const generateRandomTree = (n) => {
+    const nodes = []
+    const edges = []
+
+    // Create nodes
+    for (let i = 0; i < n; i++) {
+      nodes.push({
+        id: i,
+        value: Math.floor(Math.random() * 90) + 10,
+        label: '', // Will update
+        x: 0,
+        y: 0,
+      })
+    }
+
+    // Random structure (simplified)
+    // Always connect 0 to 1 and 2 if possible to ensure tree look
+    const queue = [0]
+    let currentIdx = 1
+
+    while (currentIdx < n && queue.length > 0) {
+      const parentId = queue.shift()
+
+      // Left child
+      if (currentIdx < n) {
+        edges.push({ from: parentId, to: currentIdx })
+        queue.push(currentIdx)
+        currentIdx++
+      }
+
+      // Right child (80% chance if available)
+      if (currentIdx < n && Math.random() > 0.2) {
+        edges.push({ from: parentId, to: currentIdx })
+        queue.push(currentIdx)
+        currentIdx++
+      }
+    }
+
+    // Fallback: connect remaining nodes sequentially if any detached (simple fix)
+    while (currentIdx < n) {
+      edges.push({ from: 0, to: currentIdx }) // Just attach to root to ensure connectivity
+      currentIdx++
+    }
+
+    // Calculate layout
+    const setPosition = (nodeId, x, y, level, offset) => {
+      const node = nodes.find((n) => n.id === nodeId)
+      if (!node) return
+
+      node.x = x
+      node.y = y
+      node.label = node.value.toString()
+
+      const children = edges.filter((e) => e.from === nodeId).map((e) => e.to)
+      if (children.length > 0) {
+        // Left
+        setPosition(children[0], x - offset, y + 70, level + 1, offset / 2)
+      }
+      if (children.length > 1) {
+        // Right
+        setPosition(children[1], x + offset, y + 70, level + 1, offset / 2)
+      }
+    }
+
+    setPosition(0, 300, 50, 0, 100)
+
+    return { nodes, edges }
+  }
 
   const getTreeType = (algo) => {
     if (['heapOps'].includes(algo)) return 'heap'
     return 'binary'
   }
 
-  const currentTree = SAMPLE_TREES[getTreeType(algorithm)]
+  const currentTree = dynamicTree || SAMPLE_TREES[getTreeType(algorithm)]
 
   const snapshot = (visitedNodes, activeNodes, highlightedEdges, line, desc, output = '') => ({
     visitedNodes: [...visitedNodes],
@@ -1030,29 +1138,36 @@ const TreeAlgo = () => {
     s.push(snapshot([], [], [], 1, 'Mulai algoritma', ''))
 
     if (algo === 'treeTraversal') {
-      // Inorder Traversal (Left-Root-Right)
+      // --- INORDER ---
       const inorder = (nodeId, visited, output) => {
         if (nodeId === null || nodeId === undefined) return { visited, output }
 
         const node = nodes[nodeId]
-        const leftChild = tree.edges.find((e) => e.from === nodeId && nodes[e.to].x < node.x)?.to
-        const rightChild = tree.edges.find((e) => e.from === nodeId && nodes[e.to].x > node.x)?.to
+        // Identify children from edges based on x coordinate (left < root < right)
+        // Note: For random tree, edges[0] is usually left, edges[1] right but validation needed
+        const children = tree.edges.filter((e) => e.from === nodeId).map((e) => e.to)
+        const leftChild = children.find((id) => nodes[id].x < node.x)
+        const rightChild = children.find((id) => nodes[id].x >= node.x)
 
-        s.push(snapshot(visited, [nodeId], [], 2, `Visit node ${node.label} (inorder)`, output.join(' ')))
+        // Line 2: if (node == nullptr) return; (Implicit in recursion check)
 
-        // Left
+        // Line 3: inorder(node->left);
+        s.push(snapshot(visited, [nodeId], [], 3, `Inorder(${node.label}): Panggil rekursif ke kiri`, output.join(' ')))
+
         if (leftChild !== undefined) {
           const result = inorder(leftChild, visited, output)
           visited = result.visited
           output = result.output
         }
 
-        // Root
+        // Line 4: cout << node->val << " ";
         visited.push(nodeId)
         output.push(node.label)
-        s.push(snapshot(visited, [nodeId], [], 3, `Process node ${node.label}`, output.join(' ')))
+        s.push(snapshot(visited, [nodeId], [], 4, `Inorder(${node.label}): Kunjungi/Cetak ${node.label}`, output.join(' ')))
 
-        // Right
+        // Line 5: inorder(node->right);
+        s.push(snapshot(visited, [nodeId], [], 5, `Inorder(${node.label}): Panggil rekursif ke kanan`, output.join(' ')))
+
         if (rightChild !== undefined) {
           const result = inorder(rightChild, visited, output)
           visited = result.visited
@@ -1066,33 +1181,57 @@ const TreeAlgo = () => {
     } else if (algo === 'heapOps') {
       // Min-Heap Insert
       const heapArray = nodes.map((n) => n.value)
-      s.push(snapshot([], [], [], 1, 'Heap array: ' + heapArray.join(', '), heapArray.join(', ')))
+      // Line numbers mapped to heapOps C++ code
+      // void insert(vector<int>& heap, int value) { -> Line 2
+      s.push(snapshot([], [], [], 2, 'Heap array awal: ' + heapArray.join(', '), heapArray.join(', ')))
 
       // Insert operation
-      const newValue = 5
-      s.push(snapshot([], [heapArray.length], [], 2, `Insert ${newValue} ke heap`, heapArray.join(', ')))
+      const newValue = Math.floor(Math.random() * 50) + 1
+      // Line 3: heap.push_back(value);
+      s.push(snapshot([], [heapArray.length], [], 3, `Insert ${newValue} ke heap (push_back)`, heapArray.join(', ')))
 
       heapArray.push(newValue)
+      // Line 4: int index = heap.size() - 1;
       let idx = heapArray.length - 1
+      s.push(
+        snapshot(
+          Array.from({ length: heapArray.length - 1 }, (_, i) => i),
+          [idx],
+          [],
+          4,
+          `Index elemen baru = ${idx}`,
+          heapArray.join(', ')
+        )
+      )
 
+      // Line 6: while (index > 0) {
       while (idx > 0) {
         const parent = Math.floor((idx - 1) / 2)
-        s.push(snapshot([], [idx, parent], [], 6, `Compare ${heapArray[idx]} dengan parent ${heapArray[parent]}`, heapArray.join(', ')))
+        // Line 7: int parent = (index - 1) / 2;
+        s.push(snapshot([], [idx, parent], [], 7, `Hitung parent dari index ${idx} adalah ${parent}`, heapArray.join(', ')))
+
+        // Line 8: if (heap[index] < heap[parent]) {
+        s.push(snapshot([], [idx, parent], [], 8, `Bandingkan: ${heapArray[idx]} < ${heapArray[parent]}?`, heapArray.join(', ')))
 
         if (heapArray[idx] < heapArray[parent]) {
+          // Line 9: swap(heap[index], heap[parent]);
           ;[heapArray[idx], heapArray[parent]] = [heapArray[parent], heapArray[idx]]
           s.push(
             snapshot(
               Array.from({ length: idx }, (_, i) => i),
               [parent],
               [],
-              8,
-              `Swap dan percolate up`,
+              9,
+              `Swap ${heapArray[idx]} dan ${heapArray[parent]}`,
               heapArray.join(', ')
             )
           )
+          // Line 10: index = parent;
           idx = parent
+          s.push(snapshot([], [idx], [], 10, `Update index sekarang = ${idx}`, heapArray.join(', ')))
         } else {
+          // Line 11: } else { break; }
+          s.push(snapshot([], [idx, parent], [], 12, `Tidak perlu swap, properti heap terpenuhi`, heapArray.join(', ')))
           break
         }
       }
@@ -1102,7 +1241,7 @@ const TreeAlgo = () => {
           Array.from({ length: heapArray.length }, (_, i) => i),
           [],
           [],
-          11,
+          15,
           'Insert selesai',
           heapArray.join(', ')
         )
@@ -1129,13 +1268,17 @@ const TreeAlgo = () => {
   const reset = () => {
     setIsPlaying(false)
     setCurrentStep(0)
-    const generated = generateSteps(currentTree, algorithm)
+    // For heapOps, we might want to regenerate to keep it interesting, or keep static.
+    // Let's regenerate for all to be dynamic.
+    const tree = generateRandomTree(nodeCount)
+    setDynamicTree(tree)
+    const generated = generateSteps(tree, algorithm)
     setSteps(generated)
   }
 
   useEffect(() => {
     reset()
-  }, [algorithm])
+  }, [algorithm, nodeCount])
 
   useEffect(() => {
     if (isPlaying) {
@@ -1201,6 +1344,18 @@ const TreeAlgo = () => {
               />
             </div>
           </div>
+
+          <div className='flex items-center gap-2'>
+            <label className='text-xs text-slate-400 font-bold'>NODES</label>
+            <input
+              type='number'
+              value={nodeCount}
+              onChange={(e) => setNodeCount(Math.min(15, Math.max(3, parseInt(e.target.value) || 0)))}
+              className='w-16 bg-slate-700 text-orange-500 px-2 py-1 rounded border border-slate-600 text-sm text-center outline-none focus:border-orange-500 transition-colors'
+              min='3'
+              max='15'
+            />
+          </div>
         </div>
 
         <div className='flex items-center gap-2'>
@@ -1215,37 +1370,40 @@ const TreeAlgo = () => {
 
       {/* TOP INFO CARD */}
       <div className='p-6 border-b border-slate-700 bg-[#151925]'>
-        <h2 className='text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-amber-200 mb-2'>{ALGO_INFO[algorithm].title}</h2>
-        <p className='text-sm text-slate-400 leading-relaxed max-w-2xl'>{ALGO_INFO[algorithm].description}</p>
+        {/* TWO COLUMN LAYOUT: INFO & PSEUDOCODE */}
+        <div className='grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4'>
+          {/* LEFT COLUMN: INFO */}
+          <div className='flex flex-col gap-4'>
+            <h2 className='text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-amber-200 mb-2'>{ALGO_INFO[algorithm].title}</h2>
+            <p className='text-sm text-slate-400 leading-relaxed max-w-2xl'>{ALGO_INFO[algorithm].description}</p>
+            <div className='flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700'>
+              <Activity
+                size={12}
+                className='text-orange-400'
+              />
+              Complexity: <span className='text-slate-200'>{ALGO_INFO[algorithm].complexity}</span>
+            </div>
+            <div className='flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700'>
+              <GitBranch
+                size={12}
+                className='text-blue-400'
+              />
+              Use Case: <span className='text-slate-200'>{ALGO_INFO[algorithm].useCase}</span>
+            </div>
+          </div>
 
-        <div className='flex gap-4 mt-4'>
-          <div className='flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700'>
-            <Activity
-              size={12}
-              className='text-orange-400'
-            />
-            Complexity: <span className='text-slate-200'>{ALGO_INFO[algorithm].complexity}</span>
-          </div>
-          <div className='flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700'>
-            <GitBranch
-              size={12}
-              className='text-blue-400'
-            />
-            Use Case: <span className='text-slate-200'>{ALGO_INFO[algorithm].useCase}</span>
-          </div>
-        </div>
-
-        {/* PSEUDOCODE */}
-        <div className='mt-4 bg-slate-900 rounded-lg border border-slate-700 overflow-hidden'>
-          <div className='px-4 py-2 bg-slate-800 border-b border-slate-700 flex items-center gap-2'>
-            <MessageSquare
-              size={12}
-              className='text-slate-400'
-            />
-            <span className='text-xs text-slate-400 font-bold'>PSEUDOCODE</span>
-          </div>
-          <div className='p-4 max-h-64 overflow-auto'>
-            <pre className='text-xs text-slate-300 font-mono whitespace-pre leading-relaxed'>{PSEUDOCODE[algorithm]}</pre>
+          {/* RIGHT COLUMN: Pseudocode */}
+          <div className='bg-slate-900 rounded-lg border border-slate-700 overflow-hidden'>
+            <div className='px-4 py-2 bg-slate-800 border-b border-slate-700 flex items-center gap-2'>
+              <MessageSquare
+                size={12}
+                className='text-slate-400'
+              />
+              <span className='text-xs text-slate-400 font-bold'>PSEUDOCODE</span>
+            </div>
+            <div className='p-4 max-h-64 overflow-auto'>
+              <pre className='text-xs text-slate-300 font-mono whitespace-pre leading-relaxed'>{PSEUDOCODE[algorithm]}</pre>
+            </div>
           </div>
         </div>
       </div>
@@ -1302,13 +1460,6 @@ const TreeAlgo = () => {
 
         {/* RIGHT COLUMN */}
         <div className='lg:col-span-7 bg-[#1e1e1e] flex flex-col border-l border-slate-800'>
-          <div className='p-4 bg-[#252526]'>
-            <CodeViewer
-              code={ALGO_CPLUSPLUS[algorithm]}
-              activeLine={currentVisual.activeLine}
-            />
-          </div>
-
           <div className='p-6 border-b border-slate-800 bg-slate-900/50'>
             <div className='bg-slate-900 border border-orange-500/50 p-4 rounded-xl shadow-lg border-l-4 border-l-orange-500 flex items-start gap-4'>
               <div className='p-2 bg-orange-900/30 rounded-lg shrink-0'>
@@ -1322,6 +1473,13 @@ const TreeAlgo = () => {
                 <p className='text-sm font-medium text-white leading-tight'>{currentVisual.description}</p>
               </div>
             </div>
+          </div>
+
+          <div className='p-4 bg-[#252526]'>
+            <CodeViewer
+              code={ALGO_CPLUSPLUS[algorithm]}
+              activeLine={currentVisual.activeLine}
+            />
           </div>
         </div>
       </main>

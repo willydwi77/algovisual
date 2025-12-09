@@ -1170,7 +1170,7 @@ const BTAlgo = () => {
             <div className='flex flex-wrap gap-4'>
               {algorithm === 'nQueens' && (
                 <div className='flex items-center gap-2'>
-                  <label className='text-sm text-slate-400'>N (Ukuran Papan):</label>
+                  <label className='text-xs text-slate-400 font-bold'>N (BOARD SIZE)</label>
                   <select
                     value={variables.nQueens.n}
                     onChange={(e) => setVariables({ ...variables, nQueens: { n: parseInt(e.target.value) } })}
@@ -1184,7 +1184,7 @@ const BTAlgo = () => {
               )}
               {algorithm === 'sudokuSolver' && (
                 <div className='flex items-center gap-2'>
-                  <label className='text-sm text-slate-400'>Tingkat Kesulitan</label>
+                  <label className='text-xs text-slate-400 font-bold'>DIFFICULTY</label>
                   <select
                     value={variables.sudokuSolver.difficulty}
                     onChange={(e) => setVariables({ ...variables, sudokuSolver: { difficulty: e.target.value } })}
@@ -1196,12 +1196,12 @@ const BTAlgo = () => {
               )}
               {algorithm === 'permutation' && (
                 <div className='flex items-center gap-2'>
-                  <label className='text-sm text-slate-400'>Array</label>
+                  <label className='text-xs text-slate-400 font-bold'>ARRAY</label>
                   <input
                     type='text'
                     value={permutationInput}
                     onChange={(e) => setPermutationInput(e.target.value)}
-                    className='bg-slate-700 text-slate-200 px-3 py-1 rounded border border-slate-600 text-sm w-32'
+                    className='bg-slate-700 border border-slate-600 rounded px-2 py-1 text-sm text-center font-mono w-32 outline-none focus:border-orange-500 text-orange-500 transition-colors'
                     placeholder='1,2,3,4,5'
                   />
                 </div>
@@ -1209,29 +1209,29 @@ const BTAlgo = () => {
               {algorithm === 'subsetSum' && (
                 <>
                   <div className='flex items-center gap-2'>
-                    <label className='text-sm text-slate-400'>Array</label>
+                    <label className='text-xs text-slate-400 font-bold'>ARRAY</label>
                     <input
                       type='text'
                       value={subsetSumInput}
                       onChange={(e) => setSubsetSumInput(e.target.value)}
-                      className='bg-slate-700 text-slate-200 px-3 py-1 rounded border border-slate-600 text-sm w-40'
+                      className='bg-slate-700 border border-slate-600 rounded px-2 py-1 text-sm text-center font-mono w-40 outline-none focus:border-orange-500 text-orange-500 transition-colors'
                       placeholder='3,34,4,12,5,2'
                     />
                   </div>
                   <div className='flex items-center gap-2'>
-                    <label className='text-sm text-slate-400'>Target</label>
+                    <label className='text-xs text-slate-400 font-bold'>TARGET</label>
                     <input
                       type='number'
                       value={variables.subsetSum.target}
                       onChange={(e) => setVariables({ ...variables, subsetSum: { ...variables.subsetSum, target: parseInt(e.target.value) || 0 } })}
-                      className='bg-slate-700 text-slate-200 px-3 py-1 rounded border border-slate-600 text-sm w-20'
+                      className='bg-slate-700 border border-slate-600 rounded px-2 py-1 text-sm text-center font-mono w-20 outline-none focus:border-orange-500 text-orange-500 transition-colors'
                     />
                   </div>
                 </>
               )}
               {algorithm === 'mazeSolver' && (
                 <div className='flex items-center gap-2'>
-                  <label className='text-sm text-slate-400'>Ukuran Maze</label>
+                  <label className='text-xs text-slate-400 font-bold'>MAZE SIZE</label>
                   <select
                     value={variables.mazeSolver.size}
                     onChange={(e) => setVariables({ ...variables, mazeSolver: { size: parseInt(e.target.value) } })}
@@ -1268,7 +1268,7 @@ const BTAlgo = () => {
           {/* LEFT COLUMN: INFO */}
           <div className='flex flex-col gap-4'>
             <h2 className='text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-amber-200 mb-2'>{ALGO_INFO[algorithm].title}</h2>
-            <p className='text-sm text-slate-400 leading-relaxed max-w-2xl'>{ALGO_INFO[algorithm].description}</p>
+            <p className='text-xs text-slate-400 font-bold leading-relaxed max-w-2xl'>{ALGO_INFO[algorithm].description}</p>
             <div className='flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700'>
               <Activity
                 size={12}

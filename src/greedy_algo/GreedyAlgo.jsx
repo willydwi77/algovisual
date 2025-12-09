@@ -478,36 +478,75 @@ const CodeViewer = ({ code, activeLine }) => {
   }
 
   const highlightCodePart = (text) => {
-    const words = text.split(/(\s+)/)
+    // Split by word boundaries but preserve operators and symbols
+    const tokens = text.split(/(\s+|[(){}\[\];,&<>*=+\-!|])/)
 
-    return words.map((word, idx) => {
-      if (/^\s+$/.test(word)) {
-        return <span key={idx}>{word}</span>
+    return tokens.map((token, idx) => {
+      // Skip whitespace and empty
+      if (!token || /^\s+$/.test(token)) {
+        return <span key={idx}>{token}</span>
       }
 
-      const keywords = ['void', 'int', 'bool', 'vector', 'struct', 'for', 'while', 'if', 'else', 'return', 'break', 'sort', 'priority_queue']
+      // C++ Keywords (kontrol alur)
+      const keywords = ['void', 'int', 'bool', 'char', 'float', 'double', 'long', 'short', 'unsigned', 'for', 'while', 'do', 'if', 'else', 'switch', 'case', 'default', 'return', 'break', 'continue', 'goto', 'true', 'false', 'nullptr', 'NULL', 'const', 'static', 'auto', 'this', 'class', 'struct', 'enum', 'typedef', 'public', 'private', 'protected', 'virtual', 'override', 'final']
 
-      if (keywords.includes(word)) {
+      // C++ Types and STL
+      const types = ['vector', 'string', 'map', 'set', 'queue', 'stack', 'pair', 'array', 'priority_queue']
+
+      if (keywords.includes(token)) {
         return (
           <span
             key={idx}
             className='text-purple-400 font-bold'>
-            {word}
+            {token}
           </span>
         )
       }
 
-      if (/^\d+$/.test(word)) {
+      if (types.includes(token)) {
+        return (
+          <span
+            key={idx}
+            className='text-cyan-400 font-semibold'>
+            {token}
+          </span>
+        )
+      }
+
+      // Numbers
+      if (/^\d+$/.test(token)) {
         return (
           <span
             key={idx}
             className='text-green-400'>
-            {word}
+            {token}
           </span>
         )
       }
 
-      return <span key={idx}>{word}</span>
+      // Operators
+      if (/^[(){}\[\];,&<>*=+\-!|]+$/.test(token)) {
+        return (
+          <span
+            key={idx}
+            className='text-yellow-400'>
+            {token}
+          </span>
+        )
+      }
+
+      // Function names (word followed by parenthesis)
+      if (idx + 1 < tokens.length && tokens[idx + 1] === '(') {
+        return (
+          <span
+            key={idx}
+            className='text-blue-300'>
+            {token}
+          </span>
+        )
+      }
+
+      return <span key={idx}>{token}</span>
     })
   }
 
@@ -566,6 +605,9 @@ const CodeViewer = ({ code, activeLine }) => {
 const GreedyAlgo = () => {
   const [algorithm, setAlgorithm] = useState('activitySelection')
   const [amount, setAmount] = useState(63)
+  const [activityCount, setActivityCount] = useState(6)
+  const [huffmanInput, setHuffmanInput] = useState('MISSISSIPPI')
+  const [kruskalNodes, setKruskalNodes] = useState(5)
   const [steps, setSteps] = useState([])
   const [currentStep, setCurrentStep] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -578,50 +620,107 @@ const GreedyAlgo = () => {
     type,
   })
 
+  // --- GENERATORS ---
+  const generateActivities = (n) => {
+    const acts = []
+    for (let i = 0; i < n; i++) {
+      const start = Math.floor(Math.random() * 20)
+      const duration = Math.floor(Math.random() * 6) + 1
+      acts.push({
+        id: i + 1,
+        start,
+        finish: start + duration,
+        selected: false,
+        current: false,
+      })
+    }
+    return acts
+  }
+
+  const generateFrequencies = (text) => {
+    const freqMap = {}
+    for (let char of text) {
+      freqMap[char] = (freqMap[char] || 0) + 1
+    }
+    return Object.entries(freqMap).map(([char, freq]) => ({
+      char,
+      freq,
+      selected: false,
+      current: false,
+    }))
+  }
+
+  const generateGraph = (v) => {
+    const edges = []
+    // Ensure connectivity by spanning tree first
+    for (let i = 1; i < v; i++) {
+      const parent = Math.floor(Math.random() * i)
+      edges.push({
+        src: parent,
+        dest: i,
+        weight: Math.floor(Math.random() * 15) + 1,
+        selected: false,
+        current: false,
+      })
+    }
+    // Add random edges
+    const extraEdges = Math.floor(v * 1.5)
+    for (let i = 0; i < extraEdges; i++) {
+      const src = Math.floor(Math.random() * v)
+      let dest = Math.floor(Math.random() * v)
+      while (src === dest) dest = Math.floor(Math.random() * v)
+
+      // Avoid duplicates (simplified)
+      if (!edges.some((e) => (e.src === src && e.dest === dest) || (e.src === dest && e.dest === src))) {
+        edges.push({
+          src: Math.min(src, dest),
+          dest: Math.max(src, dest),
+          weight: Math.floor(Math.random() * 15) + 1,
+          selected: false,
+          current: false,
+        })
+      }
+    }
+    return edges
+  }
+
   const generateSteps = (algo) => {
     let s = []
 
     if (algo === 'activitySelection') {
-      const activities = [
-        { id: 1, start: 1, finish: 4, selected: false, current: false },
-        { id: 2, start: 3, finish: 5, selected: false, current: false },
-        { id: 3, start: 0, finish: 6, selected: false, current: false },
-        { id: 4, start: 5, finish: 7, selected: false, current: false },
-        { id: 5, start: 8, finish: 9, selected: false, current: false },
-        { id: 6, start: 5, finish: 9, selected: false, current: false },
-      ]
+      const activities = generateActivities(activityCount)
 
       // Sort by finish time
       activities.sort((a, b) => a.finish - b.finish)
 
-      s.push(snapshot(activities, 1, 'Mulai Activity Selection', 'activities'))
-      s.push(snapshot(activities, 2, 'Sort aktivitas berdasarkan waktu selesai', 'activities'))
+      s.push(snapshot(activities, 9, 'Mulai Activity Selection', 'activities'))
+      s.push(snapshot(activities, 10, 'Sort aktivitas berdasarkan waktu selesai', 'activities'))
 
       // Select first activity
       activities[0].selected = true
       activities[0].current = true
       let lastFinish = activities[0].finish
-      s.push(snapshot(activities, 5, `Pilih aktivitas ${activities[0].id} (finish: ${lastFinish})`, 'activities'))
+      s.push(snapshot(activities, 13, `Pilih aktivitas ${activities[0].id} (finish: ${lastFinish})`, 'activities'))
 
       activities[0].current = false
 
       for (let i = 1; i < activities.length; i++) {
         activities[i].current = true
-        s.push(snapshot(activities, 8, `Cek aktivitas ${activities[i].id}: start=${activities[i].start}, lastFinish=${lastFinish}`, 'activities'))
+        s.push(snapshot(activities, 17, `Cek aktivitas ${activities[i].id}: start=${activities[i].start}, lastFinish=${lastFinish}`, 'activities'))
 
         if (activities[i].start >= lastFinish) {
           activities[i].selected = true
           lastFinish = activities[i].finish
-          s.push(snapshot(activities, 9, `✓ Pilih aktivitas ${activities[i].id} (tidak overlap)`, 'activities'))
+          s.push(snapshot(activities, 18, `✓ Pilih aktivitas ${activities[i].id} (tidak overlap)`, 'activities'))
         } else {
-          s.push(snapshot(activities, 8, `✗ Skip aktivitas ${activities[i].id} (overlap)`, 'activities'))
+          s.push(snapshot(activities, 17, `✗ Skip aktivitas ${activities[i].id} (overlap)`, 'activities'))
         }
 
         activities[i].current = false
       }
 
       const selected = activities.filter((a) => a.selected)
-      s.push(snapshot(activities, 13, `Selesai! Total ${selected.length} aktivitas dipilih`, 'activities'))
+      s.push(snapshot(activities, 22, `Selesai! Total ${selected.length} aktivitas dipilih`, 'activities'))
     } else if (algo === 'coinChangeGreedy') {
       const coins = [
         { value: 25, used: false, current: false },
@@ -657,14 +756,7 @@ const GreedyAlgo = () => {
         s.push(snapshot([...coins, ...result], 17, `Tidak bisa menyelesaikan dengan koin yang ada`, 'coins'))
       }
     } else if (algo === 'huffmanCoding') {
-      const chars = [
-        { char: 'a', freq: 5, selected: false, current: false },
-        { char: 'b', freq: 9, selected: false, current: false },
-        { char: 'c', freq: 12, selected: false, current: false },
-        { char: 'd', freq: 13, selected: false, current: false },
-        { char: 'e', freq: 16, selected: false, current: false },
-        { char: 'f', freq: 45, selected: false, current: false },
-      ]
+      const chars = generateFrequencies(huffmanInput)
 
       s.push(snapshot(chars, 1, 'Mulai Huffman Coding', 'huffman'))
       s.push(snapshot(chars, 7, 'Build min-heap berdasarkan frekuensi', 'huffman'))
@@ -686,20 +778,14 @@ const GreedyAlgo = () => {
 
       s.push(snapshot(chars, 23, 'Huffman Tree selesai dibuat', 'huffman'))
     } else if (algo === 'kruskalGreedy') {
-      const edges = [
-        { src: 0, dest: 1, weight: 10, selected: false, current: false },
-        { src: 0, dest: 2, weight: 6, selected: false, current: false },
-        { src: 0, dest: 3, weight: 5, selected: false, current: false },
-        { src: 1, dest: 3, weight: 15, selected: false, current: false },
-        { src: 2, dest: 3, weight: 4, selected: false, current: false },
-      ]
+      const edges = generateGraph(kruskalNodes)
 
       edges.sort((a, b) => a.weight - b.weight)
 
       s.push(snapshot(edges, 1, 'Mulai Kruskal MST', 'kruskal'))
       s.push(snapshot(edges, 2, 'Sort edges berdasarkan weight', 'kruskal'))
 
-      const parent = [0, 1, 2, 3]
+      const parent = Array.from({ length: kruskalNodes }, (_, i) => i)
       let edgeCount = 0
 
       for (let i = 0; i < edges.length; i++) {
@@ -742,7 +828,7 @@ const GreedyAlgo = () => {
 
   useEffect(() => {
     reset()
-  }, [algorithm, amount])
+  }, [algorithm, amount, activityCount, huffmanInput, kruskalNodes])
 
   useEffect(() => {
     if (isPlaying) {
@@ -811,9 +897,50 @@ const GreedyAlgo = () => {
                 type='number'
                 value={amount}
                 onChange={(e) => setAmount(parseInt(e.target.value) || 0)}
-                className='w-20 bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white font-mono focus:ring-2 focus:ring-orange-500/50 outline-none'
+                className='w-20 bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-orange-500 font-mono focus:ring-2 focus:ring-orange-500/50 outline-none text-center transition-colors'
                 min='1'
-                max='100'
+                max='1000'
+              />
+            </>
+          )}
+
+          {algorithm === 'activitySelection' && (
+            <>
+              <label className='text-xs text-slate-400 font-bold'>ACTIVITIES</label>
+              <input
+                type='number'
+                value={activityCount}
+                onChange={(e) => setActivityCount(parseInt(e.target.value) || 0)}
+                className='w-16 bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-orange-500 font-mono focus:ring-2 focus:ring-orange-500/50 outline-none text-center transition-colors'
+                min='3'
+                max='12'
+              />
+            </>
+          )}
+
+          {algorithm === 'huffmanCoding' && (
+            <>
+              <label className='text-xs text-slate-400 font-bold'>TEXT</label>
+              <input
+                type='text'
+                value={huffmanInput}
+                onChange={(e) => setHuffmanInput(e.target.value)}
+                className='w-32 bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-orange-500 font-mono focus:ring-2 focus:ring-orange-500/50 outline-none text-center transition-colors'
+                maxLength={20}
+              />
+            </>
+          )}
+
+          {algorithm === 'kruskalGreedy' && (
+            <>
+              <label className='text-xs text-slate-400 font-bold'>NODES</label>
+              <input
+                type='number'
+                value={kruskalNodes}
+                onChange={(e) => setKruskalNodes(parseInt(e.target.value) || 0)}
+                className='w-16 bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-orange-500 font-mono focus:ring-2 focus:ring-orange-500/50 outline-none text-center transition-colors'
+                min='3'
+                max='8'
               />
             </>
           )}
@@ -831,37 +958,40 @@ const GreedyAlgo = () => {
 
       {/* TOP INFO CARD */}
       <div className='p-6 border-b border-slate-700 bg-[#151925]'>
-        <h2 className='text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-amber-200 mb-2'>{ALGO_INFO[algorithm].title}</h2>
-        <p className='text-sm text-slate-400 leading-relaxed max-w-2xl'>{ALGO_INFO[algorithm].description}</p>
+        {/* TWO COLUMN LAYOUT: INFO & PSEUDOCODE */}
+        <div className='grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4'>
+          {/* LEFT COLUMN: INFO */}
+          <div className='flex flex-col gap-4'>
+            <h2 className='text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-amber-200 mb-2'>{ALGO_INFO[algorithm].title}</h2>
+            <p className='text-sm text-slate-400 leading-relaxed max-w-2xl'>{ALGO_INFO[algorithm].description}</p>
+            <div className='flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700'>
+              <Activity
+                size={12}
+                className='text-orange-400'
+              />
+              Complexity: <span className='text-slate-200'>{ALGO_INFO[algorithm].complexity}</span>
+            </div>
+            <div className='flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700'>
+              <Coins
+                size={12}
+                className='text-blue-400'
+              />
+              Use Case: <span className='text-slate-200'>{ALGO_INFO[algorithm].useCase}</span>
+            </div>
+          </div>
 
-        <div className='flex gap-4 mt-4'>
-          <div className='flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700'>
-            <Activity
-              size={12}
-              className='text-orange-400'
-            />
-            Complexity: <span className='text-slate-200'>{ALGO_INFO[algorithm].complexity}</span>
-          </div>
-          <div className='flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700'>
-            <Coins
-              size={12}
-              className='text-blue-400'
-            />
-            Use Case: <span className='text-slate-200'>{ALGO_INFO[algorithm].useCase}</span>
-          </div>
-        </div>
-
-        {/* PSEUDOCODE */}
-        <div className='mt-4 bg-slate-900 rounded-lg border border-slate-700 overflow-hidden'>
-          <div className='px-4 py-2 bg-slate-800 border-b border-slate-700 flex items-center gap-2'>
-            <MessageSquare
-              size={12}
-              className='text-slate-400'
-            />
-            <span className='text-xs text-slate-400 font-bold'>PSEUDOCODE</span>
-          </div>
-          <div className='p-4 max-h-64 overflow-auto'>
-            <pre className='text-xs text-slate-300 font-mono whitespace-pre leading-relaxed'>{PSEUDOCODE[algorithm]}</pre>
+          {/* RIGHT COLUMN: Pseudocode */}
+          <div className='bg-slate-900 rounded-lg border border-slate-700 overflow-hidden'>
+            <div className='px-4 py-2 bg-slate-800 border-b border-slate-700 flex items-center gap-2'>
+              <MessageSquare
+                size={12}
+                className='text-slate-400'
+              />
+              <span className='text-xs text-slate-400 font-bold'>PSEUDOCODE</span>
+            </div>
+            <div className='p-4 max-h-64 overflow-auto'>
+              <pre className='text-xs text-slate-300 font-mono whitespace-pre leading-relaxed'>{PSEUDOCODE[algorithm]}</pre>
+            </div>
           </div>
         </div>
       </div>
@@ -919,13 +1049,6 @@ const GreedyAlgo = () => {
 
         {/* RIGHT COLUMN */}
         <div className='lg:col-span-7 bg-[#1e1e1e] flex flex-col border-l border-slate-800'>
-          <div className='p-4 bg-[#252526]'>
-            <CodeViewer
-              code={ALGO_CPLUSPLUS[algorithm]}
-              activeLine={currentVisual.activeLine}
-            />
-          </div>
-
           <div className='p-6 border-b border-slate-800 bg-slate-900/50'>
             <div className='bg-slate-900 border border-orange-500/50 p-4 rounded-xl shadow-lg border-l-4 border-l-orange-500 flex items-start gap-4'>
               <div className='p-2 bg-orange-900/30 rounded-lg shrink-0'>
@@ -939,6 +1062,13 @@ const GreedyAlgo = () => {
                 <p className='text-sm font-medium text-white leading-tight'>{currentVisual.description}</p>
               </div>
             </div>
+          </div>
+
+          <div className='p-4 bg-[#252526]'>
+            <CodeViewer
+              code={ALGO_CPLUSPLUS[algorithm]}
+              activeLine={currentVisual.activeLine}
+            />
           </div>
         </div>
       </main>

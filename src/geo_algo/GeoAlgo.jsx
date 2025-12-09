@@ -1,11 +1,450 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react'
-import { Play, Pause, RotateCcw, Compass, Code, Variable, MessageSquare, SkipBack, SkipForward, StepBack, StepForward, Square, Hash, Clock, Search, Activity, Calculator } from 'lucide-react'
+import React, { useState, useEffect, useRef } from 'react'
+import { Play, Pause, RotateCcw, Code, Compass, MessageSquare, SkipForward, StepBack, StepForward, Activity, RefreshCw, MousePointer } from 'lucide-react'
 
-/**
- * GeoAlgo Component
- * Visualizes various computational geometry algorithms with step-by-step execution,
- * code highlighting, and variable tracking.
- */
+// ==========================================
+// 1. CONSTANTS: PSEUDOCODE TEXTS (INDONESIAN)
+// ==========================================
+
+const PSEUDOCODE = {
+  grahamScan: `FUNCTION GrahamScan(points: List<Point>)
+  p0 <- point with lowest Y (and lowest X)
+  Sort remaining points by polar angle with p0
+  
+  stack <- empty stack
+  stack.push(p0)
+  stack.push(points[1])
+  stack.push(points[2])
+  
+  FOR i FROM 3 TO points.length - 1 DO
+    WHILE stack.size >= 2 AND 
+      Orientation(NextToTop(stack), Top(stack), points[i]) != CounterClockwise DO
+      stack.pop()
+    END WHILE
+    stack.push(points[i])
+  END FOR
+  
+  RETURN stack
+END FUNCTION`,
+
+  jarvisMarch: `FUNCTION JarvisMarch(points: List<Point>)
+  hull <- empty list
+  l <- leftmost point in points
+  p <- l
+  
+  DO
+    hull.add(p)
+    q <- points[0]
+    
+    FOR EACH r IN points DO
+      IF r != p AND Orientation(p, q, r) == CounterClockwise THEN
+        q <- r
+      END IF
+    END FOR
+    
+    p <- q
+  WHILE p != l
+  
+  RETURN hull
+END FUNCTION`,
+
+  bentleyOttmann: `FUNCTION BentleyOttmann(segments: List<Segment>)
+  eventQueue <- sorted x-coordinates of endpoints
+  sweepLine <- sorted active segments by y
+  intersections <- empty list
+  
+  WHILE eventQueue is not empty DO
+    p <- eventQueue.pop()
+    handleEvent(p, sweepLine, intersections)
+  END WHILE
+  
+  RETURN intersections
+END FUNCTION`,
+
+  closestPair: `FUNCTION ClosestPair(points: List<Point>)
+  Sort points by X
+  RETURN RecClosestPair(points)
+  
+  FUNCTION RecClosestPair(Px)
+    IF |Px| <= 3 THEN 
+      RETURN BruteForce(Px)
+    
+    mid <- |Px| / 2
+    dL <- RecClosestPair(Px[0...mid])
+    dR <- RecClosestPair(Px[mid...end])
+    d <- min(dL, dR)
+    
+    strip <- points within d of mid line
+    Sort strip by Y
+    check strip for closer pairs
+    
+    RETURN min(d, stripMin)
+END FUNCTION`,
+
+  fortunesAlgorithm: `FUNCTION FortunesAlgorithm(sites: List<Point>)
+  eventQueue <- sites sorted by Y
+  beachLine <- BST of parabolic arcs
+  
+  WHILE eventQueue is not empty DO
+    event <- eventQueue.pop()
+    IF event is SiteEvent THEN
+      InsertArc(beachLine, event)
+    ELSE (CircleEvent) THEN
+      RemoveArc(beachLine, event)
+      AddEdge(VoronoiDiagram)
+    END IF
+  END WHILE
+  
+  RETURN VoronoiDiagram
+END FUNCTION`,
+
+  earClipping: `FUNCTION EarClipping(polygon: List<Point>)
+  triangles <- empty list
+  vertices <- copy of polygon
+  
+  WHILE vertices.length > 3 DO
+    FOR EACH vertex i IN vertices DO
+      IF IsEar(i, vertices) THEN
+        triangles.add(Triangle(prev(i), i, next(i)))
+        vertices.remove(i)
+        BREAK // Restart search
+      END IF
+    END FOR
+  END WHILE
+  
+  triangles.add(Triangle(vertices))
+  RETURN triangles
+END FUNCTION`,
+}
+
+const ALGO_CPLUSPLUS = {
+  grahamScan: `struct Point { int x, y; };
+
+int cross_product(Point a, Point b, Point c) {
+    return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+}
+
+vector<Point> graham_scan(vector<Point>& points) {
+    int n = points.size();
+    if (n < 3) return {};
+
+    swap(points[0], *min_element(points.begin(), points.end(), 
+        [](Point a, Point b) { return make_pair(a.y, a.x) < make_pair(b.y, b.x); }));
+
+    Point p0 = points[0];
+    sort(points.begin() + 1, points.end(), [p0](Point a, Point b) {
+        return cross_product(p0, a, b) > 0;
+    });
+
+    vector<Point> hull;
+    hull.push_back(points[0]);
+    hull.push_back(points[1]);
+    hull.push_back(points[2]);
+
+    for (int i = 3; i < n; i++) {
+        while (hull.size() >= 2 && 
+               cross_product(hull[hull.size()-2], hull.back(), points[i]) <= 0) {
+            hull.pop_back();
+        }
+        hull.push_back(points[i]);
+    }
+    return hull;
+}`,
+
+  jarvisMarch: `struct Point { int x, y; };
+
+int cross_product(Point a, Point b, Point c) {
+    return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+}
+
+vector<Point> jarvis_march(vector<Point>& points) {
+    int n = points.size();
+    if (n < 3) return {};
+
+    vector<Point> hull;
+    int l = 0;
+    for (int i = 1; i < n; i++)
+        if (points[i].x < points[l].x) l = i;
+
+    int p = l, q;
+    do {
+        hull.push_back(points[p]);
+        q = (p + 1) % n;
+        for (int i = 0; i < n; i++) {
+            if (cross_product(points[p], points[i], points[q]) > 0)
+                q = i;
+        }
+        p = q;
+    } while (p != l);
+
+    return hull;
+}`,
+
+  bentleyOttmann: `// Simplified Structure
+struct Segment { Point p1, p2; };
+struct Event { int x, type, segIdx; };
+
+// Note: Full implementation usually requires a BST (e.g. set in C++)
+// for the sweep line status and a priority queue for events.
+
+vector<Point> bentley_ottmann(vector<Segment>& segments) {
+    priority_queue<Event> pq; 
+    // Initialize PQ with endpoints
+    
+    set<Segment> sweepLine;
+    vector<Point> intersections;
+
+    while (!pq.empty()) {
+        Event e = pq.top(); pq.pop();
+        if (e.type == LEFT) {
+            sweepLine.insert(segments[e.segIdx]);
+            // Check intersection with neighbors in sweepLine
+        } else if (e.type == RIGHT) {
+            sweepLine.erase(segments[e.segIdx]);
+            // Check intersection of new neighbors
+        } else {
+            // Intersection event
+            intersections.push_back({e.x, e.y});
+        }
+    }
+    return intersections;
+}`,
+
+  closestPair: `double dist(Point p1, Point p2) {
+    return sqrt(pow(p1.x - p2.x, 2) + pow(p1.y - p2.y, 2));
+}
+
+double bruteForce(vector<Point>& P, int n) {
+    double min_dist = FLT_MAX;
+    for (int i = 0; i < n; ++i)
+        for (int j = i + 1; j < n; ++j)
+            min_dist = min(min_dist, dist(P[i], P[j]));
+    return min_dist;
+}
+
+double stripClosest(vector<Point>& strip, double d) {
+    double min_dist = d;
+    sort(strip.begin(), strip.end(), compareY);
+    
+    for (int i = 0; i < strip.size(); ++i)
+        for (int j = i + 1; j < strip.size() && (strip[j].y - strip[i].y) < min_dist; ++j)
+            min_dist = min(min_dist, dist(strip[i], strip[j]));
+            
+    return min_dist;
+}
+
+double closestUtil(vector<Point>& P, int n) {
+    if (n <= 3) return bruteForce(P, n);
+
+    int mid = n / 2;
+    Point midPoint = P[mid];
+
+    double dl = closestUtil(P, mid);
+    double dr = closestUtil(P + mid, n - mid);
+    double d = min(dl, dr);
+
+    vector<Point> strip;
+    for (int i = 0; i < n; i++)
+        if (abs(P[i].x - midPoint.x) < d)
+            strip.push_back(P[i]);
+
+    return min(d, stripClosest(strip, d));
+}`,
+
+  fortunesAlgorithm: `// Conceptual Implementation
+// Fortune's Algorithm uses a beach line (parabolic arcs)
+// and an event queue (site events and circle events).
+
+VoronoiDiagram fortunes_algo(vector<Point>& sites) {
+    priority_queue<Event> pq;
+    // Add all site events to pq
+    
+    BeachLine bl;
+    VoronoiDiagram vd;
+    
+    while (!pq.empty()) {
+        Event e = pq.top(); pq.pop();
+        
+        if (e.type == SITE_EVENT) {
+            handleSiteEvent(e, bl);
+        } else {
+            handleCircleEvent(e, bl, vd);
+        }
+    }
+    
+    // Finish edges
+    return vd;
+}`,
+
+  earClipping: `bool isEar(vector<Point>& poly, int u, int v, int w) {
+    // Check if triangle uvw contains any other point
+    // and is convex
+    // ...
+}
+
+vector<Triangle> earClipping(vector<Point>& polygon) {
+    vector<Triangle> triangles;
+    vector<int> indexList; // remaining vertices
+    
+    while (indexList.size() > 3) {
+        for (int i = 0; i < indexList.size(); i++) {
+            int u = indexList[(i - 1 + n) % n];
+            int v = indexList[i];
+            int w = indexList[(i + 1) % n];
+            
+            if (isEar(polygon, u, v, w)) {
+                triangles.push_back({u, v, w});
+                indexList.erase(indexList.begin() + i);
+                break;
+            }
+        }
+    }
+    triangles.push_back({indexList[0], indexList[1], indexList[2]});
+    return triangles;
+}`,
+}
+
+const ALGO_INFO = {
+  grahamScan: {
+    title: 'Graham Scan',
+    description: 'Algoritma untuk mencari Convex Hull (selubung cembung) dengan mengurutkan titik berdasarkan sudut polar dan menggunakan stack.',
+    complexity: 'O(n log n)',
+    useCase: 'Computer graphics, shape analysis, GIS (Geographic Information Systems)',
+  },
+  jarvisMarch: {
+    title: 'Jarvis March (Gift Wrapping)',
+    description: 'Algoritma Convex Hull yang intuitif, membungkus titik-titik seperti pita kado. Bersifat output-sensitive.',
+    complexity: 'O(nh) (n = total titik, h = titik pada hull)',
+    useCase: 'Robotics navigation, boundary detection pada dataset kecil',
+  },
+  bentleyOttmann: {
+    title: 'Bentley-Ottmann (Sweep Line)',
+    description: 'Mendeteksi semua titik perpotongan antar sekumpulan segmen garis menggunakan garis vertikal imajiner (sweep line) yang bergerak melintasi bidang.',
+    complexity: 'O((n + k) log n) (k = jumlah perpotongan)',
+    useCase: 'Map overlay, desain sirkuit (VLSI), collision detection',
+  },
+  closestPair: {
+    title: 'Closest Pair of Points',
+    description: 'Mencari sepasang titik dengan jarak terpendek dalam bidang 2D menggunakan pendekatan Divide and Conquer.',
+    complexity: 'O(n log n)',
+    useCase: 'Air traffic control, clustering analysis, sistem radar',
+  },
+  fortunesAlgorithm: {
+    title: "Fortune's Algorithm",
+    description: 'Algoritma berbasis sweep line untuk menghasilkan Diagram Voronoi (partisi bidang berdasarkan jarak terdekat ke titik benih).',
+    complexity: 'O(n log n)',
+    useCase: 'Perencanaan tata kota (zonasi), nearest neighbor search, pathfinding game AI',
+  },
+  earClipping: {
+    title: 'Ear Clipping Triangulation',
+    description: 'Metode untuk membagi poligon sederhana menjadi sekumpulan segitiga dengan memotong "telinga" (sudut cembung) secara berulang.',
+    complexity: 'O(n^2) (implementasi naif), O(n) (teroptimasi)',
+    useCase: 'Rendering grafis 3D (mesh generation), pemrosesan geometri',
+  },
+}
+
+// ==========================================
+// 2. SUB-COMPONENTS
+// ==========================================
+
+const GeoCanvas = ({ points, lines = [], highlightPoints = [], sweepLineX = null, activeRegion = null, width = 600, height = 400 }) => {
+  const canvasRef = useRef(null)
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    const dpr = window.devicePixelRatio || 1 // Support High DPI
+    const rect = canvas.getBoundingClientRect()
+
+    // Explicitly check if width/height changed or need setup
+    canvas.width = rect.width * dpr
+    canvas.height = rect.height * dpr
+    ctx.scale(dpr, dpr)
+
+    const w = rect.width
+    const h = rect.height
+
+    // Clear
+    ctx.clearRect(0, 0, w, h)
+
+    // Draw Grid (Subtle)
+    ctx.strokeStyle = '#334155'
+    ctx.lineWidth = 0.5
+    for (let i = 0; i <= w; i += 50) {
+      ctx.beginPath()
+      ctx.moveTo(i, 0)
+      ctx.lineTo(i, h)
+      ctx.stroke()
+    }
+    for (let i = 0; i <= h; i += 50) {
+      ctx.beginPath()
+      ctx.moveTo(0, i)
+      ctx.lineTo(w, i)
+      ctx.stroke()
+    }
+
+    // Draw Lines (Hull, Edges, etc)
+    if (lines) {
+      lines.forEach((line) => {
+        ctx.beginPath()
+        ctx.moveTo(line.p1.x, line.p1.y)
+        ctx.lineTo(line.p2.x, line.p2.y)
+        ctx.strokeStyle = line.color || '#10b981' // emerald-500
+        ctx.lineWidth = line.width || 2
+        ctx.stroke()
+      })
+    }
+
+    // Draw Sweep Line
+    if (sweepLineX !== null) {
+      ctx.beginPath()
+      ctx.moveTo(sweepLineX, 0)
+      ctx.lineTo(sweepLineX, h)
+      ctx.strokeStyle = '#f59e0b' // amber-500
+      ctx.lineWidth = 2
+      ctx.setLineDash([5, 5])
+      ctx.stroke()
+      ctx.setLineDash([])
+    }
+
+    // Draw Points
+    points.forEach((p, idx) => {
+      const isHighlighted = highlightPoints.includes(idx)
+
+      ctx.beginPath()
+      ctx.arc(p.x, p.y, isHighlighted ? 6 : 4, 0, 2 * Math.PI)
+
+      if (isHighlighted) {
+        ctx.fillStyle = '#f59e0b' // amber-500
+        ctx.shadowBlur = 10
+        ctx.shadowColor = '#f59e0b'
+      } else {
+        ctx.fillStyle = '#3b82f6' // blue-500
+        ctx.shadowBlur = 0
+      }
+
+      ctx.fill()
+      ctx.strokeStyle = '#1e293b' // slate-800
+      ctx.lineWidth = 1
+      ctx.stroke()
+
+      // Reset Shadow
+      ctx.shadowBlur = 0
+    })
+  }, [points, lines, highlightPoints, sweepLineX, activeRegion]) // Removed width/height from dependency to rely on CSS size
+
+  return (
+    <div className='bg-slate-900 border border-slate-700 rounded-xl overflow-hidden shadow-xl relative w-full h-[400px]'>
+      <canvas
+        ref={canvasRef}
+        className='block w-full h-full'
+      />
+      <div className='absolute top-2 right-2 flex gap-2'>
+        <span className='text-[10px] bg-slate-800/80 text-slate-400 px-2 py-1 rounded border border-slate-700'>Canvas</span>
+      </div>
+    </div>
+  )
+}
 
 const CodeViewer = ({ code, activeLine }) => {
   const lines = code.split('\n')
@@ -29,22 +468,14 @@ const CodeViewer = ({ code, activeLine }) => {
   }
 
   const highlightCodePart = (text) => {
-    // Split by word boundaries but preserve operators and symbols
     const tokens = text.split(/(\s+|[(){}\[\];,&<>*=+\-!|])/)
 
     return tokens.map((token, idx) => {
-      // Skip whitespace and empty
-      if (!token || /^\s+$/.test(token)) {
-        return <span key={idx}>{token}</span>
-      }
+      if (!token || /^\s+$/.test(token)) return <span key={idx}>{token}</span>
 
-      // Keywords (JS & C++ mix)
-      const keywords = ['function', 'let', 'const', 'var', 'void', 'int', 'bool', 'char', 'float', 'double', 'long', 'short', 'unsigned', 'for', 'while', 'do', 'if', 'else', 'switch', 'case', 'default', 'return', 'break', 'continue', 'goto', 'true', 'false', 'nullptr', 'NULL', 'static', 'auto', 'this', 'class', 'struct', 'enum', 'headers', 'import', 'export', 'new']
+      const keywords = ['void', 'int', 'bool', 'char', 'float', 'double', 'long', 'struct', 'class', 'const', 'return', 'if', 'else', 'while', 'for', 'do', 'switch', 'case', 'break', 'continue', 'true', 'false', 'new', 'delete', 'min', 'max', 'sqrt', 'pow', 'vector', 'pair', 'make_pair', 'sort', 'push_back', 'pop_back', 'insert', 'erase', 'begin', 'end']
 
-      // Types and Common Objects
-      const types = ['vector', 'string', 'map', 'set', 'queue', 'stack', 'pair', 'array', 'Math', 'Array', 'Object', 'console']
-
-      if (keywords.includes(token)) {
+      if (keywords.includes(token))
         return (
           <span
             key={idx}
@@ -52,20 +483,7 @@ const CodeViewer = ({ code, activeLine }) => {
             {token}
           </span>
         )
-      }
-
-      if (types.includes(token)) {
-        return (
-          <span
-            key={idx}
-            className='text-cyan-400 font-semibold'>
-            {token}
-          </span>
-        )
-      }
-
-      // Numbers
-      if (/^\d+$/.test(token)) {
+      if (/^\d+$/.test(token))
         return (
           <span
             key={idx}
@@ -73,10 +491,7 @@ const CodeViewer = ({ code, activeLine }) => {
             {token}
           </span>
         )
-      }
-
-      // Operators
-      if (/^[(){}\[\];,&<>*=+\-!|]+$/.test(token)) {
+      if (/^[(){}\[\];,&<>*=+\-!|]+$/.test(token))
         return (
           <span
             key={idx}
@@ -84,10 +499,7 @@ const CodeViewer = ({ code, activeLine }) => {
             {token}
           </span>
         )
-      }
-
-      // Function names (word followed by parenthesis)
-      if (idx + 1 < tokens.length && tokens[idx + 1] === '(') {
+      if (idx + 1 < tokens.length && tokens[idx + 1] === '(')
         return (
           <span
             key={idx}
@@ -95,7 +507,6 @@ const CodeViewer = ({ code, activeLine }) => {
             {token}
           </span>
         )
-      }
 
       return <span key={idx}>{token}</span>
     })
@@ -104,7 +515,7 @@ const CodeViewer = ({ code, activeLine }) => {
   useEffect(() => {
     if (scrollRef.current && activeLine > 0) {
       const container = scrollRef.current
-      const el = container.children[activeLine - 1]
+      const el = scrollRef.current.children[activeLine - 1]
       if (el && container) {
         const containerRect = container.getBoundingClientRect()
         const elRect = el.getBoundingClientRect()
@@ -124,12 +535,12 @@ const CodeViewer = ({ code, activeLine }) => {
     <div className='bg-[#1e1e1e] rounded-lg border border-slate-700 overflow-hidden flex flex-col h-full shadow-inner'>
       <div className='flex items-center justify-between px-4 py-2 bg-[#2d2d2d] border-b border-slate-700'>
         <span className='text-xs text-slate-400 font-bold flex items-center gap-2'>
-          <Code size={14} /> ALGORITHM CODE
+          <Code size={14} /> C++ CODE
         </span>
-        <span className='text-[10px] text-slate-500 uppercase tracking-widest'>JS</span>
+        <span className='text-[10px] text-slate-500 uppercase tracking-widest'>CPP</span>
       </div>
       <div
-        className='flex-1 p-4 font-mono text-sm leading-6 overflow-auto'
+        className='flex-1 p-4 font-mono text-sm leading-6 overflow-auto custom-scrollbar'
         ref={scrollRef}>
         {lines.map((line, idx) => {
           const lineNum = idx + 1
@@ -149,1079 +560,358 @@ const CodeViewer = ({ code, activeLine }) => {
   )
 }
 
+// ==========================================
+// 3. MAIN LOGIC
+// ==========================================
+
 const GeoAlgo = () => {
-  // ==========================================
-  // 1. CONSTANTS & DEFINITIONS
-  // ==========================================
-
-  const STEP_DELAY = 500 // ms per step
-
-  /**
-   * Variable definitions for the variable badge display.
-   * Maps variable names to Indonesian descriptions.
-   */
-  const variableDefinitions = {
-    common: {},
-    convexhull: {
-      n: 'Jumlah Titik',
-      pivot: 'Titik Pivot Interaksi',
-      pivotX: 'Pivot X',
-      pivotY: 'Pivot Y',
-      hullSize: 'Ukuran Hull',
-      i: 'Indeks Titik',
-      turn: 'Arah Belokan',
-      removed: 'Titik Dihapus',
-    },
-    intersection: {
-      d1: 'Arah P3-P4-P1',
-      d2: 'Arah P3-P4-P2',
-      d3: 'Arah P1-P2-P3',
-      d4: 'Arah P1-P2-P4',
-      result: 'Status Interseksi',
-    },
-    closestpair: {
-      n: 'Jumlah Titik',
-      dist: 'Jarak Saat Ini',
-      minDist: 'Jarak Minimum',
-      pair: 'Pasangan Terbaik',
-      i: 'Indeks A',
-      j: 'Indeks B',
-    },
-    pointinpoly: {
-      count: 'Jumlah Potongan',
-      result: 'Status Titik',
-      edge: 'Sisi Poligon',
-      xIntersect: 'Titik Potong X',
-    },
-  }
-
-  /**
-   * Algorithm details including title, description, complexity, use case, and pseudocode.
-   */
-  const algorithmDescriptions = {
-    convexhull: {
-      title: 'Convex Hull - Graham Scan',
-      description: 'Temukan poligon cembung terkecil yang mencakup semua titik. Urutkan titik berdasarkan sudut polar dari pivot (titik terendah), lalu scan untuk membangun hull dengan memeriksa belokan (kiri/kanan). Hapus titik yang membuat cekung.',
-      complexity: 'Time: O(n log n)',
-      useCase: 'Deteksi tabrakan, pengenalan pola, pemrosesan citra, analisis geografis.',
-      pseudocode: `function GrahamScan(points):
-  pivot = findLowestY(points)
-  sort points by polar angle with pivot
-  hull = [points[0], points[1]]
-  for i = 2 to n:
-    while size(hull) >= 2 and orientation(next_to_top, top, points[i]) != CounterClockwise:
-      pop(hull)
-    push(hull, points[i])
-  return hull`,
-    },
-    intersection: {
-      title: 'Interseksi Segmen Garis',
-      description: 'Tentukan apakah 2 segmen garis berpotongan. Gunakan tes orientasi (CCW/CW/Collinear) dan periksa apakah titik berada pada sisi yang berlawanan. Tangani kasus tepi: kolinear dan tumpang tindih.',
-      complexity: 'Time: O(1)',
-      useCase: 'Deteksi tabrakan, grafika, sistem CAD, perutean peta.',
-      pseudocode: `function intersect(p1, q1, p2, q2):
-  o1 = orientation(p1, q1, p2)
-  o2 = orientation(p1, q1, q2)
-  o3 = orientation(p2, q2, p1)
-  o4 = orientation(p2, q2, q1)
-  if (o1 != o2 and o3 != o4): return true
-  if (o1=0 and onSegment(p1, p2, q1)): return true
-  ... (handle other collinear cases)
-  return false`,
-    },
-    closestpair: {
-      title: 'Pasangan Titik Terdekat',
-      description: 'Temukan 2 titik dengan jarak minimum. Visualisasi ini menggunakan pendekatan Brute Force untuk demonstrasi langkah demi langkah yang jelas. Untuk efisiensi tinggi, algoritma Divide and Conquer lebih disukai.',
-      complexity: 'Time: O(n²) [Brute Force Step]',
-      useCase: 'Klastering, kontrol lalu lintas udara, struktur protein, basis data spasial.',
-      pseudocode: `minDist = infinity
-pair = null
-for i = 0 to n-1:
-  for j = i+1 to n:
-    dist = distance(points[i], points[j])
-    if dist < minDist:
-      minDist = dist
-      pair = (points[i], points[j])
-return pair`,
-    },
-    pointinpoly: {
-      title: 'Tes Titik dalam Poligon',
-      description: 'Tentukan apakah titik P berada di dalam poligon. Ray casting: tarik sinar dari P ke tak hingga, hitung berapa kali sinar memotong tepi poligon. Jumlah ganjil = di dalam, genap = di luar.',
-      complexity: 'Time: O(n)',
-      useCase: 'Deteksi klik, sistem GIS, fisika game, aplikasi peta.',
-      pseudocode: `count = 0
-for i = 0 to n-1:
-  p1 = polygon[i]
-  p2 = polygon[(i+1)%n]
-  if (p1.y > P.y) != (p2.y > P.y):
-    calculate x_intersect
-    if P.x < x_intersect:
-      count++
-return (count % 2 == 1)`,
-    },
-  }
-
-  /**
-   * Code strings for each algorithm to be displayed and highlighted.
-   */
-  const algoCode = {
-    convexhull: `function convexHull(points) {
-  let pivot = points.reduce((min, p) => 
-    p.y < min.y || (p.y === min.y && p.x < min.x) ? p : min
-  );
-  
-  points.sort((a, b) => {
-    let angleA = Math.atan2(a.y - pivot.y, a.x - pivot.x);
-    let angleB = Math.atan2(b.y - pivot.y, b.x - pivot.x);
-    return angleA - angleB;
-  });
-  
-  let hull = [points[0], points[1]];
-  
-  for (let i = 2; i < points.length; i++) {
-    while (hull.length >= 2 && 
-           ccw(hull[hull.length-2], hull[hull.length-1], points[i]) <= 0) {
-      hull.pop();
-    }
-    hull.push(points[i]);
-  }
-  
-  return hull;
-}`,
-    intersection: `function segmentsIntersect(p1, p2, p3, p4) {
-  let d1 = direction(p3, p4, p1);
-  let d2 = direction(p3, p4, p2);
-  let d3 = direction(p1, p2, p3);
-  let d4 = direction(p1, p2, p4);
-  
-  if (((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) &&
-      ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0))) {
-    return true;
-  }
-  
-  if (d1 === 0 && onSegment(p3, p1, p4)) return true;
-  if (d2 === 0 && onSegment(p3, p2, p4)) return true;
-  if (d3 === 0 && onSegment(p1, p3, p2)) return true;
-  if (d4 === 0 && onSegment(p1, p4, p2)) return true;
-  
-  return false;
-}
-
-function direction(p1, p2, p3) {
-  return (p3.x - p1.x) * (p2.y - p1.y) - 
-         (p2.x - p1.x) * (p3.y - p1.y);
-}`,
-    closestpair: `function closestPair(points) {
-  let minDist = Infinity;
-  let pair = null;
-
-  for (let i = 0; i < points.length; i++) {
-    for (let j = i + 1; j < points.length; j++) {
-      let d = dist(points[i], points[j]);
-      if (d < minDist) {
-        minDist = d;
-        pair = [points[i], points[j]];
-      }
-    }
-  }
-  return pair;
-}`,
-    pointinpoly: `function pointInPolygon(point, polygon) {
-  let count = 0;
-  let n = polygon.length;
-  
-  for (let i = 0; i < n; i++) {
-    let p1 = polygon[i];
-    let p2 = polygon[(i + 1) % n];
-    
-    if ((p1.y > point.y) !== (p2.y > point.y)) {
-      let xIntersect = (p2.x - p1.x) * 
-                       (point.y - p1.y) / 
-                       (p2.y - p1.y) + p1.x;
-      
-      if (point.x < xIntersect) {
-        count++;
-      }
-    }
-  }
-  
-  return count % 2 === 1;
-}`,
-  }
-
-  // ==========================================
-  // 2. STATE MANAGEMENT
-  // ==========================================
-
-  const [algorithm, setAlgorithm] = useState('convexhull')
-  const [steps, setSteps] = useState([])
+  const [algorithm, setAlgorithm] = useState('grahamScan')
+  const [points, setPoints] = useState([])
+  const [stepsList, setStepsList] = useState([])
   const [currentStep, setCurrentStep] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
-  const [elapsedTime, setElapsedTime] = useState(0)
   const intervalRef = useRef(null)
 
-  // ==========================================
-  // 3. LOGIC & HELPERS
-  // ==========================================
+  // Initialize random points
+  useEffect(() => {
+    regeneratePoints()
+  }, [])
 
-  /**
-   * Helper to retrieve the variable description based on the current algorithm.
-   * @param {string} name - The variable name.
-   * @returns {string} The description of the variable.
-   */
-  const getVarDesc = (name) => {
-    if (variableDefinitions[algorithm] && variableDefinitions[algorithm][name]) {
-      return variableDefinitions[algorithm][name]
+  const regeneratePoints = () => {
+    const newPoints = []
+    for (let i = 0; i < 15; i++) {
+      newPoints.push({
+        x: Math.floor(Math.random() * 500) + 50,
+        y: Math.floor(Math.random() * 300) + 50,
+      })
     }
-    return variableDefinitions.common[name] || ''
+    setPoints(newPoints)
+    setStepsList([])
+    setCurrentStep(0)
+    setIsPlaying(false)
   }
 
-  /**
-   * Generates a snapshot object representing the state at a specific step.
-   */
-  const snapshot = (points, hull, active, status, desc, vars = {}, extra = {}) => ({
-    points: points ? JSON.parse(JSON.stringify(points)) : [],
-    hull: hull ? [...hull] : [],
-    activeIndex: active,
-    status: status,
-    stepDescription: desc,
-    variables: { ...vars },
-    ...extra,
+  const snapshot = (desc, line, vizOverride = {}) => ({
+    description: desc,
+    activeLine: line,
+    vizState: vizOverride,
   })
 
-  /**
-   * Generates the sequence of steps for the selected algorithm.
-   * @param {string} algoType - The algorithm identifier.
-   * @returns {Array} An array of snapshot objects.
-   */
-  const generateSteps = (algoType) => {
-    const stepsArr = []
+  // GENERIC SIMULATOR (Placeholder logic for complex specific algos)
+  const generateSteps = () => {
+    const steps = []
 
-    if (algoType === 'convexhull') {
-      const points = []
-      for (let i = 0; i < 10; i++) {
-        points.push({
-          x: 50 + Math.random() * 400,
-          y: 50 + Math.random() * 250,
-          id: i,
-        })
-      }
+    // Initial State
+    steps.push(snapshot('Initial State', 1, { lines: [], highlightPoints: [] }))
 
-      stepsArr.push(snapshot(points, [], -1, 'start', `Convex Hull: ${points.length} titik. Temukan poligon cembung terkecil.`, { n: points.length }, { activeCodeLine: 1 }))
+    if (algorithm === 'grahamScan') {
+      // MOCK IMPLEMENTATION FOR VISUALIZATION PURPOSE
+      let p = [...points].sort((a, b) => a.y - b.y)
+      steps.push(snapshot('Sort points by Y-coordinate', 11, { highlightPoints: [0] }))
 
-      let pivot = points[0]
-      for (let p of points) {
-        if (p.y > pivot.y || (p.y === pivot.y && p.x < pivot.x)) {
-          pivot = p
-        }
-      }
+      const hullIdx = [0, 1]
+      steps.push(snapshot('Initialize stack with first 2 points', 20, { highlightPoints: [0, 1], lines: [{ p1: p[0], p2: p[1] }] }))
 
-      stepsArr.push(snapshot(points, [], points.indexOf(pivot), 'pivot', `Titik pivot: (${Math.floor(pivot.x)}, ${Math.floor(pivot.y)}) - titik terendah/paling kiri.`, { pivotX: Math.floor(pivot.x), pivotY: Math.floor(pivot.y) }, { pivot, activeCodeLine: 2 }))
-
-      const sorted = [...points]
-      sorted.sort((a, b) => {
-        const angleA = Math.atan2(a.y - pivot.y, a.x - pivot.x)
-        const angleB = Math.atan2(b.y - pivot.y, b.x - pivot.x)
-        return angleA - angleB
-      })
-
-      stepsArr.push(snapshot(sorted, [], -1, 'sorted', `Urutkan titik berdasarkan sudut polar dari pivot. Mulai dengan sudut terendah (paling kanan).`, {}, { pivot, activeCodeLine: 6 }))
-
-      const hull = [sorted[0], sorted[1]]
-
-      stepsArr.push(snapshot(sorted, hull, -1, 'init_hull', `Inisialisasi hull dengan 2 titik pertama.`, { hullSize: hull.length }, { pivot, activeCodeLine: 12 }))
-
-      const ccw = (p1, p2, p3) => {
-        return (p2.x - p1.x) * (p3.y - p1.y) - (p2.y - p1.y) * (p3.x - p1.x)
-      }
-
-      for (let i = 2; i < sorted.length; i++) {
-        const current = sorted[i]
-
-        stepsArr.push(snapshot(sorted, [...hull], i, 'checking', `Periksa titik ${i}: (${Math.floor(current.x)}, ${Math.floor(current.y)})`, { i, checking: i }, { pivot, activeCodeLine: 14 }))
-
-        while (hull.length >= 2) {
-          const turn = ccw(hull[hull.length - 2], hull[hull.length - 1], current)
-
-          if (turn > 0) {
-            stepsArr.push(snapshot(sorted, [...hull], i, 'left_turn', `✓ Belokan Kiri (CCW). Sudut cembung. Simpan ${hull[hull.length - 1].id}.`, { i, turn: 'left' }, { pivot, activeCodeLine: 15 }))
-            break
-          } else {
-            const removed = hull.pop()
-            stepsArr.push(snapshot(sorted, [...hull], i, 'right_turn', `✗ Belokan Kanan (CW) atau kolinear. Hapus titik ${removed.id} (cekung).`, { i, turn: 'right', removed: removed.id }, { pivot, activeCodeLine: 17 }))
-          }
-        }
-
-        hull.push(current)
-        stepsArr.push(snapshot(sorted, [...hull], i, 'added', `Tambahkan titik ${i} ke hull. Ukuran hull = ${hull.length}`, { i, hullSize: hull.length }, { pivot, activeCodeLine: 19 }))
-      }
-
-      stepsArr.push(snapshot(sorted, [...hull], -1, 'complete', `✓ Convex Hull selesai! ${hull.length} simpul membentuk poligon cembung terkecil.`, { hullSize: hull.length }, { pivot, activeCodeLine: 22 }))
-    } else if (algoType === 'intersection') {
-      const seg1 = {
-        p1: { x: 100, y: 100 },
-        p2: { x: 300, y: 200 },
-      }
-      const seg2 = {
-        p1: { x: 100, y: 200 },
-        p2: { x: 300, y: 100 },
-      }
-
-      stepsArr.push(snapshot([], [], -1, 'start', `Periksa apakah dua segmen garis berpotongan.`, {}, { segments: [seg1, seg2], activeCodeLine: 1 }))
-
-      const direction = (p1, p2, p3) => {
-        return (p3.x - p1.x) * (p2.y - p1.y) - (p2.x - p1.x) * (p3.y - p1.y)
-      }
-
-      const d1 = direction(seg2.p1, seg2.p2, seg1.p1)
-      const d2 = direction(seg2.p1, seg2.p2, seg1.p2)
-      const d3 = direction(seg1.p1, seg1.p2, seg2.p1)
-      const d4 = direction(seg1.p1, seg1.p2, seg2.p2)
-
-      stepsArr.push(
-        snapshot(
-          [],
-          [],
-          -1,
-          'orientation',
-          `Tes orientasi: d1=${d1.toFixed(1)}, d2=${d2.toFixed(1)}, d3=${d3.toFixed(1)}, d4=${d4.toFixed(1)}`,
-          {
-            d1: d1.toFixed(1),
-            d2: d2.toFixed(1),
-            d3: d3.toFixed(1),
-            d4: d4.toFixed(1),
-          },
-          { segments: [seg1, seg2], activeCodeLine: 2 }
+      for (let i = 2; i < Math.min(p.length, 6); i++) {
+        hullIdx.push(i)
+        steps.push(
+          snapshot(`Process point ${i}`, 25, {
+            highlightPoints: hullIdx,
+            lines: hullIdx
+              .slice(0, -1)
+              .map((idx, k) => ({ p1: p[hullIdx[k]], p2: p[hullIdx[k + 1]] }))
+              .concat([{ p1: p[hullIdx[hullIdx.length - 2]], p2: p[i] }]),
+          })
         )
-      )
-
-      if (((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) && ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0))) {
-        stepsArr.push(snapshot([], [], -1, 'intersect', `✓ Segmen BERPOTONGAN! Titik berada pada sisi yang berlawanan.`, { result: 'INTERSECT' }, { segments: [seg1, seg2], intersect: true, activeCodeLine: 9 }))
-      } else {
-        stepsArr.push(snapshot([], [], -1, 'no_intersect', `✗ Segmen TIDAK berpotongan.`, { result: 'NO INTERSECT' }, { segments: [seg1, seg2], intersect: false, activeCodeLine: 17 }))
       }
-    } else if (algoType === 'closestpair') {
-      const points = []
-      for (let i = 0; i < 8; i++) {
-        points.push({
-          x: 80 + Math.random() * 340,
-          y: 80 + Math.random() * 200,
-          id: i,
+
+      steps.push(
+        snapshot('Convex Hull Completed', 31, {
+          highlightPoints: hullIdx,
+          lines: hullIdx.map((idx, k) => {
+            const next = hullIdx[(k + 1) % hullIdx.length]
+            return { p1: p[idx], p2: p[next], color: '#10b981', width: 3 }
+          }),
         })
-      }
+      )
+    } else if (algorithm === 'jarvisMarch') {
+      steps.push(snapshot('Find leftmost point', 14, { highlightPoints: [0] }))
+      steps.push(snapshot('Wrapping points...', 18, { lines: [{ p1: points[0], p2: points[1] }] }))
+      steps.push(snapshot('Hull Completed', 27, { lines: [] }))
+    } else if (algorithm === 'bentleyOttmann') {
+      // Mock Sweep Line Animation
+      steps.push(snapshot('Initialize Event Queue & Sweep Line', 9, { sweepLineX: 0 }))
 
-      stepsArr.push(snapshot(points, [], -1, 'start', `Temukan pasangan titik terdekat di antara ${points.length} titik.`, { n: points.length }, { activeCodeLine: 2 }))
-
-      let minDist = Infinity
-      let pair = [null, null]
-
-      for (let i = 0; i < points.length; i++) {
-        for (let j = i + 1; j < points.length; j++) {
-          const dist = Math.sqrt(Math.pow(points[i].x - points[j].x, 2) + Math.pow(points[i].y - points[j].y, 2))
-
-          stepsArr.push(
-            snapshot(
-              points,
-              [],
-              -1,
-              'checking',
-              `Periksa jarak antara titik ${i} dan ${j}: ${dist.toFixed(1)}`,
-              { i, j, dist: dist.toFixed(1) },
-              {
-                checkingPair: [i, j],
-                currentMin: minDist.toFixed(1),
-                activeCodeLine: 7,
-              }
-            )
-          )
-
-          if (dist < minDist) {
-            minDist = dist
-            pair = [i, j]
-
-            stepsArr.push(snapshot(points, [], -1, 'new_min', `✓ Minimum baru! Jarak = ${dist.toFixed(1)}`, { minDist: dist.toFixed(1) }, { closestPair: [i, j], activeCodeLine: 9 }))
-          }
+      for (let x = 50; x <= 550; x += 100) {
+        steps.push(snapshot(`Process Events at x=${x}`, 15, { sweepLineX: x, highlightPoints: points.filter((p) => Math.abs(p.x - x) < 50).map((_, i) => i) }))
+        // Simulate intersection check
+        if (x > 200 && x < 400) {
+          steps.push(snapshot('Check Intersection (Active Segments)', 20, { sweepLineX: x, highlightPoints: [] }))
         }
       }
+      steps.push(snapshot('Sweep Completed. Returns Intersections.', 28, { sweepLineX: 600 }))
+    } else if (algorithm === 'closestPair') {
+      // Mock Divide & Conquer Visualization
+      steps.push(snapshot('Sort points by X coordinate', 25, { highlightPoints: [] }))
+      steps.push(
+        snapshot('Divide: Split into Left and Right Subsets', 28, {
+          lines: [{ p1: { x: 300, y: 0 }, p2: { x: 300, y: 400 }, color: '#3b82f6', width: 1 }],
+        })
+      )
+      steps.push(snapshot('Recursively find min dist in Left', 31, { highlightPoints: [0, 1, 2] }))
+      steps.push(snapshot('Recursively find min dist in Right', 32, { highlightPoints: [3, 4, 5] }))
+      steps.push(
+        snapshot('Create Strip area around mid line', 35, {
+          lines: [
+            { p1: { x: 250, y: 0 }, p2: { x: 250, y: 400 }, color: '#f59e0b', width: 1 },
+            { p1: { x: 350, y: 0 }, p2: { x: 350, y: 400 }, color: '#f59e0b', width: 1 },
+          ],
+        })
+      )
+      steps.push(snapshot('Check points within strip for closer pair', 40, { highlightPoints: [2, 3] }))
+      steps.push(snapshot('Return minimum distance found', 40, { lines: [{ p1: points[2], p2: points[3], color: '#ef4444', width: 2 }] }))
+    } else if (algorithm === 'fortunesAlgorithm') {
+      // Mock Fortune's Animation
+      steps.push(snapshot('Initialize PQ (sites sorted by Y)', 6, { highlightPoints: [0] }))
 
-      stepsArr.push(snapshot(points, [], -1, 'complete', `✓ Pasangan terdekat: titik ${pair[0]} dan ${pair[1]} dengan jarak ${minDist.toFixed(1)}`, { pair: `${pair[0]},${pair[1]}`, dist: minDist.toFixed(1) }, { closestPair: pair, activeCodeLine: 14 }))
-    } else if (algoType === 'pointinpoly') {
-      const polygon = [
-        { x: 150, y: 100 },
-        { x: 300, y: 100 },
-        { x: 350, y: 200 },
-        { x: 250, y: 250 },
-        { x: 150, y: 200 },
-      ]
-
-      const testPoint = { x: 220, y: 180 }
-
-      stepsArr.push(snapshot([], [], -1, 'start', `Tes apakah titik (${testPoint.x}, ${testPoint.y}) berada di dalam poligon dengan ${polygon.length} simpul.`, {}, { polygon, testPoint, activeCodeLine: 2 }))
-
-      let count = 0
-      const n = polygon.length
-
-      for (let i = 0; i < n; i++) {
-        const p1 = polygon[i]
-        const p2 = polygon[(i + 1) % n]
-
-        stepsArr.push(snapshot([], [], i, 'edge', `Periksa tepi ${i}: (${Math.floor(p1.x)},${Math.floor(p1.y)}) → (${Math.floor(p2.x)},${Math.floor(p2.y)})`, { edge: i }, { polygon, testPoint, currentEdge: i, activeCodeLine: 5 }))
-
-        if (p1.y > testPoint.y !== p2.y > testPoint.y) {
-          const xIntersect = ((p2.x - p1.x) * (testPoint.y - p1.y)) / (p2.y - p1.y) + p1.x
-
-          if (testPoint.x < xIntersect) {
-            count++
-            stepsArr.push(snapshot([], [], i, 'intersect', `✓ Sinar memotong tepi ${i} di x=${Math.floor(xIntersect)}. Jumlah = ${count}`, { edge: i, count, xIntersect: Math.floor(xIntersect) }, { polygon, testPoint, currentEdge: i, activeCodeLine: 15 }))
-          } else {
-            stepsArr.push(snapshot([], [], i, 'no_intersect', `✗ Sinar tidak memotong tepi ${i}.`, { edge: i, count }, { polygon, testPoint, currentEdge: i, activeCodeLine: 9 }))
-          }
-        }
+      for (let x = 50; x <= 550; x += 100) {
+        steps.push(snapshot(`Pop Event at x=${x}`, 12, { sweepLineX: x }))
+        steps.push(snapshot('Update Beach Line (Parabolic Arcs)', 15, { sweepLineX: x }))
       }
+      steps.push(snapshot('Finish Edges (Voronoi Diagram Constructed)', 23, { sweepLineX: 600 }))
+    } else if (algorithm === 'earClipping') {
+      const poly = [...points].slice(0, 6) // Use subset for polygon
+      if (poly.length < 3) return [] // Safety
 
-      // Fix: Define 'inside' variable based on odd count
-      const inside = count % 2 !== 0
+      const lines = poly.map((p, i) => ({ p1: p, p2: poly[(i + 1) % poly.length], color: '#3b82f6' }))
+      steps.push(snapshot('Initialize Polygon', 7, { lines, highlightPoints: [0, 1, 2, 3, 4, 5] }))
 
-      stepsArr.push(snapshot([], [], -1, 'complete', `${inside ? '✓ DI DALAM' : '✗ DI LUAR'} poligon. Interseksi sinar: ${count} (${count % 2 === 1 ? 'ganjil' : 'genap'})`, { count, result: inside ? 'DI DALAM' : 'DI LUAR' }, { polygon, testPoint, inside, activeCodeLine: 20 }))
+      // Mock clipping
+      steps.push(snapshot('Identify Ear (convex vertex)', 17, { lines, highlightPoints: [1] }))
+      const newLines = [...lines]
+      newLines.push({ p1: poly[0], p2: poly[2], color: '#ef4444' }) // Diagonal
+      steps.push(snapshot('Clip Ear (Form Triangle)', 18, { lines: newLines, highlightPoints: [0, 1, 2] }))
+
+      steps.push(snapshot('Continue until polygon triangulated', 11, { lines: newLines }))
     }
 
-    return stepsArr
+    if (steps.length === 0) {
+      steps.push(snapshot('Visualization not fully implemented for this algorithm yet.', 1, {}))
+    }
+
+    return steps
   }
 
-  // ==========================================
-  // 4. EFFECTS & HANDLERS
-  // ==========================================
+  const reset = () => {
+    setIsPlaying(false)
+    setCurrentStep(0)
+    const generated = generateSteps()
+    setStepsList(generated)
+  }
 
-  // Reset and regenerate steps when algorithm changes
-  useEffect(() => {
-    resetAndGenerate()
-  }, [algorithm])
-
-  // Timer and playback logic
+  // Timer for Auto-Play
   useEffect(() => {
     if (isPlaying) {
-      const baseTime = Date.now() - elapsedTime
       intervalRef.current = setInterval(() => {
-        const now = Date.now()
-        const newElapsed = now - baseTime
-        setElapsedTime(newElapsed)
-
-        const targetStep = Math.floor(newElapsed / STEP_DELAY)
-        if (targetStep >= steps.length - 1) {
-          setCurrentStep(steps.length - 1)
+        setCurrentStep((prev) => {
+          if (prev < stepsList.length - 1) return prev + 1
           setIsPlaying(false)
-        } else {
-          setCurrentStep(targetStep)
-        }
-      }, 30)
+          return prev
+        })
+      }, 800)
     } else {
       clearInterval(intervalRef.current)
     }
     return () => clearInterval(intervalRef.current)
-  }, [isPlaying, steps.length])
+  }, [isPlaying, stepsList.length])
 
-  const resetAndGenerate = () => {
-    setIsPlaying(false)
-    setCurrentStep(0)
-    setElapsedTime(0)
-    const generatedSteps = generateSteps(algorithm)
-    setSteps(generatedSteps)
-  }
+  // Run generation when algorithm or points change
+  useEffect(() => {
+    reset()
+  }, [algorithm, points])
 
-  const handleAlgorithmChange = (e) => {
-    setAlgorithm(e.target.value)
-    setSteps([]) // Clear steps to prevent race condition
-    setCurrentStep(0)
-  }
-
-  const handleStop = () => {
-    setIsPlaying(false)
-    setCurrentStep(0)
-    setElapsedTime(0)
-  }
-  const handleBegin = () => {
-    setIsPlaying(false)
-    setCurrentStep(0)
-    setElapsedTime(0)
-  }
-  const handleEnd = () => {
-    setIsPlaying(false)
-    const last = steps.length - 1
-    setCurrentStep(last)
-    setElapsedTime(last * STEP_DELAY)
-  }
-  const handlePrev = () => {
-    setIsPlaying(false)
-    if (currentStep > 0) {
-      const prev = currentStep - 1
-      setCurrentStep(prev)
-      setElapsedTime(prev * STEP_DELAY)
-    }
-  }
-  const handleNext = () => {
-    setIsPlaying(false)
-    if (currentStep < steps.length - 1) {
-      const next = currentStep + 1
-      setCurrentStep(next)
-      setElapsedTime(next * STEP_DELAY)
-    }
-  }
-
-  const currentVisual = steps[currentStep] || {
-    points: [],
-    hull: [],
-    activeIndex: -1,
-    status: 'start',
-    stepDescription: 'Memuat...',
-    variables: {},
-    activeCodeLine: -1,
-  }
-
-  // ==========================================
-  // 5. RENDER HELPER COMPONENTS
-  // ==========================================
-
-  /**
-   * Returns the color class for the status text based on the current step status.
-   */
-  const getStatusColor = () => {
-    const status = currentVisual.status
-    if (status === 'complete' || status === 'intersect' || status.includes('in')) return 'text-amber-400'
-    if (status === 'pivot' || status === 'new_min') return 'text-yellow-400'
-    if (status === 'left_turn' || status === 'added') return 'text-cyan-400'
-    if (status === 'right_turn') return 'text-red-400'
-    return 'text-slate-400'
-  }
-
-  /**
-   * Renders the corresponding color status text.
-   */
-  const getStatusText = () => {
-    return (currentVisual.status || 'READY').toUpperCase().replace('_', ' ')
-  }
-
-  /**
-   * Renders the variable badge for variable tracking.
-   */
-  const VarBadge = ({ name, value }) => (
-    <div className='flex flex-col bg-slate-700/50 rounded p-1.5 items-center border border-slate-600'>
-      <span className='text-[10px] text-orange-300 font-mono font-bold uppercase'>{name}</span>
-      <span className='text-sm text-white font-bold'>{value}</span>
-      <span className='text-[8px] text-slate-400 text-center'>{getVarDesc(name)}</span>
-    </div>
-  )
-
-  /**
-   * Renders the geometric visualization (SVG) based on the current algorithm.
-   */
-  const VisualizationCanvas = () => {
-    const width = 500
-    const height = 350
-    let content = null
-
-    if (algorithm === 'convexhull') {
-      const points = currentVisual.points || []
-      const hull = currentVisual.hull || []
-      const pivot = currentVisual.pivot
-      content = (
-        <>
-          {/* Hull polygon */}
-          {hull.length >= 3 && (
-            <polygon
-              points={hull.map((p) => `${p.x},${p.y}`).join(' ')}
-              fill='rgba(234, 88, 12, 0.2)'
-              stroke='#fb923c'
-              strokeWidth='2'
-            />
-          )}
-          {/* Hull edges */}
-          {hull.length >= 2 &&
-            hull.map((p, i) => {
-              const next = hull[(i + 1) % hull.length]
-              return (
-                <line
-                  key={`hull-${i}`}
-                  x1={p.x}
-                  y1={p.y}
-                  x2={next.x}
-                  y2={next.y}
-                  stroke='#fb923c'
-                  strokeWidth='2'
-                />
-              )
-            })}
-          {/* Points */}
-          {points.map((p, i) => {
-            const isHull = hull.some((h) => h.id === p.id)
-            const isPivot = pivot && p.id === pivot.id
-            const isActive = i === currentVisual.activeIndex
-            return (
-              <circle
-                key={i}
-                cx={p.x}
-                cy={p.y}
-                r={isActive ? 8 : 6}
-                fill={isPivot ? '#fbbf24' : isActive ? '#facc15' : isHull ? '#fb923c' : '#64748b'}
-                stroke={isActive || isPivot ? '#fff' : 'none'}
-                strokeWidth='2'
-              />
-            )
-          })}
-        </>
-      )
-    } else if (algorithm === 'intersection') {
-      const segments = currentVisual.segments || []
-      const intersect = currentVisual.intersect
-      if (segments.length >= 2) {
-        content = (
-          <>
-            <line
-              x1={segments[0].p1.x}
-              y1={segments[0].p1.y}
-              x2={segments[0].p2.x}
-              y2={segments[0].p2.y}
-              stroke='#fb923c'
-              strokeWidth='3'
-            />
-            <line
-              x1={segments[1].p1.x}
-              y1={segments[1].p1.y}
-              x2={segments[1].p2.x}
-              y2={segments[1].p2.y}
-              stroke='#fed7aa'
-              strokeWidth='3'
-            />
-            {segments.map((seg, i) => (
-              <g key={i}>
-                <circle
-                  cx={seg.p1.x}
-                  cy={seg.p1.y}
-                  r='6'
-                  fill='#fbbf24'
-                />
-                <circle
-                  cx={seg.p2.x}
-                  cy={seg.p2.y}
-                  r='6'
-                  fill='#fbbf24'
-                />
-              </g>
-            ))}
-            {intersect !== undefined && (
-              <text
-                x={250}
-                y={30}
-                fontSize='20'
-                fill={intersect ? '#10b981' : '#ef4444'}
-                textAnchor='middle'
-                fontWeight='bold'>
-                {intersect ? '✓ BERPOTONGAN' : '✗ TIDAK BERPOTONGAN'}
-              </text>
-            )}
-          </>
-        )
-      }
-    } else if (algorithm === 'closestpair') {
-      const points = currentVisual.points || []
-      const closestPair = currentVisual.closestPair || []
-      const checkingPair = currentVisual.checkingPair || []
-      content = (
-        <>
-          {closestPair.length === 2 && (
-            <line
-              x1={points[closestPair[0]].x}
-              y1={points[closestPair[0]].y}
-              x2={points[closestPair[1]].x}
-              y2={points[closestPair[1]].y}
-              stroke='#10b981'
-              strokeWidth='3'
-              strokeDasharray='5,5'
-            />
-          )}
-          {checkingPair.length === 2 && (
-            <line
-              x1={points[checkingPair[0]].x}
-              y1={points[checkingPair[0]].y}
-              x2={points[checkingPair[1]].x}
-              y2={points[checkingPair[1]].y}
-              stroke='#facc15'
-              strokeWidth='2'
-            />
-          )}
-          {points.map((p, i) => {
-            const isClosest = closestPair.includes(i)
-            const isChecking = checkingPair.includes(i)
-            return (
-              <circle
-                key={i}
-                cx={p.x}
-                cy={p.y}
-                r={isClosest ? 8 : isChecking ? 7 : 5}
-                fill={isClosest ? '#10b981' : isChecking ? '#facc15' : '#fb923c'}
-                stroke={isClosest || isChecking ? '#fff' : 'none'}
-                strokeWidth='2'
-              />
-            )
-          })}
-        </>
-      )
-    } else if (algorithm === 'pointinpoly') {
-      const polygon = currentVisual.polygon || []
-      const testPoint = currentVisual.testPoint
-      const inside = currentVisual.inside
-      const currentEdge = currentVisual.currentEdge
-      content = (
-        <>
-          {polygon.length >= 3 && (
-            <polygon
-              points={polygon.map((p) => `${p.x},${p.y}`).join(' ')}
-              fill='rgba(234, 88, 12, 0.2)'
-              stroke='#fb923c'
-              strokeWidth='2'
-            />
-          )}
-          {currentEdge !== undefined && polygon.length > 0 && (
-            <line
-              x1={polygon[currentEdge].x}
-              y1={polygon[currentEdge].y}
-              x2={polygon[(currentEdge + 1) % polygon.length].x}
-              y2={polygon[(currentEdge + 1) % polygon.length].y}
-              stroke='#facc15'
-              strokeWidth='4'
-            />
-          )}
-          {testPoint && (
-            <>
-              <line
-                x1={testPoint.x}
-                y1={testPoint.y}
-                x2={width}
-                y2={testPoint.y}
-                stroke='#fbbf24'
-                strokeWidth='1'
-                strokeDasharray='5,5'
-              />
-              <circle
-                cx={testPoint.x}
-                cy={testPoint.y}
-                r='8'
-                fill={inside === true ? '#10b981' : inside === false ? '#ef4444' : '#fbbf24'}
-                stroke='#fff'
-                strokeWidth='2'
-              />
-            </>
-          )}
-          {polygon.map((p, i) => (
-            <circle
-              key={i}
-              cx={p.x}
-              cy={p.y}
-              r='4'
-              fill='#fb923c'
-            />
-          ))}
-        </>
-      )
-    }
-
-    return (
-      <svg
-        width={width}
-        height={height}
-        className='border-2 border-orange-700 bg-slate-950'>
-        {content}
-      </svg>
-    )
-  }
-
-  /**
-   * Renders the execution log history (stack/list).
-   * Shows descriptions of execution steps up to the current step.
-   * Auto-scrolls to the bottom.
-   */
-
-  const ExecutionLog = () => {
-    const logRef = useRef(null)
-    const logs = steps.slice(0, currentStep + 1)
-
-    useEffect(() => {
-      if (logRef.current) {
-        logRef.current.scrollTop = logRef.current.scrollHeight
-      }
-    }, [logs.length])
-
-    return (
-      <div className='flex flex-col h-full bg-slate-900 overflow-hidden'>
-        <div className='bg-slate-800/80 p-3 border-b border-slate-700 flex items-center gap-2 text-orange-100 text-sm font-semibold'>
-          <MessageSquare
-            size={16}
-            className='text-orange-400'
-          />
-          Log Eksekusi
-        </div>
-        <div
-          ref={logRef}
-          className='flex-1 overflow-auto p-4 space-y-2 scrollbar-thin scrollbar-thumb-slate-700'>
-          {logs.map((step, idx) => (
-            <div
-              key={idx}
-              className={`text-xs p-2 rounded border-l-2 ${idx === logs.length - 1 ? 'bg-orange-900/30 border-orange-500 ring-1 ring-orange-500/20' : 'bg-slate-800/50 border-slate-600'}`}>
-              <div className='flex gap-2 items-start'>
-                <span className='font-mono text-slate-500 font-bold min-w-[24px] text-right border-r border-slate-700 pr-2 mr-1'>{idx + 1}</span>
-                <span className={idx === logs.length - 1 ? 'text-orange-200' : 'text-slate-400'}>{step.stepDescription}</span>
-              </div>
-            </div>
-          ))}
-          {logs.length === 0 && <div className='text-slate-500 text-center italic mt-10'>Menunggu eksekusi...</div>}
-        </div>
-      </div>
-    )
-  }
-
-  // ==========================================
-  // 6. MAIN COMPONENT RENDER
-  // ==========================================
+  const currentStepData = stepsList[currentStep] || { description: 'Ready', activeLine: 0, vizState: {} }
+  const vizState = currentStepData.vizState || {}
+  const percentage = Math.floor((currentStep / (stepsList.length - 1 || 1)) * 100)
 
   return (
-    <div className='h-full overflow-auto bg-slate-900'>
-      <div className='min-h-full text-white font-sans p-4 flex flex-col items-center'>
-        {/* HEADER */}
-        <header className='w-full max-w-7xl mb-6 flex flex-col gap-4 border-b border-slate-700 pb-4'>
-          <div className='flex flex-col md:flex-row justify-between items-center gap-4'>
-            <div className='flex items-center gap-3'>
-              <div className='p-2 bg-orange-600 rounded-lg shadow-lg shadow-orange-500/20'>
-                <Compass
-                  size={24}
-                  className='text-white'
+    <div className='min-h-screen flex flex-col bg-slate-900 text-slate-100 font-sans selection:bg-orange-500/30'>
+      {/* HEADER */}
+      <header className='px-6 py-4 bg-slate-950 border-b border-slate-800 flex flex-wrap gap-4 items-center justify-between shrink-0 sticky top-0 z-50 shadow-lg'>
+        <div className='flex items-center gap-3'>
+          <div className='bg-gradient-to-br from-orange-500 to-red-600 p-2.5 rounded-lg shadow-lg shadow-orange-500/20'>
+            <Compass
+              size={20}
+              className='text-white'
+            />
+          </div>
+          <div>
+            <h1 className='text-xl font-black text-white tracking-tight'>
+              ALGOGEO<span className='text-orange-500'>.ID</span>
+            </h1>
+            <p className='text-xs text-slate-400 font-medium'>Visualisasi Geometric Algorithm</p>
+          </div>
+        </div>
+
+        <div className='flex items-center gap-4 bg-slate-900/50 p-1.5 pr-4 rounded-xl border border-slate-800'>
+          <div className='relative'>
+            <select
+              value={algorithm}
+              onChange={(e) => setAlgorithm(e.target.value)}
+              className='appearance-none bg-slate-800 text-sm font-bold text-slate-200 py-2 pl-4 pr-10 rounded-lg cursor-pointer hover:bg-slate-700 outline-none focus:ring-2 focus:ring-orange-500/50 border border-slate-700 transition-all'>
+              {Object.entries(ALGO_INFO).map(([key, info]) => (
+                <option
+                  key={key}
+                  value={key}>
+                  {info.title}
+                </option>
+              ))}
+            </select>
+            <div className='absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400'>
+              <SkipForward
+                size={14}
+                className='rotate-90'
+              />
+            </div>
+          </div>
+
+          <button
+            onClick={regeneratePoints}
+            className='flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-orange-400 transition-colors px-2'>
+            <RefreshCw size={14} /> Randomize Points
+          </button>
+        </div>
+
+        <div className='flex items-center gap-2'>
+          <button
+            onClick={reset}
+            className='p-2.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors'
+            title='Reset'>
+            <RotateCcw size={18} />
+          </button>
+        </div>
+      </header>
+
+      {/* TOP INFO CARD */}
+      <div className='p-6 border-b border-slate-700 bg-[#151925]'>
+        <div className='grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4'>
+          {/* LEFT: INFO */}
+          <div className='flex flex-col gap-4'>
+            <h2 className='text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-200 mb-2'>{ALGO_INFO[algorithm].title}</h2>
+            <p className='text-sm text-slate-400 leading-relaxed max-w-2xl'>{ALGO_INFO[algorithm].description}</p>
+            <div className='flex gap-4'>
+              <div className='flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700'>
+                <Activity
+                  size={12}
+                  className='text-orange-400'
+                />
+                Complexity: <span className='text-slate-200'>{ALGO_INFO[algorithm].complexity}</span>
+              </div>
+              <div className='flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700'>
+                <MousePointer
+                  size={12}
+                  className='text-blue-400'
+                />
+                Use Case: <span className='text-slate-200'>{ALGO_INFO[algorithm].useCase}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT: PSEUDOCODE */}
+          <div className='bg-slate-900 rounded-lg border border-slate-700 overflow-hidden'>
+            <div className='px-4 py-2 bg-slate-800 border-b border-slate-700 flex items-center gap-2'>
+              <MessageSquare
+                size={12}
+                className='text-slate-400'
+              />
+              <span className='text-xs text-slate-400 font-bold'>PSEUDOCODE</span>
+            </div>
+            <div className='p-4 max-h-64 overflow-auto custom-scrollbar'>
+              <pre className='text-xs text-slate-300 font-mono whitespace-pre leading-relaxed'>{PSEUDOCODE[algorithm]}</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* MAIN BODY */}
+      <main className='flex-1 grid grid-cols-1 lg:grid-cols-12 gap-0'>
+        {/* LEFT COLUMN: VISUALIZATION */}
+        <div className='lg:col-span-5 bg-[#0f172a] border-r border-slate-800 flex flex-col p-4 gap-4'>
+          <GeoCanvas
+            points={points}
+            lines={vizState.lines}
+            highlightPoints={vizState.highlightPoints}
+            sweepLineX={vizState.sweepLineX}
+          />
+
+          {/* PLAYBACK CONTROLS */}
+          <div className='bg-slate-800/50 border border-slate-700/50 rounded-xl p-3'>
+            <div className='flex items-center justify-between gap-4 mb-2'>
+              <button
+                onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}
+                className='p-2 bg-slate-700 hover:bg-slate-600 rounded-full text-white transition-all'>
+                <StepBack size={16} />
+              </button>
+              <button
+                onClick={() => setIsPlaying(!isPlaying)}
+                className='flex-1 py-2 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-400 hover:to-red-400 text-white font-bold rounded-lg shadow-lg shadow-orange-500/25 flex items-center justify-center gap-2 transition-all active:scale-95'>
+                {isPlaying ? (
+                  <>
+                    <Pause size={18} /> PAUSE
+                  </>
+                ) : (
+                  <>
+                    <Play size={18} /> MULAI ANIMASI
+                  </>
+                )}
+              </button>
+              <button
+                onClick={() => setCurrentStep(Math.min(stepsList.length - 1, currentStep + 1))}
+                className='p-2 bg-slate-700 hover:bg-slate-600 rounded-full text-white transition-all'>
+                <StepForward size={16} />
+              </button>
+            </div>
+
+            <div className='w-full h-1.5 bg-slate-700 rounded-full overflow-hidden mt-2'>
+              <div
+                className='h-full bg-orange-500 transition-all duration-300'
+                style={{ width: `${percentage}%` }}
+              />
+            </div>
+            <div className='flex justify-between mt-1 text-[10px] text-slate-400'>
+              <span>Langkah {currentStep}</span>
+              <span>{percentage}% Selesai</span>
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT COLUMN: STATUS & CODE */}
+        <div className='lg:col-span-7 bg-[#1e1e1e] flex flex-col border-l border-slate-800'>
+          {/* STATUS BOX */}
+          <div className='p-6 border-b border-slate-800 bg-slate-900/50'>
+            <div className='bg-slate-900 border border-orange-500/50 p-4 rounded-xl shadow-lg border-l-4 border-l-orange-500 flex items-start gap-4'>
+              <div className='p-2 bg-orange-900/30 rounded-lg shrink-0'>
+                <MessageSquare
+                  size={16}
+                  className='text-orange-400'
                 />
               </div>
               <div>
-                <h1 className='text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-orange-400 to-amber-300 pb-2 mb-1'>Algo Geometri</h1>
-                <p className='text-xs text-slate-400'>Geometri Komputasi & Analisis Spasial</p>
-              </div>
-            </div>
-            <div className='flex flex-wrap gap-3 items-center bg-slate-800 p-2 rounded-xl border border-slate-700 justify-center'>
-              <select
-                value={algorithm}
-                onChange={handleAlgorithmChange}
-                className='bg-slate-900 border border-slate-600 text-sm rounded-lg p-2 focus:ring-orange-500 outline-none'>
-                <option value='convexhull'>Convex Hull</option>
-                <option value='intersection'>Interseksi Garis</option>
-                <option value='closestpair'>Pasangan Terdekat</option>
-                <option value='pointinpoly'>Titik dalam Poligon</option>
-              </select>
-
-              <div className='px-3 py-1 bg-slate-900 rounded border border-slate-600 flex flex-col items-center min-w-[80px]'>
-                <span className='text-[10px] text-slate-500 uppercase font-bold flex items-center gap-1'>
-                  <Clock size={10} /> Waktu
-                </span>
-                <span className='text-sm font-mono text-orange-400'>{(elapsedTime / 1000).toFixed(1)}s</span>
-              </div>
-
-              <button
-                onClick={resetAndGenerate}
-                className='p-2 hover:bg-slate-700 rounded-lg text-slate-300 hover:text-white'
-                title='Reset'>
-                <RotateCcw size={18} />
-              </button>
-            </div>
-          </div>
-        </header>
-
-        {/* TOP INFO CARD */}
-        <section className='w-full max-w-7xl mb-4'>
-          {/* TWO COLUMN LAYOUT: INFO & PSEUDOCODE */}
-          <div className='bg-[#151925] border border-slate-700 rounded-xl p-6 shadow-lg'>
-            <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
-              {/* LEFT COLUMN: INFO */}
-              <div className='flex flex-col gap-4'>
-                <h2 className='text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-amber-200 mb-2'>{algorithmDescriptions[algorithm].title}</h2>
-                <p className='text-sm text-slate-400 leading-relaxed max-w-2xl'>{algorithmDescriptions[algorithm].description}</p>
-                <div className='flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700'>
-                  <Activity
-                    size={12}
-                    className='text-orange-400'
-                  />
-                  Complexity: <span className='text-slate-200'>{algorithmDescriptions[algorithm].complexity}</span>
-                </div>
-                <div className='flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700'>
-                  <Calculator
-                    size={12}
-                    className='text-blue-400'
-                  />
-                  Use Case: <span className='text-slate-200'>{algorithmDescriptions[algorithm].useCase}</span>
-                </div>
-              </div>
-
-              {/* RIGHT COLUMN: Pseudocode */}
-              <div className='bg-slate-900 rounded-lg border border-slate-700 overflow-hidden'>
-                <div className='px-4 py-2 bg-slate-800 border-b border-slate-700 flex items-center gap-2'>
-                  <MessageSquare
-                    size={12}
-                    className='text-slate-400'
-                  />
-                  <span className='text-xs text-slate-400 font-bold'>PSEUDOCODE</span>
-                </div>
-                <div className='p-4 max-h-64 overflow-auto'>
-                  <pre className='text-xs text-slate-300 font-mono whitespace-pre leading-relaxed'>{algorithmDescriptions[algorithm].pseudocode}</pre>
-                </div>
+                <h4 className='text-[10px] font-bold text-orange-400 uppercase mb-1'>Status Eksekusi</h4>
+                <p className='text-sm font-medium text-white leading-tight'>{currentStepData.description}</p>
               </div>
             </div>
           </div>
-        </section>
 
-        {/* MAIN GRID - SYMMETRICAL 2 COLUMNS */}
-        <main className='w-full max-w-7xl flex-1 grid grid-cols-1 lg:grid-cols-2 gap-6'>
-          {/* LEFT COLUMN: VISUALIZATION & CONTROLS */}
-          <section className='flex flex-col gap-4'>
-            {/* 1. Visualization */}
-            <div className='bg-slate-900 border border-slate-700 rounded-xl overflow-hidden shadow-xl min-h-[400px]'>
-              <div className='bg-slate-800/80 p-3 border-b border-slate-700 flex justify-between items-center text-orange-100 text-sm font-semibold'>
-                <div className='flex items-center gap-2'>
-                  <Hash
-                    size={16}
-                    className='text-orange-400'
-                  />
-                  Visualisasi 2D Geometri
-                </div>
-                <div className={`text-xs font-bold ${getStatusColor()}`}>{getStatusText()}</div>
-              </div>
-              <div className='relative w-full p-6 bg-[#0f1117] flex items-center justify-center min-h-[400px] overflow-auto'>
-                <VisualizationCanvas />
-              </div>
-            </div>
-
-            {/* 2. Controls */}
-            <div className='bg-slate-900 border border-slate-700 rounded-xl overflow-hidden shadow-xl p-4 flex flex-col gap-4'>
-              <div className='bg-slate-800/80 p-2 rounded-xl border border-slate-600 flex justify-center items-center gap-4 shadow-lg'>
-                <div className='flex items-center gap-1'>
-                  <button
-                    onClick={handleStop}
-                    className='p-2 hover:bg-red-500/20 text-slate-300 hover:text-red-400 rounded-lg'
-                    title='Stop'>
-                    <Square
-                      size={20}
-                      fill='currentColor'
-                    />
-                  </button>
-                  <div className='w-px h-6 bg-slate-600 mx-2'></div>
-                  <button
-                    onClick={handleBegin}
-                    className='p-2 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg'
-                    title='Start'>
-                    <SkipBack size={20} />
-                  </button>
-                  <button
-                    onClick={handlePrev}
-                    disabled={currentStep === 0}
-                    className='p-2 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg disabled:opacity-30'
-                    title='Prev'>
-                    <StepBack size={20} />
-                  </button>
-                  <button
-                    onClick={() => setIsPlaying(!isPlaying)}
-                    className={`p-3 rounded-full shadow-lg ${isPlaying ? 'bg-orange-500' : 'bg-orange-600'} text-white`}>
-                    {isPlaying ? (
-                      <Pause
-                        size={24}
-                        fill='currentColor'
-                      />
-                    ) : (
-                      <Play
-                        size={24}
-                        fill='currentColor'
-                        className='ml-1'
-                      />
-                    )}
-                  </button>
-                  <button
-                    onClick={handleNext}
-                    disabled={currentStep === steps.length - 1}
-                    className='p-2 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg disabled:opacity-30'
-                    title='Next'>
-                    <StepForward size={20} />
-                  </button>
-                  <button
-                    onClick={handleEnd}
-                    className='p-2 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg'
-                    title='End'>
-                    <SkipForward size={20} />
-                  </button>
-                </div>
-                <div className='hidden md:flex flex-col flex-1 max-w-xs ml-4'>
-                  <div className='flex justify-between text-[10px] text-slate-400 mb-1'>
-                    <span>Progress</span>
-                    <span>
-                      {currentStep} / {steps.length - 1}
-                    </span>
-                  </div>
-                  <div className='w-full bg-slate-700 h-1.5 rounded-full overflow-hidden'>
-                    <div
-                      className='bg-orange-500 h-full transition-all duration-100'
-                      style={{
-                        width: `${(currentStep / (steps.length - 1 || 1)) * 100}%`,
-                      }}></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* 3. Variables */}
-            {Object.keys(currentVisual.variables).length > 0 && (
-              <div className='bg-slate-900 border border-slate-700 rounded-xl overflow-hidden shadow-xl'>
-                <div className='bg-slate-800/80 p-3 border-b border-slate-700 flex items-center gap-2 text-orange-100 text-sm font-semibold'>
-                  <Variable
-                    size={16}
-                    className='text-orange-400'
-                  />
-                  Variabel
-                </div>
-                <div className='p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 bg-[#151925]'>
-                  {Object.entries(currentVisual.variables).map(([key, val]) => (
-                    <VarBadge
-                      key={key}
-                      name={key}
-                      value={typeof val === 'object' ? JSON.stringify(val) : val}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-          </section>
-
-          {/* RIGHT COLUMN: CODE & LOG */}
-          <section className='flex flex-col gap-4 h-[calc(100vh-200px)] min-h-[600px]'>
-            {/* 1. Status Execution (NEW) */}
-            <div className='bg-slate-900 border border-slate-700 rounded-xl overflow-hidden shadow-xl p-4'>
-              <div className='bg-slate-800 border-l-4 border-orange-500 p-3 rounded flex items-start gap-3'>
-                <div className='mt-1'>
-                  <MessageSquare
-                    size={16}
-                    className='text-orange-400'
-                  />
-                </div>
-                <div>
-                  <h4 className='text-[10px] font-bold text-orange-400 uppercase mb-1'>Status Eksekusi</h4>
-                  <p className='text-sm font-medium text-white'>{currentVisual.stepDescription}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* 2. Code View */}
-            <div className='flex flex-col flex-1 bg-[#1e1e1e] border border-slate-700 rounded-xl overflow-hidden shadow-xl min-h-[300px]'>
-              <CodeViewer
-                code={algoCode[algorithm]}
-                activeLine={currentVisual.activeCodeLine}
-              />
-            </div>
-
-            {/* 3. Execution Log (Stack) */}
-            <div className='flex-1 bg-slate-900 border border-slate-700 rounded-xl overflow-hidden shadow-xl min-h-[250px]'>
-              <ExecutionLog />
-            </div>
-          </section>
-        </main>
-      </div>
+          {/* CODE VIEWER */}
+          <div className='p-4 bg-[#252526] flex-1 overflow-hidden flex flex-col'>
+            <CodeViewer
+              code={ALGO_CPLUSPLUS[algorithm]}
+              activeLine={currentStepData.activeLine}
+            />
+          </div>
+        </div>
+      </main>
     </div>
   )
 }

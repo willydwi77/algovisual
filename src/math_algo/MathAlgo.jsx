@@ -1054,13 +1054,13 @@ const MathAlgo = () => {
               value={algorithm}
               onChange={(e) => setAlgorithm(e.target.value)}
               className='appearance-none bg-slate-800 text-sm font-bold text-slate-200 py-2 pl-4 pr-10 rounded-lg cursor-pointer hover:bg-slate-700 outline-none focus:ring-2 focus:ring-orange-500/50 border border-slate-700 transition-all'>
-              <option value='euclideanGCD'>Euclidean GCD</option>
-              <option value='extendedEuclidean'>Extended Euclidean</option>
-              <option value='sieveOfEratosthenes'>Sieve of Eratosthenes</option>
-              <option value='modularExponentiation'>Modular Exponentiation</option>
-              <option value='chineseRemainderTheorem'>Chinese Remainder</option>
-              <option value='eulerTotient'>Euler Totient</option>
-              <option value='millerRabin'>Miller-Rabin</option>
+              {Object.entries(ALGO_INFO).map(([key, info]) => (
+                <option
+                  key={key}
+                  value={key}>
+                  {info.title}
+                </option>
+              ))}
             </select>
             <div className='absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400'>
               <SkipForward

@@ -305,37 +305,37 @@ vector<Triangle> earClipping(vector<Point>& polygon) {
 
 const ALGO_INFO = {
   grahamScan: {
-    title: 'Graham Scan',
+    title: 'GRAHAM SCAN',
     description: 'Algoritma untuk mencari Convex Hull (selubung cembung) dengan mengurutkan titik berdasarkan sudut polar dan menggunakan stack.',
     complexity: 'O(n log n)',
     useCase: 'Computer graphics, shape analysis, GIS (Geographic Information Systems)',
   },
   jarvisMarch: {
-    title: 'Jarvis March (Gift Wrapping)',
+    title: 'JARVIS MARCH (GIFT WRAPPING)',
     description: 'Algoritma Convex Hull yang intuitif, membungkus titik-titik seperti pita kado. Bersifat output-sensitive.',
     complexity: 'O(nh) (n = total titik, h = titik pada hull)',
     useCase: 'Robotics navigation, boundary detection pada dataset kecil',
   },
   bentleyOttmann: {
-    title: 'Bentley-Ottmann (Sweep Line)',
+    title: 'BENTLEY-OTTMANN (SWEEP LINE)',
     description: 'Mendeteksi semua titik perpotongan antar sekumpulan segmen garis menggunakan garis vertikal imajiner (sweep line) yang bergerak melintasi bidang.',
     complexity: 'O((n + k) log n) (k = jumlah perpotongan)',
     useCase: 'Map overlay, desain sirkuit (VLSI), collision detection',
   },
   closestPair: {
-    title: 'Closest Pair of Points',
+    title: 'CLOSEST PAIR OF POINTS',
     description: 'Mencari sepasang titik dengan jarak terpendek dalam bidang 2D menggunakan pendekatan Divide and Conquer.',
     complexity: 'O(n log n)',
     useCase: 'Air traffic control, clustering analysis, sistem radar',
   },
   fortunesAlgorithm: {
-    title: "Fortune's Algorithm",
+    title: "FORTUNE'S ALGORITHM",
     description: 'Algoritma berbasis sweep line untuk menghasilkan Diagram Voronoi (partisi bidang berdasarkan jarak terdekat ke titik benih).',
     complexity: 'O(n log n)',
     useCase: 'Perencanaan tata kota (zonasi), nearest neighbor search, pathfinding game AI',
   },
   earClipping: {
-    title: 'Ear Clipping Triangulation',
+    title: 'EAR CLIPPING TRIANGULATION',
     description: 'Metode untuk membagi poligon sederhana menjadi sekumpulan segitiga dengan memotong "telinga" (sudut cembung) secara berulang.',
     complexity: 'O(n^2) (implementasi naif), O(n) (teroptimasi)',
     useCase: 'Rendering grafis 3D (mesh generation), pemrosesan geometri',

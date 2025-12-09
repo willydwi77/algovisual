@@ -786,9 +786,12 @@ const BTAlgo = () => {
     mazeSolver: { size: 5 },
   })
 
-  // Local input states for array inputs (to allow comma typing)
+  // Local input states for array inputs (to allow comma typing) and other controls
   const [permutationInput, setPermutationInput] = useState('1,2,3')
   const [subsetSumInput, setSubsetSumInput] = useState('3,34,4,12,5,2')
+  const [nQueensInput, setNQueensInput] = useState(4)
+  const [sudokuInput, setSudokuInput] = useState('easy')
+  const [mazeInput, setMazeInput] = useState(5)
 
   const snapshot = (grid, highlightCells, activeCells, line, desc) => ({
     grid: grid.map((row) => [...row]),
@@ -1074,6 +1077,12 @@ const BTAlgo = () => {
       if (arr.length > 0 && arr.length <= 10) {
         setVariables((prev) => ({ ...prev, subsetSum: { ...prev.subsetSum, array: arr } }))
       }
+    } else if (algorithm === 'nQueens') {
+      setVariables((prev) => ({ ...prev, nQueens: { n: nQueensInput } }))
+    } else if (algorithm === 'sudokuSolver') {
+      setVariables((prev) => ({ ...prev, sudokuSolver: { difficulty: sudokuInput } }))
+    } else if (algorithm === 'mazeSolver') {
+      setVariables((prev) => ({ ...prev, mazeSolver: { size: mazeInput } }))
     }
     // Reset will be triggered by useEffect when variables change
   }
@@ -1096,6 +1105,27 @@ const BTAlgo = () => {
     }
   }, [JSON.stringify(variables.subsetSum.array), variables.subsetSum.target])
 
+  // Trigger reset when N-Queens size changes
+  useEffect(() => {
+    if (algorithm === 'nQueens') {
+      reset()
+    }
+  }, [variables.nQueens.n])
+
+  // Trigger reset when Sudoku difficulty changes
+  useEffect(() => {
+    if (algorithm === 'sudokuSolver') {
+      reset()
+    }
+  }, [variables.sudokuSolver.difficulty])
+
+  // Trigger reset when Maze size changes
+  useEffect(() => {
+    if (algorithm === 'mazeSolver') {
+      reset()
+    }
+  }, [variables.mazeSolver.size])
+
   // Sync local input states when variables change externally
   useEffect(() => {
     setPermutationInput(variables.permutation.array.join(','))
@@ -1104,6 +1134,18 @@ const BTAlgo = () => {
   useEffect(() => {
     setSubsetSumInput(variables.subsetSum.array.join(','))
   }, [JSON.stringify(variables.subsetSum.array)])
+
+  useEffect(() => {
+    setNQueensInput(variables.nQueens.n)
+  }, [variables.nQueens.n])
+
+  useEffect(() => {
+    setSudokuInput(variables.sudokuSolver.difficulty)
+  }, [variables.sudokuSolver.difficulty])
+
+  useEffect(() => {
+    setMazeInput(variables.mazeSolver.size)
+  }, [variables.mazeSolver.size])
 
   useEffect(() => {
     if (isPlaying) {
@@ -1174,9 +1216,9 @@ const BTAlgo = () => {
                 <div className='flex items-center gap-2'>
                   <label className='text-xs text-slate-400 font-bold'>N (BOARD SIZE)</label>
                   <select
-                    value={variables.nQueens.n}
-                    onChange={(e) => setVariables({ ...variables, nQueens: { n: parseInt(e.target.value) } })}
-                    className='bg-slate-700 text-slate-200 px-3 py-1 rounded border border-slate-600 text-sm'>
+                    value={nQueensInput}
+                    onChange={(e) => setNQueensInput(parseInt(e.target.value))}
+                    className='bg-slate-700 text-slate-200 px-3 py-1 rounded border border-slate-600 text-sm outline-none focus:border-orange-500 transition-colors'>
                     <option value={4}>4</option>
                     <option value={5}>5</option>
                     <option value={6}>6</option>
@@ -1188,9 +1230,9 @@ const BTAlgo = () => {
                 <div className='flex items-center gap-2'>
                   <label className='text-xs text-slate-400 font-bold'>DIFFICULTY</label>
                   <select
-                    value={variables.sudokuSolver.difficulty}
-                    onChange={(e) => setVariables({ ...variables, sudokuSolver: { difficulty: e.target.value } })}
-                    className='bg-slate-700 text-slate-200 px-3 py-1 rounded border border-slate-600 text-sm'>
+                    value={sudokuInput}
+                    onChange={(e) => setSudokuInput(e.target.value)}
+                    className='bg-slate-700 text-slate-200 px-3 py-1 rounded border border-slate-600 text-sm outline-none focus:border-orange-500 transition-colors'>
                     <option value='easy'>Mudah</option>
                     <option value='medium'>Sedang</option>
                   </select>
@@ -1235,9 +1277,9 @@ const BTAlgo = () => {
                 <div className='flex items-center gap-2'>
                   <label className='text-xs text-slate-400 font-bold'>MAZE SIZE</label>
                   <select
-                    value={variables.mazeSolver.size}
-                    onChange={(e) => setVariables({ ...variables, mazeSolver: { size: parseInt(e.target.value) } })}
-                    className='bg-slate-700 text-slate-200 px-3 py-1 rounded border border-slate-600 text-sm'>
+                    value={mazeInput}
+                    onChange={(e) => setMazeInput(parseInt(e.target.value))}
+                    className='bg-slate-700 text-slate-200 px-3 py-1 rounded border border-slate-600 text-sm outline-none focus:border-orange-500 transition-colors'>
                     <option value={5}>5x5</option>
                     <option value={6}>6x6</option>
                     <option value={7}>7x7</option>

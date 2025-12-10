@@ -574,6 +574,119 @@ const SAMPLE_GRAPHS = {
 // 2. SUB-COMPONENTS
 // ==========================================
 
+const BigOGraph = ({ algorithm, progress, nodeCount }) => {
+  const getComplexityType = (algo) => {
+    if (['bfs', 'dfs', 'topologicalSort'].includes(algo)) return 'linear' // O(V+E)
+    if (['dijkstra', 'prim'].includes(algo)) return 'vlogv' // O((V+E) log V) or O(E log V)
+    if (algo === 'bellmanFord') return 've' // O(VE)
+    if (algo === 'floydWarshall') return 'cubic' // O(V³)
+    if (algo === 'kruskal') return 'eloge' // O(E log E)
+    return 'linear'
+  }
+
+  const type = getComplexityType(algorithm)
+  const label = ALGO_INFO[algorithm].complexity
+  const data = nodeCount
+
+  const width = 280
+  const height = 120
+  const padding = 15
+
+  const points = []
+  const steps = data || 10
+
+  for (let i = 0; i <= steps; i++) {
+    const x = i / steps
+    let y
+
+    if (type === 'linear') {
+      y = x // O(V+E) ~ linear
+    } else if (type === 'vlogv') {
+      y = x === 0 ? 0 : (x * Math.log2(x * 10 + 1)) / 3.5 // O(V log V)
+    } else if (type === 've') {
+      y = x * x * 0.8 // O(VE) ~ between linear and quadratic
+    } else if (type === 'cubic') {
+      y = x * x * x // O(V³)
+    } else if (type === 'eloge') {
+      y = x === 0 ? 0 : (x * Math.log2(x * 10 + 1)) / 3 // O(E log E)
+    } else {
+      y = x
+    }
+
+    if (y > 1) y = 1
+
+    const px = padding + x * (width - 2 * padding)
+    const py = height - padding - y * (height - 2 * padding)
+    points.push(`${px},${py}`)
+  }
+
+  // Current Dot
+  const cx = progress
+  let cy
+
+  if (type === 'linear') {
+    cy = cx
+  } else if (type === 'vlogv' || type === 'eloge') {
+    cy = cx === 0 ? 0 : (cx * Math.log2(cx * 10 + 1)) / 3.5
+  } else if (type === 've') {
+    cy = cx * cx * 0.8
+  } else if (type === 'cubic') {
+    cy = cx * cx * cx
+  } else {
+    cy = cx
+  }
+
+  if (cy > 1) cy = 1
+  const dotX = padding + cx * (width - 2 * padding)
+  const dotY = height - padding - cy * (height - 2 * padding)
+
+  return (
+    <div className='bg-slate-900 border border-slate-700 rounded-xl p-4 shadow-xl'>
+      <div className='flex justify-between items-center mb-2'>
+        <div className='flex items-center gap-2 text-orange-400 font-bold text-xs uppercase'>
+          <Activity size={14} /> Kompleksitas Waktu
+        </div>
+        <div className='px-2 py-0.5 bg-emerald-900/30 border border-emerald-500/30 text-emerald-400 text-xs font-mono rounded'>{label}</div>
+      </div>
+      <div className='relative h-[120px] w-full border-l border-b border-slate-600'>
+        <svg
+          width='100%'
+          height='100%'
+          viewBox={`0 0 ${width} ${height}`}>
+          <polyline
+            points={points.join(' ')}
+            fill='none'
+            stroke='#f97316'
+            strokeWidth='2'
+            strokeLinecap='round'
+          />
+          <circle
+            cx={dotX}
+            cy={dotY}
+            r='4'
+            fill='white'
+            stroke='#f97316'
+            strokeWidth='2'
+          />
+          <circle
+            cx={dotX}
+            cy={dotY}
+            r='8'
+            fill='#f97316'
+            opacity='0.3'
+            className='animate-pulse'
+          />
+        </svg>
+      </div>
+      <div className='flex justify-between text-[10px] text-slate-500 mt-1 font-mono'>
+        <span>Start</span>
+        <span>V={data} nodes</span>
+        <span>End</span>
+      </div>
+    </div>
+  )
+}
+
 const GraphVisualization = ({ graph, step }) => {
   const { nodes, edges } = graph
   const { visitedNodes = [], activeNodes = [], selectedEdges = [], distances = {}, queue = [], stack = [] } = step
@@ -998,7 +1111,7 @@ const GraphAlgo = () => {
       const source = 0
 
       stack.push(source)
-      s.push(snapshot([], [source], [], {}, [], stack, 7, `Mulai dari node ${source}, push ke stack`))
+      s.push(snapshot([], [source], [], {}, [], stack, 5, `Mulai dari node ${source}, push ke stack`))
 
       const adj = {}
       nodes.forEach((n) => (adj[n.id] = []))
@@ -1009,11 +1122,11 @@ const GraphAlgo = () => {
 
       while (stack.length > 0) {
         const current = stack.pop()
-        s.push(snapshot(Array.from(visited), [current], [], {}, [], stack, 10, `Pop node ${current} dari stack`))
+        s.push(snapshot(Array.from(visited), [current], [], {}, [], stack, 8, `Pop node ${current} dari stack`))
 
         if (!visited.has(current)) {
           visited.add(current)
-          s.push(snapshot(Array.from(visited), [current], [], {}, [], stack, 13, `Tandai node ${current} sebagai visited`))
+          s.push(snapshot(Array.from(visited), [current], [], {}, [], stack, 12, `Tandai node ${current} sebagai visited`))
 
           for (const neighbor of adj[current]) {
             if (!visited.has(neighbor)) {
@@ -1034,7 +1147,7 @@ const GraphAlgo = () => {
       })
       dist[source] = 0
 
-      s.push(snapshot([], [source], [], dist, [], [], 9, `Set distance[${source}] = 0`))
+      s.push(snapshot([], [source], [], dist, [], [], 6, `Set distance[${source}] = 0`))
 
       const adj = {}
       nodes.forEach((n) => (adj[n.id] = []))
@@ -1057,7 +1170,7 @@ const GraphAlgo = () => {
         if (u === -1) break
 
         visited.add(u)
-        s.push(snapshot(Array.from(visited), [u], [], dist, [], [], 13, `Pilih node ${u} dengan distance terkecil = ${dist[u]}`))
+        s.push(snapshot(Array.from(visited), [u], [], dist, [], [], 14, `Pilih node ${u} dengan distance terkecil = ${dist[u]}`))
 
         for (const { to: v, weight } of adj[u]) {
           const newDist = dist[u] + weight
@@ -1078,17 +1191,17 @@ const GraphAlgo = () => {
       })
       dist[source] = 0
 
-      s.push(snapshot([], [source], [], dist, [], [], 6, `Set distance[${source}] = 0`))
+      s.push(snapshot([], [source], [], dist, [], [], 2, `Set distance[${source}] = 0`))
 
       // Relax edges V-1 times
       for (let i = 0; i < V - 1; i++) {
-        s.push(snapshot([], [], [], dist, [], [], 9, `Iterasi ${i + 1}: Relax semua edges`))
+        s.push(snapshot([], [], [], dist, [], [], 5, `Iterasi ${i + 1}: Relax semua edges`))
 
         for (const edge of edges) {
           const { from: u, to: v, weight } = edge
           if (dist[u] !== Infinity && dist[u] + weight < dist[v]) {
             dist[v] = dist[u] + weight
-            s.push(snapshot([], [u, v], [{ from: u, to: v }], dist, [], [], 11, `Relax (${u},${v}): dist[${v}] = ${dist[v]}`))
+            s.push(snapshot([], [u, v], [{ from: u, to: v }], dist, [], [], 8, `Relax (${u},${v}): dist[${v}] = ${dist[v]}`))
           }
         }
       }
@@ -1101,7 +1214,7 @@ const GraphAlgo = () => {
           dist,
           [],
           [],
-          17,
+          23,
           'Bellman-Ford selesai, tidak ada negative cycle'
         )
       )
@@ -1127,11 +1240,11 @@ const GraphAlgo = () => {
         dist[`${edge.to},${edge.from}`] = edge.weight
       })
 
-      s.push(snapshot([], [], [], {}, [], [], 7, 'Initialize distance matrix'))
+      s.push(snapshot([], [], [], {}, [], [], 5, 'Initialize distance matrix'))
 
       // Floyd-Warshall
       for (let k = 0; k < V; k++) {
-        s.push(snapshot([], [k], [], {}, [], [], 19, `Intermediate node k=${k}`))
+        s.push(snapshot([], [k], [], {}, [], [], 12, `Intermediate node k=${k}`))
 
         for (let i = 0; i < V; i++) {
           for (let j = 0; j < V; j++) {
@@ -1152,7 +1265,7 @@ const GraphAlgo = () => {
                   {},
                   [],
                   [],
-                  23,
+                  17,
                   `Update dist[${i}][${j}] = ${dist[ijKey]} via ${k}`
                 )
               )
@@ -1175,21 +1288,21 @@ const GraphAlgo = () => {
 
       const sortedEdges = [...edges].sort((a, b) => a.weight - b.weight)
 
-      s.push(snapshot([], [], [], {}, [], [], 4, 'Initialize parent array'))
+      s.push(snapshot([], [], [], {}, [], [], 17, 'Initialize parent array'))
 
       for (const edge of sortedEdges) {
         const { from: u, to: v, weight } = edge
         const rootU = find(u)
         const rootV = find(v)
 
-        s.push(snapshot([], [u, v], [], {}, [], [], 9, `Check edge (${u},${v}) weight=${weight}`))
+        s.push(snapshot([], [u, v], [], {}, [], [], 18, `Check edge (${u},${v}) weight=${weight}`))
 
         if (rootU !== rootV) {
           mst.push({ from: u, to: v })
           parent[rootU] = rootV
-          s.push(snapshot([], [u, v], mst, {}, [], [], 12, `Add edge (${u},${v}) to MST`))
+          s.push(snapshot([], [u, v], mst, {}, [], [], 21, `Add edge (${u},${v}) to MST`))
         } else {
-          s.push(snapshot([], [u, v], mst, {}, [], [], 11, `Skip edge (${u},${v}) - forms cycle`))
+          s.push(snapshot([], [u, v], mst, {}, [], [], 20, `Skip edge (${u},${v}) - forms cycle`))
         }
       }
     } else if (algo === 'prim') {
@@ -1202,7 +1315,7 @@ const GraphAlgo = () => {
       nodes.forEach((n) => (key[n.id] = Infinity))
       key[start] = 0
 
-      s.push(snapshot([], [start], [], key, [], [], 9, `Start from node ${start}`))
+      s.push(snapshot([], [start], [], key, [], [], 7, `Start from node ${start}`))
 
       const adj = {}
       nodes.forEach((n) => (adj[n.id] = []))
@@ -1225,13 +1338,13 @@ const GraphAlgo = () => {
         if (u === -1) break
 
         visited.add(u)
-        s.push(snapshot(Array.from(visited), [u], mst, key, [], [], 14, `Add node ${u} to MST`))
+        s.push(snapshot(Array.from(visited), [u], mst, key, [], [], 10, `Add node ${u} to MST`))
 
         for (const { to: v, weight } of adj[u]) {
           if (!visited.has(v) && weight < key[v]) {
             key[v] = weight
             mst.push({ from: u, to: v })
-            s.push(snapshot(Array.from(visited), [u, v], mst, key, [], [], 20, `Update key[${v}] = ${weight}, add edge (${u},${v})`))
+            s.push(snapshot(Array.from(visited), [u, v], mst, key, [], [], 17, `Update key[${v}] = ${weight}, add edge (${u},${v})`))
           }
         }
       }
@@ -1249,22 +1362,22 @@ const GraphAlgo = () => {
 
       const dfsUtil = (v) => {
         visited.add(v)
-        s.push(snapshot(Array.from(visited), [v], [], {}, [], stack, 12, `Visit node ${v}`))
+        s.push(snapshot(Array.from(visited), [v], [], {}, [], stack, 3, `Visit node ${v}`))
 
         for (const neighbor of adj[v]) {
           if (!visited.has(neighbor)) {
-            s.push(snapshot(Array.from(visited), [v, neighbor], [{ from: v, to: neighbor }], {}, [], stack, 15, `Recurse to neighbor ${neighbor}`))
+            s.push(snapshot(Array.from(visited), [v, neighbor], [{ from: v, to: neighbor }], {}, [], stack, 5, `Recurse to neighbor ${neighbor}`))
             dfsUtil(neighbor)
           }
         }
 
         stack.push(v)
-        s.push(snapshot(Array.from(visited), [v], [], {}, [], stack, 19, `Push node ${v} to stack`))
+        s.push(snapshot(Array.from(visited), [v], [], {}, [], stack, 11, `Push node ${v} to stack`))
       }
 
       for (const node of nodes) {
         if (!visited.has(node.id)) {
-          s.push(snapshot(Array.from(visited), [node.id], [], {}, [], stack, 9, `Start DFS from node ${node.id}`))
+          s.push(snapshot(Array.from(visited), [node.id], [], {}, [], stack, 17, `Start DFS from node ${node.id}`))
           dfsUtil(node.id)
         }
       }
@@ -1273,7 +1386,7 @@ const GraphAlgo = () => {
         result.push(stack.pop())
       }
 
-      s.push(snapshot(Array.from(visited), [], [], {}, [], [], 24, `Topological order: ${result.join(' → ')}`))
+      s.push(snapshot(Array.from(visited), [], [], {}, [], [], 19, `Topological order: ${result.join(' → ')}`))
     }
 
     s.push(
@@ -1452,6 +1565,13 @@ const GraphAlgo = () => {
           <GraphVisualization
             graph={currentGraph}
             step={currentVisual}
+          />
+
+          {/* BIG O GRAPH */}
+          <BigOGraph
+            algorithm={algorithm}
+            progress={currentStep / (steps.length || 1)}
+            nodeCount={nodeCount}
           />
 
           {/* PLAYBACK CONTROLS */}

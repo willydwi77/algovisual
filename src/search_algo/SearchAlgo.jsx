@@ -539,41 +539,41 @@ const SearchAlgo = () => {
       let left = 0
       let right = n - 1
 
-      s.push(snapshot(arr, [], -1, [], 3, `left = 0, right = ${n - 1}`, target))
+      s.push(snapshot(arr, [], -1, [], 2, `left = 0, right = ${n - 1}`, target))
 
       while (left <= right) {
         const mid = Math.floor((left + right) / 2)
-        s.push(snapshot(arr, [left, right], -1, checked, 7, `Rentang pencarian: [${left}, ${right}]`, target))
+        s.push(snapshot(arr, [left, right], -1, checked, 5, `Rentang pencarian: [${left}, ${right}]`, target))
 
-        s.push(snapshot(arr, [mid], -1, checked, 8, `mid = ${mid}, arr[${mid}] = ${arr[mid]}`, target))
+        s.push(snapshot(arr, [mid], -1, checked, 6, `mid = ${mid}, arr[${mid}] = ${arr[mid]}`, target))
 
         if (arr[mid] === target) {
-          s.push(snapshot(arr, [], mid, [...checked, mid], 10, `Ditemukan! arr[${mid}] = ${target}`, target))
-          s.push(snapshot(arr, [], mid, [...checked, mid], 11, `Return indeks ${mid}`, target))
+          s.push(snapshot(arr, [], mid, [...checked, mid], 8, `Ditemukan! arr[${mid}] = ${target}`, target))
+          s.push(snapshot(arr, [], mid, [...checked, mid], 9, `Return indeks ${mid}`, target))
           break
         } else if (arr[mid] < target) {
           checked.push(mid)
-          s.push(snapshot(arr, [], -1, checked, 13, `arr[${mid}] < ${target}, cari di kanan`, target))
+          s.push(snapshot(arr, [], -1, checked, 11, `arr[${mid}] < ${target}, cari di kanan`, target))
           left = mid + 1
         } else {
           checked.push(mid)
-          s.push(snapshot(arr, [], -1, checked, 15, `arr[${mid}] > ${target}, cari di kiri`, target))
+          s.push(snapshot(arr, [], -1, checked, 13, `arr[${mid}] > ${target}, cari di kiri`, target))
           right = mid - 1
         }
       }
 
       if (left > right) {
-        s.push(snapshot(arr, [], -1, checked, 20, `Tidak ditemukan, return -1`, target))
+        s.push(snapshot(arr, [], -1, checked, 17, `Tidak ditemukan, return -1`, target))
       }
     } else if (algo === 'jump') {
       let step = Math.floor(Math.sqrt(n))
       let prev = 0
 
-      s.push(snapshot(arr, [], -1, [], 5, `Ukuran lompatan = √${n} = ${step}`, target))
+      s.push(snapshot(arr, [], -1, [], 3, `Ukuran lompatan = √${n} = ${step}`, target))
 
       // Jump phase
       while (prev < n && arr[Math.min(step, n) - 1] < target) {
-        s.push(snapshot(arr, [Math.min(step, n) - 1], -1, checked, 8, `Periksa arr[${Math.min(step, n) - 1}] = ${arr[Math.min(step, n) - 1]} < ${target}?`, target))
+        s.push(snapshot(arr, [Math.min(step, n) - 1], -1, checked, 6, `Periksa arr[${Math.min(step, n) - 1}] = ${arr[Math.min(step, n) - 1]} < ${target}?`, target))
 
         for (let i = prev; i < Math.min(step, n); i++) {
           checked.push(i)
@@ -582,10 +582,10 @@ const SearchAlgo = () => {
         prev = step
         step += Math.floor(Math.sqrt(n))
 
-        s.push(snapshot(arr, [], -1, checked, 9, `Lompat ke blok berikutnya: prev = ${prev}`, target))
+        s.push(snapshot(arr, [], -1, checked, 7, `Lompat ke blok berikutnya: prev = ${prev}`, target))
 
         if (prev >= n) {
-          s.push(snapshot(arr, [], -1, checked, 11, `Melewati batas array, tidak ditemukan`, target))
+          s.push(snapshot(arr, [], -1, checked, 9, `Melewati batas array, tidak ditemukan`, target))
           break
         }
       }
@@ -593,11 +593,11 @@ const SearchAlgo = () => {
       // Linear search in block
       if (prev < n) {
         for (let i = prev; i < Math.min(step, n); i++) {
-          s.push(snapshot(arr, [i], -1, checked, 16, `Linear search: arr[${i}] = ${arr[i]}`, target))
+          s.push(snapshot(arr, [i], -1, checked, 14, `Linear search: arr[${i}] = ${arr[i]}`, target))
 
           if (arr[i] === target) {
-            s.push(snapshot(arr, [], i, [...checked, i], 17, `Ditemukan! arr[${i}] = ${target}`, target))
-            s.push(snapshot(arr, [], i, [...checked, i], 18, `Return indeks ${i}`, target))
+            s.push(snapshot(arr, [], i, [...checked, i], 15, `Ditemukan! arr[${i}] = ${target}`, target))
+            s.push(snapshot(arr, [], i, [...checked, i], 16, `Return indeks ${i}`, target))
             break
           }
           checked.push(i)
@@ -605,73 +605,73 @@ const SearchAlgo = () => {
       }
 
       if (!s.some((step) => step.foundIndex >= 0)) {
-        s.push(snapshot(arr, [], -1, checked, 22, `Tidak ditemukan, return -1`, target))
+        s.push(snapshot(arr, [], -1, checked, 20, `Tidak ditemukan, return -1`, target))
       }
     } else if (algo === 'interpolation') {
       let low = 0
       let high = n - 1
 
-      s.push(snapshot(arr, [], -1, [], 3, `low = 0, high = ${n - 1}`, target))
+      s.push(snapshot(arr, [], -1, [], 2, `low = 0, high = ${n - 1}`, target))
 
       while (low <= high && target >= arr[low] && target <= arr[high]) {
         if (low === high) {
-          s.push(snapshot(arr, [low], -1, checked, 7, `Hanya satu elemen tersisa: arr[${low}] = ${arr[low]}`, target))
+          s.push(snapshot(arr, [low], -1, checked, 6, `Hanya satu elemen tersisa: arr[${low}] = ${arr[low]}`, target))
 
           if (arr[low] === target) {
-            s.push(snapshot(arr, [], low, [...checked, low], 8, `Ditemukan! Return ${low}`, target))
+            s.push(snapshot(arr, [], low, [...checked, low], 7, `Ditemukan! Return ${low}`, target))
           } else {
-            s.push(snapshot(arr, [], -1, [...checked, low], 9, `Tidak sama, return -1`, target))
+            s.push(snapshot(arr, [], -1, [...checked, low], 8, `Tidak sama, return -1`, target))
           }
           break
         }
 
         const pos = low + Math.floor(((target - arr[low]) * (high - low)) / (arr[high] - arr[low]))
 
-        s.push(snapshot(arr, [low, high], -1, checked, 12, `Rentang: [${low}, ${high}]`, target))
+        s.push(snapshot(arr, [low, high], -1, checked, 5, `Rentang: [${low}, ${high}]`, target))
 
-        s.push(snapshot(arr, [pos], -1, checked, 13, `Interpolasi: pos = ${pos}, arr[${pos}] = ${arr[pos]}`, target))
+        s.push(snapshot(arr, [pos], -1, checked, 11, `Interpolasi: pos = ${pos}, arr[${pos}] = ${arr[pos]}`, target))
 
         if (arr[pos] === target) {
-          s.push(snapshot(arr, [], pos, [...checked, pos], 15, `Ditemukan! arr[${pos}] = ${target}`, target))
-          s.push(snapshot(arr, [], pos, [...checked, pos], 16, `Return indeks ${pos}`, target))
+          s.push(snapshot(arr, [], pos, [...checked, pos], 13, `Ditemukan! arr[${pos}] = ${target}`, target))
+          s.push(snapshot(arr, [], pos, [...checked, pos], 14, `Return indeks ${pos}`, target))
           break
         } else if (arr[pos] < target) {
           checked.push(pos)
-          s.push(snapshot(arr, [], -1, checked, 18, `arr[${pos}] < ${target}, cari di kanan`, target))
+          s.push(snapshot(arr, [], -1, checked, 16, `arr[${pos}] < ${target}, cari di kanan`, target))
           low = pos + 1
         } else {
           checked.push(pos)
-          s.push(snapshot(arr, [], -1, checked, 20, `arr[${pos}] > ${target}, cari di kiri`, target))
+          s.push(snapshot(arr, [], -1, checked, 18, `arr[${pos}] > ${target}, cari di kiri`, target))
           high = pos - 1
         }
       }
 
       if (low > high || target < arr[low] || target > arr[high]) {
-        s.push(snapshot(arr, [], -1, checked, 24, `Tidak ditemukan, return -1`, target))
+        s.push(snapshot(arr, [], -1, checked, 22, `Tidak ditemukan, return -1`, target))
       }
     } else if (algo === 'exponential') {
       if (arr[0] === target) {
-        s.push(snapshot(arr, [0], 0, [0], 3, `arr[0] = ${arr[0]} adalah target!`, target))
-        s.push(snapshot(arr, [], 0, [0], 4, `Return indeks 0`, target))
+        s.push(snapshot(arr, [0], 0, [0], 13, `arr[0] = ${arr[0]} adalah target!`, target))
+        s.push(snapshot(arr, [], 0, [0], 14, `Return indeks 0`, target))
       } else {
         let i = 1
-        s.push(snapshot(arr, [], -1, [], 7, `Mulai dari i = 1`, target))
+        s.push(snapshot(arr, [], -1, [], 17, `Mulai dari i = 1`, target))
 
         while (i < n && arr[i] <= target) {
-          s.push(snapshot(arr, [i], -1, checked, 9, `Periksa arr[${i}] = ${arr[i]} <= ${target}`, target))
+          s.push(snapshot(arr, [i], -1, checked, 18, `Periksa arr[${i}] = ${arr[i]} <= ${target}`, target))
 
           for (let j = Math.floor(i / 2); j < i; j++) {
             if (!checked.includes(j)) checked.push(j)
           }
 
           i *= 2
-          s.push(snapshot(arr, [], -1, checked, 10, `Gandakan indeks: i = ${i}`, target))
+          s.push(snapshot(arr, [], -1, checked, 19, `Gandakan indeks: i = ${i}`, target))
         }
 
         const bound = Math.min(i, n - 1)
         const start = Math.floor(i / 2)
 
-        s.push(snapshot(arr, [], -1, checked, 14, `Binary search dalam rentang [${start}, ${bound}]`, target))
+        s.push(snapshot(arr, [], -1, checked, 22, `Binary search dalam rentang [${start}, ${bound}]`, target))
 
         // Binary search helper
         let left = start
@@ -680,7 +680,7 @@ const SearchAlgo = () => {
         while (left <= right) {
           const mid = Math.floor((left + right) / 2)
 
-          s.push(snapshot(arr, [mid], -1, checked, 3, `Binary: mid = ${mid}, arr[${mid}] = ${arr[mid]}`, target))
+          s.push(snapshot(arr, [mid], -1, checked, 2, `Binary: mid = ${mid}, arr[${mid}] = ${arr[mid]}`, target))
 
           if (arr[mid] === target) {
             s.push(snapshot(arr, [], mid, [...checked, mid], 4, `Ditemukan! arr[${mid}] = ${target}`, target))

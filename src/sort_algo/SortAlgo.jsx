@@ -585,7 +585,7 @@ const SortAlgo = () => {
         }
 
         if (minIdx !== i) {
-          s.push(snapshot(arr, [], [], [], 12, `Tukar elemen`))
+          s.push(snapshot(arr, [], [], [], 13, `Tukar elemen`))
           let temp = arr[i]
           arr[i] = arr[minIdx]
           arr[minIdx] = temp
@@ -618,7 +618,7 @@ const SortAlgo = () => {
       // Quick Sort Implementation
       const partition = (low, high) => {
         const pivot = arr[high]
-        s.push(snapshot(arr, [high], [], [], 8, `Pilih pivot = arr[${high}] = ${pivot}`))
+        s.push(snapshot(arr, [high], [], [], 2, `Pilih pivot = arr[${high}] = ${pivot}`))
 
         let i = low - 1
         s.push(snapshot(arr, [], [], [], 3, `Set i = ${low - 1}`))
@@ -666,7 +666,7 @@ const SortAlgo = () => {
         const L = arr.slice(left, mid + 1)
         const R = arr.slice(mid + 1, right + 1)
 
-        s.push(snapshot(arr, [], [], [], 2, `Bagi array: L[${n1}], R[${n2}]`))
+        s.push(snapshot(arr, [], [], [], 5, `Bagi array: L[${n1}], R[${n2}]`))
 
         let i = 0,
           j = 0,
@@ -677,7 +677,7 @@ const SortAlgo = () => {
           const leftIdx = left + i
           const rightIdx = mid + 1 + j
 
-          s.push(snapshot(arr, [leftIdx, rightIdx], [], [], 14, `Bandingkan L[${i}]=${L[i]} dengan R[${j}]=${R[j]}`))
+          s.push(snapshot(arr, [leftIdx, rightIdx], [], [], 15, `Bandingkan L[${i}]=${L[i]} dengan R[${j}]=${R[j]}`))
 
           if (L[i] <= R[j]) {
             arr[k] = L[i]
@@ -708,7 +708,7 @@ const SortAlgo = () => {
         // Mark merged section as sorted
         const sorted = []
         for (let idx = left; idx <= right; idx++) sorted.push(idx)
-        s.push(snapshot(arr, [], [], sorted, 18, `Merge selesai untuk rentang [${left}..${right}]`))
+        s.push(snapshot(arr, [], [], sorted, 21, `Merge selesai untuk rentang [${left}..${right}]`))
       }
 
       const mergeSortHelper = (left, right) => {
@@ -730,16 +730,16 @@ const SortAlgo = () => {
         const l = 2 * i + 1
         const r = 2 * i + 2
 
-        s.push(snapshot(arr, [i], [], [], 2, `Heapify node ${i}, left=${l}, right=${r}`))
+        s.push(snapshot(arr, [i], [], [], 1, `Heapify node ${i}, left=${l}, right=${r}`))
 
         if (l < size && arr[l] > arr[largest]) {
           largest = l
-          s.push(snapshot(arr, [l, largest], [], [], 7, `arr[${l}] > arr[${i}], largest = ${l}`))
+          s.push(snapshot(arr, [l, largest], [], [], 6, `arr[${l}] > arr[${i}], largest = ${l}`))
         }
 
         if (r < size && arr[r] > arr[largest]) {
           largest = r
-          s.push(snapshot(arr, [r, largest], [], [], 10, `arr[${r}] > arr[${largest}], largest = ${r}`))
+          s.push(snapshot(arr, [r, largest], [], [], 9, `arr[${r}] > arr[${largest}], largest = ${r}`))
         }
 
         if (largest !== i) {
@@ -750,17 +750,17 @@ const SortAlgo = () => {
       }
 
       // Build max heap
-      s.push(snapshot(arr, [], [], [], 22, 'Membangun Max Heap'))
+      s.push(snapshot(arr, [], [], [], 21, 'Membangun Max Heap'))
       for (let i = Math.floor(n / 2) - 1; i >= 0; i--) {
         heapify(n, i)
       }
-      s.push(snapshot(arr, [], [], [], 22, 'Max Heap selesai dibangun'))
+      s.push(snapshot(arr, [], [], [], 21, 'Max Heap selesai dibangun'))
 
       // Extract elements from heap
       for (let i = n - 1; i > 0; i--) {
-        s.push(snapshot(arr, [0, i], [], [], 27, `Tukar root arr[0] dengan arr[${i}]`))
+        s.push(snapshot(arr, [0, i], [], [], 26, `Tukar root arr[0] dengan arr[${i}]`))
         ;[arr[0], arr[i]] = [arr[i], arr[0]]
-        s.push(snapshot(arr, [], [0, i], [i], 27, `arr[${i}] = ${arr[i]} sudah di posisi akhir`))
+        s.push(snapshot(arr, [], [0, i], [i], 26, `arr[${i}] = ${arr[i]} sudah di posisi akhir`))
 
         heapify(i, 0)
       }
